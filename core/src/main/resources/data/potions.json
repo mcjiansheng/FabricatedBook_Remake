@@ -1,0 +1,62 @@
+[
+  {
+    "id": "potion_heal",
+    "name": "回血药水",
+    "description": "回复 10 点生命值",
+    "effects": ["heal:10"]
+  },
+  {
+    "id": "potion_attack",
+    "name": "攻击药水",
+    "description": "对所有敌人造成 10 点伤害",
+    "effects": ["damage_all:10"]
+  },
+  {
+    "id": "potion_shield",
+    "name": "护盾药水",
+    "description": "获得 30 护盾",
+    "effects": ["block:30"]
+  },
+  {
+    "id": "potion_poison",
+    "name": "中毒药水",
+    "description": "对所有敌人造成 5 点中毒",
+    "effects": ["debuff_all:Poison:5"]
+  },
+  {
+    "id": "potion_wither",
+    "name": "凋零药水",
+    "description": "对所有敌人造成 5 点凋零并引爆一次",
+    "effects": ["debuff_all:Withering:5", "trigger_withering_all"]
+  },
+  {
+    "id": "potion_energy",
+    "name": "能量药水",
+    "description": "获得 3 点能量，抽 3 张卡",
+    "effects": ["energy:3", "draw:3"]
+  },
+  {
+    "id": "potion_shield_break",
+    "name": "碎盾药水",
+    "description": "击碎所有敌人的护盾",
+    "effects": ["remove_all_enemy_block"]
+  },
+  {
+    "id": "potion_dizziness",
+    "name": "眩晕药水",
+    "description": "使所有敌人眩晕 1 回合",
+    "effects": ["debuff_all:Dizziness:1"]
+  },
+  {
+    "id": "potion_strength",
+    "name": "力量药水",
+    "description": "获得 5 点力量",
+    "effects": ["buff:self:Strength:5"]
+  },
+  {
+    "id": "potion_resistance",
+    "name": "抗性药水",
+    "description": "获得 5 点抗性",
+    "effects": ["buff:self:Resistance:5"]
+  }
+]

@@ -1,0 +1,114 @@
+[
+  // ===== 荒野 — 普通战斗 =====
+  {
+    "id": "w1_scavenger",
+    "name": "拾荒者",
+    "isBoss": false,
+    "floor": 1,
+    "enemies": [
+      {
+        "id": "scavenger",
+        "name": "拾荒者",
+        "maxHp": 45,
+        "actionScript": ["atk_double_3", "inc_strength_3", "atk_debuff_blockred"],
+        "passive": ""
+      }
+    ]
+  },
+  {
+    "id": "w1_vultures",
+    "name": "秃鹫×3",
+    "isBoss": false,
+    "floor": 1,
+    "enemies": [
+      {
+        "id": "vulture_1",
+        "name": "秃鹫",
+        "maxHp": 25,
+        "actionScript": ["def_fly", "atk_peck", "atk_dive"],
+        "passive": ""
+      },
+      {
+        "id": "vulture_2",
+        "name": "秃鹫",
+        "maxHp": 25,
+        "actionScript": ["def_fly", "atk_peck", "atk_dive"],
+        "passive": ""
+      },
+      {
+        "id": "vulture_3",
+        "name": "秃鹫",
+        "maxHp": 25,
+        "actionScript": ["def_fly", "atk_peck", "atk_dive"],
+        "passive": ""
+      }
+    ]
+  },
+  {
+    "id": "w1_thieves",
+    "name": "盗贼×2",
+    "isBoss": false,
+    "floor": 1,
+    "enemies": [
+      {
+        "id": "thief_1",
+        "name": "盗贼",
+        "maxHp": 35,
+        "actionScript": ["atk_poison_3", "atk_debuff_fragile", "def_block_5"],
+        "passive": ""
+      },
+      {
+        "id": "thief_2",
+        "name": "盗贼",
+        "maxHp": 35,
+        "actionScript": ["atk_poison_3", "atk_debuff_fragile", "def_block_5"],
+        "passive": ""
+      }
+    ]
+  },
+  // ===== 荒野 — 紧急战斗 =====
+  {
+    "id": "w1_emergency_scavengers",
+    "name": "拾荒者×3",
+    "isBoss": false,
+    "floor": 1,
+    "enemies": [
+      {
+        "id": "scavenger_e1",
+        "name": "拾荒者",
+        "maxHp": 45,
+        "actionScript": ["atk_double_3", "inc_strength_3", "atk_debuff_blockred"],
+        "passive": ""
+      },
+      {
+        "id": "scavenger_e2",
+        "name": "拾荒者",
+        "maxHp": 45,
+        "actionScript": ["atk_double_3", "inc_strength_3", "atk_debuff_blockred"],
+        "passive": ""
+      },
+      {
+        "id": "scavenger_e3",
+        "name": "拾荒者",
+        "maxHp": 45,
+        "actionScript": ["atk_double_3", "inc_strength_3", "atk_debuff_blockred"],
+        "passive": ""
+      }
+    ]
+  },
+  {
+    "id": "w1_emergency_ghost",
+    "name": "孤魂野鬼",
+    "isBoss": false,
+    "floor": 1,
+    "enemies": [
+      {
+        "id": "lone_ghost",
+        "name": "孤魂野鬼",
+        "maxHp": 40,
+        "actionScript": ["buff_resist_strength", "atk_double_wither", "curse_debuffs", "atk_trigger_wither", "def_block_10"],
+        "passive": ""
+      }
+    ]
+  }
+]

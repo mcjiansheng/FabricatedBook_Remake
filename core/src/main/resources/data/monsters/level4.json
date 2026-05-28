@@ -1,0 +1,146 @@
+[
+  // ===== 迷雾 — 普通战斗 =====
+  {
+    "id": "w4_corrupted_warden",
+    "name": "腐化的守林人",
+    "isBoss": false,
+    "floor": 4,
+    "enemies": [
+      {
+        "id": "corrupted_warden",
+        "name": "腐化的守林人",
+        "maxHp": 120,
+        "actionScript": ["atk_chaos", "def_chaos"],
+        "passive": "block_reduction_player"
+      }
+    ]
+  },
+  {
+    "id": "w4_fog_ghost",
+    "name": "雾鬼",
+    "isBoss": false,
+    "floor": 4,
+    "enemies": [
+      {
+        "id": "fog_ghost",
+        "name": "雾鬼",
+        "maxHp": 100,
+        "actionScript": ["buff_strength_3", "atk_fog_blade", "atk_yin_wind"],
+        "passive": "poison_on_attack"
+      }
+    ]
+  },
+  {
+    "id": "w4_phantom",
+    "name": "幻影",
+    "isBoss": false,
+    "floor": 4,
+    "enemies": [
+      {
+        "id": "phantom",
+        "name": "幻影",
+        "maxHp": 300,
+        "actionScript": ["atk_phantom_strike", "curse_weak_2", "atk_phantom_dance"],
+        "passive": "self_damage_passive"
+      }
+    ]
+  },
+  {
+    "id": "w4_fog_walker",
+    "name": "雾行鸟",
+    "isBoss": false,
+    "floor": 4,
+    "enemies": [
+      {
+        "id": "fog_walker",
+        "name": "雾行鸟",
+        "maxHp": 120,
+        "actionScript": ["atk_peck_12", "buff_dance", "atk_wing_slap"],
+        "passive": ""
+      }
+    ]
+  },
+  // ===== 迷雾 — 紧急战斗 =====
+  {
+    "id": "w4_emergency_fog_ghost_and_phantom",
+    "name": "雾鬼 + 幻影",
+    "isBoss": false,
+    "floor": 4,
+    "enemies": [
+      {
+        "id": "fog_ghost_em",
+        "name": "雾鬼",
+        "maxHp": 100,
+        "actionScript": ["buff_strength_3", "atk_fog_blade", "atk_yin_wind"],
+        "passive": "poison_on_attack"
+      },
+      {
+        "id": "phantom_em",
+        "name": "幻影",
+        "maxHp": 300,
+        "actionScript": ["atk_phantom_strike", "curse_weak_2", "atk_phantom_dance"],
+        "passive": "self_damage_passive"
+      }
+    ]
+  },
+  {
+    "id": "w4_emergency_rotten_mountain_ghost",
+    "name": "腐烂山鬼",
+    "isBoss": false,
+    "floor": 4,
+    "enemies": [
+      {
+        "id": "rotten_mountain_ghost",
+        "name": "腐烂山鬼",
+        "maxHp": 200,
+        "actionScript": ["atk_landslide", "atk_gravel", "def_bedrock", "def_cliff"],
+        "passive": "regen_on_attack"
+      }
+    ]
+  },
+  {
+    "id": "w4_emergency_lost_traveler",
+    "name": "迷途旅人",
+    "isBoss": false,
+    "floor": 4,
+    "enemies": [
+      {
+        "id": "lost_traveler",
+        "name": "迷途旅人",
+        "maxHp": 300,
+        "actionScript": ["atk_random_strike", "atk_double_strike", "def_block_12", "buff_awaken"],
+        "passive": ""
+      }
+    ]
+  },
+  // ===== 迷雾 — Boss =====
+  {
+    "id": "w4_boss_last_sentinel",
+    "name": "最后的哨兵",
+    "isBoss": true,
+    "floor": 4,
+    "enemies": [
+      {
+        "id": "last_sentinel",
+        "name": "最后的哨兵",
+        "maxHp": 500,
+        "actionScript": ["atk_sentinel_spear", "def_formation", "def_iron_wall", "heal_repair", "heal_full_repair"],
+        "passive": "summon_turrets"
+      },
+      {
+        "id": "sentinel_turret_1",
+        "name": "炮塔",
+        "maxHp": 100,
+        "actionScript": ["atk_shot", "atk_overload_shot"],
+        "passive": "self_destruct"
+      },
+      {
+        "id": "sentinel_turret_2",
+        "name": "炮塔",
+        "maxHp": 100,
+        "actionScript": ["atk_shot", "atk_overload_shot"],
+        "passive": "self_destruct"
+      }
+    ]
+  }
+]

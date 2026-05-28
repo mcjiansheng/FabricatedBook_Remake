@@ -1,0 +1,23 @@
+sourceSets.main.java.srcDirs = ["src/main/java"]
+sourceSets.main.resources.srcDirs = ["src/main/resources"]
+
+dependencies {
+    implementation project(":core")
+
+    api "com.badlogicgames.gdx:gdx:${gdxVersion}"
+    api "com.badlogicgames.gdx:gdx-backend-lwjgl3:${gdxVersion}"
+    api "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-desktop"
+    api "com.badlogicgames.gdx:gdx-box2d-platform:${gdxVersion}:natives-desktop"
+    api "com.badlogicgames.gdx:gdx-freetype-platform:${gdxVersion}:natives-desktop"
+}
+
+tasks.register("runGame", JavaExec.class) {
+    group = "application"
+    description = "运行游戏"
+
+    mainClass = "com.fabricatedbook.desktop.DesktopLauncher"
+    classpath = sourceSets.main.runtimeClasspath
+
+    // 设置工作目录为 core 的资源目录，确保 img/ 和字体文件能被 Gdx.files.internal() 找到
+    workingDir = project(":core").sourceSets.main.resources.srcDirs.iterator().next()
+}

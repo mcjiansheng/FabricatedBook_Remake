@@ -1,0 +1,451 @@
+[
+  // ⚪ 基础卡牌
+  {
+    "id": "warrior_attack",
+    "name": "攻击",
+    "cost": 1,
+    "description": "造成 6 点伤害",
+    "type": "ATTACK",
+    "rarity": "BASIC",
+    "value": 0,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage:6"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  {
+    "id": "warrior_defense",
+    "name": "防御",
+    "cost": 1,
+    "description": "获得 6 点格挡",
+    "type": "DEFENSE",
+    "rarity": "BASIC",
+    "value": 0,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["block:6"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 痛击 — 价值1
+  {
+    "id": "warrior_painful_blow",
+    "name": "痛击",
+    "cost": 2,
+    "description": "造成 8 点伤害，提供 2 点易伤",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage:8", "debuff:BlockReduction:2"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 横扫 — 价值1
+  {
+    "id": "warrior_sweep",
+    "name": "横扫",
+    "cost": 1,
+    "description": "对所有单位造成 5 点伤害",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "ALL_ENEMIES",
+    "targetCount": 0,
+    "effects": ["damage_all:5"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 奇袭 — 价值1（消耗）
+  {
+    "id": "warrior_ambush",
+    "name": "奇袭",
+    "cost": 0,
+    "description": "造成 5 点伤害 + 3 点虚弱，消耗",
+    "type": "SKILL",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage:5", "debuff:Weak:3"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🔵 反击 — 价值1
+  {
+    "id": "warrior_counterattack",
+    "name": "反击",
+    "cost": 1,
+    "description": "根据格挡值造成伤害",
+    "type": "SKILL",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["counter:block"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 强力击 — 价值1
+  {
+    "id": "warrior_powerful_strike",
+    "name": "强力击",
+    "cost": 2,
+    "description": "造成 10 点伤害，手牌每张攻击牌使伤害 +3",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage_per_attack:10:3"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🟣 装甲 — 价值2（装备，消耗）
+  {
+    "id": "warrior_armorer",
+    "name": "装甲",
+    "cost": 2,
+    "description": "格挡值不再在回合结束时消失（buff: armor），消耗",
+    "type": "EQUIP",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["buff:self:ArmorBuff:1"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🔵 致命节奏 — 价值1
+  {
+    "id": "warrior_deadly_tempo",
+    "name": "致命节奏",
+    "cost": 1,
+    "description": "造成 7 点伤害，每使用一次该牌伤害 +1",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage_scaling:7"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🟣 底牌 — 价值2（消耗）
+  {
+    "id": "warrior_ace",
+    "name": "底牌",
+    "cost": 0,
+    "description": "抽 5 张牌，消耗",
+    "type": "SKILL",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["draw:5"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🟣 搏命挣扎 — 价值2（消耗）
+  {
+    "id": "warrior_struggle_desperately",
+    "name": "搏命挣扎",
+    "cost": 0,
+    "description": "3 回合内血量降为 0 也不会死亡（buff: undead），每回合 +2 能量，3 回合后直接死亡，消耗",
+    "type": "SKILL",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["buff:self:UndeadBuff:3", "energy_per_turn:2"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🟣 兴奋 — 价值2（消耗）
+  {
+    "id": "warrior_excited",
+    "name": "兴奋",
+    "cost": 1,
+    "description": "清除所有负面效果，消耗",
+    "type": "SKILL",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["purify"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🔵 治疗 — 价值1（消耗）
+  {
+    "id": "warrior_heal",
+    "name": "治疗",
+    "cost": 1,
+    "description": "回复 10 生命值，消耗",
+    "type": "SKILL",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["heal:10"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🟣 致命一击 — 价值2
+  {
+    "id": "warrior_critical_hit",
+    "name": "致命一击",
+    "cost": 3,
+    "description": "造成 30 点伤害",
+    "type": "ATTACK",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage:30"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 沸血 — 价值1
+  {
+    "id": "warrior_boiling_blood",
+    "name": "沸血",
+    "cost": 0,
+    "description": "获得 2 回合力量，随机一张攻击牌",
+    "type": "SKILL",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["buff:self:Strength:2", "add_random_attack"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 肘击 — 价值1
+  {
+    "id": "warrior_elbowing",
+    "name": "肘击",
+    "cost": 1,
+    "description": "造成 6 点伤害，25% 造成 1 回合眩晕",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage:6", "chance_debuff:Dizziness:1:25"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🟣 剑刃风暴 — 价值2
+  {
+    "id": "warrior_bladestorm",
+    "name": "剑刃风暴",
+    "cost": 2,
+    "description": "对所有敌人造成 3×3 点伤害",
+    "type": "ATTACK",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "ALL_ENEMIES",
+    "targetCount": 0,
+    "effects": ["damage_all:3:3"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 哈撒给 — 价值1
+  {
+    "id": "warrior_hasaki",
+    "name": "哈撒给",
+    "cost": 0,
+    "description": "造成 4 点伤害，3 回合易碎",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage:4", "debuff:BlockReduction:3"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 龙牙 — 价值1
+  {
+    "id": "warrior_dragon_fang",
+    "name": "龙牙",
+    "cost": 1,
+    "description": "造成 9 点伤害，敌方生命值 <30 则伤害 +5",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage_threshold:9:5:30"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🟣 英雄登场 — 价值2（消耗）
+  {
+    "id": "warrior_hero_entrance",
+    "name": "英雄登场",
+    "cost": 0,
+    "description": "对所有敌人造成 12 点伤害 + 2 回合脆弱和易碎，获得 3 点能量，消耗",
+    "type": "SKILL",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "ALL_ENEMIES",
+    "targetCount": 0,
+    "effects": ["damage_all:12", "debuff_all:Fragile:2", "debuff_all:BlockReduction:2", "energy:3"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🟣 封尘绝念斩 — 价值2
+  {
+    "id": "warrior_fate_sealed",
+    "name": "封尘绝念斩",
+    "cost": 2,
+    "description": "对所有敌人造成 16 点伤害",
+    "type": "ATTACK",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "ALL_ENEMIES",
+    "targetCount": 0,
+    "effects": ["damage_all:16"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 腐化 — 价值1
+  {
+    "id": "warrior_corrupt",
+    "name": "腐化",
+    "cost": 1,
+    "description": "造成 4 点凋零并引爆 1 次凋零",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["debuff:Withering:4", "trigger_withering"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🟣 瘟疫 — 价值2（消耗）
+  {
+    "id": "warrior_plague",
+    "name": "瘟疫",
+    "cost": 2,
+    "description": "对所有敌人造成 6 点中毒，并使所有敌人中毒层数翻倍，消耗",
+    "type": "SKILL",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "ALL_ENEMIES",
+    "targetCount": 0,
+    "effects": ["debuff_all:Poison:6", "double_poison"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🟣 淬毒 — 价值2
+  {
+    "id": "warrior_poisoned",
+    "name": "淬毒",
+    "cost": 1,
+    "description": "对敌人造成 5×2 点伤害，每次攻击 50% 概率附加中毒",
+    "type": "ATTACK",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage:5:2", "chance_debuff:Poison:1:50"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 弱点 — 价值0
+  {
+    "id": "warrior_weakness",
+    "name": "弱点",
+    "cost": 0,
+    "description": "造成 1 回合脆弱和易碎",
+    "type": "SKILL",
+    "rarity": "COMMON",
+    "value": 0,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["debuff:Fragile:1", "debuff:BlockReduction:1"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🟣 歪瓜 — 价值2（消耗）
+  {
+    "id": "warrior_cheat",
+    "name": "歪瓜",
+    "cost": 0,
+    "description": "获得 30 点格挡，消耗",
+    "type": "SKILL",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["block:30"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🟡 爆裂黎明 — 价值3（消耗）
+  {
+    "id": "warrior_blast_dawn",
+    "name": "爆裂黎明",
+    "cost": 5,
+    "description": "对所有敌人造成 6×10 点伤害，消耗",
+    "type": "SKILL",
+    "rarity": "EPIC",
+    "value": 3,
+    "targetType": "ALL_ENEMIES",
+    "targetCount": 0,
+    "effects": ["damage_all:6:10"],
+    "exhaust": true,
+    "profession": "warrior"
+  },
+  // 🔵 凛神斩 — 价值1
+  {
+    "id": "warrior_reckoning",
+    "name": "凛神斩",
+    "cost": 1,
+    "description": "对所有敌人造成 3 点伤害，每个目标提供 5 格挡",
+    "type": "ATTACK",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "ALL_ENEMIES",
+    "targetCount": 0,
+    "effects": ["damage_all:3", "block_per_enemy:5"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🟣 肉斩骨断 — 价值2
+  {
+    "id": "warrior_flesh_bone",
+    "name": "肉斩骨断",
+    "cost": 1,
+    "description": "对敌人造成 5 点伤害，每损失 10 生命值伤害 +3",
+    "type": "ATTACK",
+    "rarity": "RARE",
+    "value": 2,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage_missing_hp:5:10:3"],
+    "exhaust": false,
+    "profession": "warrior"
+  },
+  // 🔵 不屈 — 价值1
+  {
+    "id": "warrior_unyielding",
+    "name": "不屈",
+    "cost": 2,
+    "description": "获得 3 点坚强，10 点格挡",
+    "type": "DEFENSE",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SELF",
+    "targetCount": 1,
+    "effects": ["buff:self:BlockIncrease:3", "block:10"],
+    "exhaust": false,
+    "profession": "warrior"
+  }
+]

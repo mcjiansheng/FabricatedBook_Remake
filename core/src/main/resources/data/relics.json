@@ -1,0 +1,324 @@
+[
+  // ===== ⚪ 普通藏品 =====
+  {
+    "id": "relic_hot_water_flask",
+    "name": "热水壶",
+    "rarity": "COMMON",
+    "description": "生命值上限 +5",
+    "effectValue": 5
+  },
+  {
+    "id": "relic_old_coin",
+    "name": "古旧钱币",
+    "rarity": "COMMON",
+    "description": "立即获得 30 金币",
+    "effectValue": 30
+  },
+  {
+    "id": "relic_weird_flute",
+    "name": "古怪的长笛",
+    "rarity": "COMMON",
+    "description": "战斗开始时获得 1 能量",
+    "effectValue": 1
+  },
+  {
+    "id": "relic_speech_draft",
+    "name": "一份演讲稿",
+    "rarity": "COMMON",
+    "description": "获得一张牌",
+    "effectValue": 1
+  },
+  {
+    "id": "relic_lucky_coin",
+    "name": "幸运硬币",
+    "rarity": "COMMON",
+    "description": "金币 +1，玩家变得幸运一点（无实际作用）",
+    "effectValue": 1
+  },
+  {
+    "id": "relic_a_combo",
+    "name": "A 级连招",
+    "rarity": "COMMON",
+    "description": "造成伤害 +5%",
+    "effectValue": 5
+  },
+  {
+    "id": "relic_target",
+    "name": "靶子",
+    "rarity": "COMMON",
+    "description": "敌方单位受到伤害有概率（33%）+10%",
+    "effectValue": 10
+  },
+  {
+    "id": "relic_vampire_count",
+    "name": "探灵伯爵",
+    "rarity": "COMMON",
+    "description": "战斗胜利后获得藏品概率增加",
+    "effectValue": 0
+  },
+  {
+    "id": "relic_best_of_year",
+    "name": "年度最佳",
+    "rarity": "COMMON",
+    "description": "角色获得 LGBT 元素（无实际作用）",
+    "effectValue": 0
+  },
+  // ===== 🔵 稀有藏品 =====
+  {
+    "id": "relic_flawless_jade",
+    "name": "无暇宝玉",
+    "rarity": "UNCOMMON",
+    "description": "立即获得 100 金币",
+    "effectValue": 100
+  },
+  {
+    "id": "relic_treasure_ring",
+    "name": "至宝指环",
+    "rarity": "UNCOMMON",
+    "description": "战斗获得金币 +50%",
+    "effectValue": 50
+  },
+  {
+    "id": "relic_gargoyle_statue",
+    "name": "石像鬼塑像",
+    "rarity": "UNCOMMON",
+    "description": "生命上限 +10",
+    "effectValue": 10
+  },
+  {
+    "id": "relic_rice_bowl",
+    "name": "饭碗",
+    "rarity": "UNCOMMON",
+    "description": "回复 25% 生命值",
+    "effectValue": 25
+  },
+  {
+    "id": "relic_bankbook",
+    "name": "捡来的存折",
+    "rarity": "UNCOMMON",
+    "description": "每次进入商店获得 25 块",
+    "effectValue": 25
+  },
+  {
+    "id": "relic_vampire_fang",
+    "name": "吸血鬼的尖牙",
+    "rarity": "UNCOMMON",
+    "description": "每使用 1 张牌，回复 1 点生命值",
+    "effectValue": 1
+  },
+  {
+    "id": "relic_kungfu_manual",
+    "name": "葵花宝典",
+    "rarity": "UNCOMMON",
+    "description": "角色造成伤害有概率 +80%",
+    "effectValue": 80
+  },
+  // ===== 🟣 史诗藏品 =====
+  {
+    "id": "relic_miniature_stage",
+    "name": "微缩舞台模型",
+    "rarity": "EPIC",
+    "description": "战斗开始时获得 3 能量，额外抽 2 张牌",
+    "effectValue": 3
+  },
+  {
+    "id": "relic_prop_box",
+    "name": "道具箱",
+    "rarity": "EPIC",
+    "description": "获得三张牌",
+    "effectValue": 3
+  },
+  {
+    "id": "relic_coin_toy",
+    "name": "投币玩具",
+    "rarity": "EPIC",
+    "description": "每拥有 10 金币，造成伤害 +3%",
+    "effectValue": 3
+  },
+  {
+    "id": "relic_hand_soap",
+    "name": "洗手液",
+    "rarity": "EPIC",
+    "description": "受治疗效果 +20%",
+    "effectValue": 20
+  },
+  {
+    "id": "relic_marionette",
+    "name": "悬丝木偶",
+    "rarity": "EPIC",
+    "description": "敌人受到的中毒和凋零伤害 +10%",
+    "effectValue": 10
+  },
+  {
+    "id": "relic_5a_combo",
+    "name": "5A 级连招",
+    "rarity": "EPIC",
+    "description": "造成伤害 +25%",
+    "effectValue": 25
+  },
+  // ===== 🟡 传说藏品 =====
+  {
+    "id": "relic_king_spear",
+    "name": "国王的长枪",
+    "rarity": "LEGENDARY",
+    "description": "生命值低于 10% 时，造成伤害 +50%",
+    "effectValue": 50
+  },
+  {
+    "id": "relic_king_armor",
+    "name": "国王的铠甲",
+    "rarity": "LEGENDARY",
+    "description": "生命值低于 10% 时，每回合获得 10 点护盾且护盾获取量 +50%",
+    "effectValue": 10
+  },
+  {
+    "id": "relic_king_crystal",
+    "name": "国王的水晶",
+    "rarity": "LEGENDARY",
+    "description": "战斗胜利时若生命值高于 10%，损失 5 点生命值，获得额外 20 金币",
+    "effectValue": 20
+  },
+  {
+    "id": "relic_blade_light",
+    "name": "刀光剑影",
+    "rarity": "LEGENDARY",
+    "description": "每拥有一个负面效果，造成伤害 +20%",
+    "effectValue": 20
+  },
+  {
+    "id": "relic_frostmourne",
+    "name": "霜之哀伤",
+    "rarity": "LEGENDARY",
+    "description": "每通过 1 场战斗造成伤害 +8%",
+    "effectValue": 8
+  },
+  {
+    "id": "relic_peeping_eye",
+    "name": "窥秘之眼",
+    "rarity": "LEGENDARY",
+    "description": "敌方受到伤害 +40%",
+    "effectValue": 40
+  },
+  {
+    "id": "relic_i_help_you",
+    "name": "\"我来助你\"",
+    "rarity": "LEGENDARY",
+    "description": "回合开始时，所有敌人受到 2 点伤害",
+    "effectValue": 2
+  },
+  {
+    "id": "relic_safety_suit",
+    "name": "蓝卡坞安全衣",
+    "rarity": "LEGENDARY",
+    "description": "每拥有一个负面藏品，受到伤害 -10%",
+    "effectValue": 10
+  },
+  // ===== 🔴 神话藏品 =====
+  {
+    "id": "relic_golden_cup",
+    "name": "金酒之杯",
+    "rarity": "MYTHIC",
+    "description": "每拥有 10 金币，造成伤害 +8%",
+    "effectValue": 8
+  },
+  {
+    "id": "relic_old_fan",
+    "name": "老蒲扇",
+    "rarity": "MYTHIC",
+    "description": "每拥有一张卡牌，造成伤害 +1%",
+    "effectValue": 1
+  },
+  {
+    "id": "relic_rosemary_squad",
+    "name": "迷迭香小队",
+    "rarity": "MYTHIC",
+    "description": "敌人造成伤害 -30%，造成伤害 +30%",
+    "effectValue": 30
+  },
+  {
+    "id": "relic_pale_crown",
+    "name": "苍白花冠",
+    "rarity": "MYTHIC",
+    "description": "生命值回复量 +35%",
+    "effectValue": 35
+  },
+  {
+    "id": "relic_wither_storm",
+    "name": "\"凋零风暴\"",
+    "rarity": "MYTHIC",
+    "description": "敌人受到的凋零伤害 +50%，每回合额外结算一次凋零伤害",
+    "effectValue": 50
+  },
+  {
+    "id": "relic_stop_war",
+    "name": "止戈",
+    "rarity": "MYTHIC",
+    "description": "受到伤害变为 70%",
+    "effectValue": 70
+  },
+  // ===== ⚖️ 特殊藏品 =====
+  {
+    "id": "relic_betrayal",
+    "name": "背叛",
+    "rarity": "SPECIAL",
+    "description": "1-4 层伤害 +20%，第 5 层敌人血量 +20%，进入不同结局",
+    "effectValue": 20
+  },
+  {
+    "id": "relic_hatred",
+    "name": "仇恨",
+    "rarity": "SPECIAL",
+    "description": "1-4 层伤害 -20%，第 5 层敌人血量 -20%，进入不同结局",
+    "effectValue": 20
+  },
+  {
+    "id": "relic_avenger",
+    "name": "\"复仇者\"",
+    "rarity": "SPECIAL",
+    "description": "造成伤害有概率（1/3）增加 30%，险路恶敌中出现「迷失的守林人」",
+    "effectValue": 30
+  },
+  {
+    "id": "relic_babel_tower",
+    "name": "\"巴别塔\"",
+    "rarity": "SPECIAL",
+    "description": "团结起来，不惜一切。险路恶敌中出现其他敌人",
+    "effectValue": 0
+  },
+  {
+    "id": "relic_centralization",
+    "name": "\"集权\"",
+    "rarity": "SPECIAL",
+    "description": "进入一个战斗节点，造成伤害 +5%",
+    "effectValue": 5
+  },
+  {
+    "id": "relic_oligarch",
+    "name": "\"寡头\"",
+    "rarity": "SPECIAL",
+    "description": "每进入一个非战斗节点，获得 20 金币",
+    "effectValue": 20
+  },
+  // ===== 🌊 负面藏品 =====
+  {
+    "id": "relic_sea_metabolism",
+    "name": "海神的代谢",
+    "rarity": "CURSED",
+    "description": "敌人生命值 +25%",
+    "effectValue": 25
+  },
+  {
+    "id": "relic_tolerance",
+    "name": "宽容",
+    "rarity": "CURSED",
+    "description": "敌方造成伤害 +20%",
+    "effectValue": 20
+  },
+  {
+    "id": "relic_humility",
+    "name": "谦虚",
+    "rarity": "CURSED",
+    "description": "生命值 -30%",
+    "effectValue": 30
+  }
+]

@@ -1,0 +1,190 @@
+[
+  // ===== 高塔 — 普通战斗 =====
+  {
+    "id": "w5_sword_guardian",
+    "name": "剑卫",
+    "isBoss": false,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "sword_guardian",
+        "name": "剑卫",
+        "maxHp": 250,
+        "actionScript": ["atk_dual_blade_16", "def_sword_shield", "atk_thrust"],
+        "passive": "strength_after_5_turns"
+      }
+    ]
+  },
+  {
+    "id": "w5_shield_guardian",
+    "name": "盾卫",
+    "isBoss": false,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "shield_guardian",
+        "name": "盾卫",
+        "maxHp": 500,
+        "actionScript": ["def_iron_wall_30", "atk_shield_bash", "atk_shock", "def_team_protection"],
+        "passive": ""
+      }
+    ]
+  },
+  {
+    "id": "w5_gun_guardian",
+    "name": "铳卫",
+    "isBoss": false,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "gun_guardian",
+        "name": "铳卫",
+        "maxHp": 180,
+        "actionScript": ["atk_spread_shot", "atk_point_shot"],
+        "passive": "bonus_damage_passive"
+      }
+    ]
+  },
+  {
+    "id": "w5_mage",
+    "name": "法师",
+    "isBoss": false,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "mage",
+        "name": "法师",
+        "maxHp": 150,
+        "actionScript": ["atk_magic_missile", "atk_arcane_blast", "def_magic_shield", "curse_wither"],
+        "passive": "wither_on_attack"
+      }
+    ]
+  },
+  // ===== 高塔 — 紧急战斗 =====
+  {
+    "id": "w5_emergency_gargoyle",
+    "name": "石像鬼",
+    "isBoss": false,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "gargoyle",
+        "name": "石像鬼",
+        "maxHp": 300,
+        "actionScript": ["def_stone_skin", "atk_claw", "atk_stone_fist", "buff_activate"],
+        "passive": ""
+      }
+    ]
+  },
+  {
+    "id": "w5_emergency_guardian_commander_sword_gun",
+    "name": "卫士统领 + 剑卫 + 铳卫",
+    "isBoss": false,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "guardian_commander",
+        "name": "卫士统领",
+        "maxHp": 240,
+        "actionScript": ["atk_command", "def_team_shield", "def_stand_firm", "heal_command", "heal_emergency"],
+        "passive": "start_block_35"
+      },
+      {
+        "id": "sword_guardian_em",
+        "name": "剑卫",
+        "maxHp": 250,
+        "actionScript": ["atk_dual_blade_16", "def_sword_shield", "atk_thrust"],
+        "passive": "strength_after_5_turns"
+      },
+      {
+        "id": "gun_guardian_em",
+        "name": "铳卫",
+        "maxHp": 180,
+        "actionScript": ["atk_spread_shot", "atk_point_shot"],
+        "passive": "bonus_damage_passive"
+      }
+    ]
+  },
+  {
+    "id": "w5_emergency_guardian_commander_shield_mage",
+    "name": "卫士统领 + 盾卫 + 法师",
+    "isBoss": false,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "guardian_commander_2",
+        "name": "卫士统领",
+        "maxHp": 240,
+        "actionScript": ["atk_command", "def_team_shield", "def_stand_firm", "heal_command", "heal_emergency"],
+        "passive": "start_block_35"
+      },
+      {
+        "id": "shield_guardian_em",
+        "name": "盾卫",
+        "maxHp": 500,
+        "actionScript": ["def_iron_wall_30", "atk_shield_bash", "atk_shock", "def_team_protection"],
+        "passive": ""
+      },
+      {
+        "id": "mage_em",
+        "name": "法师",
+        "maxHp": 150,
+        "actionScript": ["atk_magic_missile", "atk_arcane_blast", "def_magic_shield", "curse_wither"],
+        "passive": "wither_on_attack"
+      }
+    ]
+  },
+  {
+    "id": "w5_emergency_shadow_guard",
+    "name": "影卫",
+    "isBoss": false,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "shadow_guard",
+        "name": "影卫",
+        "maxHp": 200,
+        "actionScript": ["atk_shadow_strike", "atk_shadow_burst", "curse_shadow", "atk_shadow_dance"],
+        "passive": ""
+      }
+    ]
+  },
+  // ===== 高塔 — Boss =====
+  {
+    "id": "w5_boss_demon_king",
+    "name": "魔王",
+    "isBoss": true,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "demon_king",
+        "name": "魔王",
+        "maxHp": 700,
+        "actionScript": ["atk_demon_rage", "def_demon_barrier", "charge_attack", "atk_demon_dance", "buff_demon_pressure"],
+        "passive": "wither_poison_on_attack"
+      }
+    ]
+  },
+  {
+    "id": "w5_boss_puppet_master",
+    "name": "幕后黑手",
+    "isBoss": true,
+    "floor": 5,
+    "enemies": [
+      {
+        "id": "puppet_master",
+        "name": "幕后黑手",
+        "maxHp": 1000,
+        "actionScript": ["def_puppet_repair", "atk_dark_energy", "steal_block", "wither_drain", "transfer_curse", "multi_curse", "shadow_assault"],
+        "passive": "spawn_puppet"
+      },
+      {
+        "id": "puppet",
+        "name": "傀儡",
+        "maxHp": 150,
+        "actionScript": ["sacrifice", "trigger_wither_puppet", "def_shield_puppet"],
+        "passive": "buff_master_random"
+      }
+    ]
+  }
+]

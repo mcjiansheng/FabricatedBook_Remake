@@ -1,0 +1,162 @@
+[
+  // ===== 诡异秘林 — 普通战斗（含森林怪 + 新增腐尸） =====
+  {
+    "id": "w3_corpse",
+    "name": "腐尸",
+    "isBoss": false,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "corpse",
+        "name": "腐尸",
+        "maxHp": 150,
+        "actionScript": ["atk_rot", "atk_tear", "self_fragile"],
+        "passive": "regen_5"
+      }
+    ]
+  },
+  // 森林普通怪也会在诡异秘林出现（参考原有敌人）
+  {
+    "id": "w3_hunter",
+    "name": "猎人",
+    "isBoss": false,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "hunter",
+        "name": "猎人",
+        "maxHp": 65,
+        "actionScript": ["inc_strength_block", "atk_barrage", "atk_heavy", "atk_precise"],
+        "passive": ""
+      }
+    ]
+  },
+  {
+    "id": "w3_treeman",
+    "name": "树人",
+    "isBoss": false,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "treeman",
+        "name": "树人",
+        "maxHp": 90,
+        "actionScript": ["atk_vine", "atk_thorn", "def_root"],
+        "passive": "def_bark_3"
+      }
+    ]
+  },
+  {
+    "id": "w3_goblins",
+    "name": "哥布林×2",
+    "isBoss": false,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "goblin_1",
+        "name": "哥布林",
+        "maxHp": 60,
+        "actionScript": ["heal_all_5", "atk_poison_blade", "atk_combo_goblin"],
+        "passive": "buff_strength_turns"
+      },
+      {
+        "id": "goblin_2",
+        "name": "哥布林",
+        "maxHp": 60,
+        "actionScript": ["heal_all_5", "atk_poison_blade", "atk_combo_goblin"],
+        "passive": "buff_strength_turns"
+      }
+    ]
+  },
+  {
+    "id": "w3_slimes",
+    "name": "史莱姆×3",
+    "isBoss": false,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "slime_1",
+        "name": "史莱姆",
+        "maxHp": 40,
+        "actionScript": ["def_harden", "def_sticky_wall", "atk_bounce", "def_share_block"],
+        "passive": ""
+      },
+      {
+        "id": "slime_2",
+        "name": "史莱姆",
+        "maxHp": 40,
+        "actionScript": ["def_harden", "def_sticky_wall", "atk_bounce", "def_share_block"],
+        "passive": ""
+      },
+      {
+        "id": "slime_3",
+        "name": "史莱姆",
+        "maxHp": 40,
+        "actionScript": ["def_harden", "def_sticky_wall", "atk_bounce", "def_share_block"],
+        "passive": ""
+      }
+    ]
+  },
+  // ===== 诡异秘林 — 紧急战斗 =====
+  {
+    "id": "w3_emergency_fallen_warden",
+    "name": "堕落守林人",
+    "isBoss": false,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "fallen_warden",
+        "name": "堕落守林人",
+        "maxHp": 100,
+        "actionScript": ["atk_berserk"],
+        "passive": "self_fragile_passive"
+      }
+    ]
+  },
+  // ===== 诡异秘林 — Boss =====
+  {
+    "id": "w3_boss_withering_tree",
+    "name": "凋零之树",
+    "isBoss": true,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "withering_tree",
+        "name": "凋零之树",
+        "maxHp": 200,
+        "actionScript": ["heal_self", "atk_wither_strike", "atk_thorn_storm", "trigger_wither_self", "atk_wither_combo", "life_drain"],
+        "passive": "wither_passive"
+      }
+    ]
+  },
+  {
+    "id": "w3_boss_human_fungus",
+    "name": "人中菌",
+    "isBoss": true,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "human_fungus",
+        "name": "人中菌",
+        "maxHp": 250,
+        "actionScript": ["atk_filament", "atk_spore_storm", "atk_symbiosis", "curse_poison_fragile"],
+        "passive": "poison_player_turn_start"
+      }
+    ]
+  },
+  {
+    "id": "w3_boss_lost_warden",
+    "name": "迷失的守林人",
+    "isBoss": true,
+    "floor": 3,
+    "enemies": [
+      {
+        "id": "lost_warden",
+        "name": "迷失的守林人",
+        "maxHp": 250,
+        "actionScript": ["atk_horizontal_slash", "atk_wild_dance", "curse_fragile_both", "def_block_8", "idle_stare"],
+        "passive": "boost_damage_passive"
+      }
+    ]
+  }
+]

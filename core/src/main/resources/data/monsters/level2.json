@@ -1,0 +1,115 @@
+[
+  // ===== 森林 — 普通战斗 =====
+  {
+    "id": "w2_hunter",
+    "name": "猎人",
+    "isBoss": false,
+    "floor": 2,
+    "enemies": [
+      {
+        "id": "hunter",
+        "name": "猎人",
+        "maxHp": 65,
+        "actionScript": ["inc_strength_block", "atk_barrage", "atk_heavy", "atk_precise"],
+        "passive": ""
+      }
+    ]
+  },
+  {
+    "id": "w2_treeman",
+    "name": "树人",
+    "isBoss": false,
+    "floor": 2,
+    "enemies": [
+      {
+        "id": "treeman",
+        "name": "树人",
+        "maxHp": 90,
+        "actionScript": ["atk_vine", "atk_thorn", "def_root"],
+        "passive": "def_bark_3"
+      }
+    ]
+  },
+  {
+    "id": "w2_goblins",
+    "name": "哥布林×2",
+    "isBoss": false,
+    "floor": 2,
+    "enemies": [
+      {
+        "id": "goblin_1",
+        "name": "哥布林",
+        "maxHp": 60,
+        "actionScript": ["heal_all_5", "atk_poison_blade", "atk_combo_goblin"],
+        "passive": "buff_strength_turns"
+      },
+      {
+        "id": "goblin_2",
+        "name": "哥布林",
+        "maxHp": 60,
+        "actionScript": ["heal_all_5", "atk_poison_blade", "atk_combo_goblin"],
+        "passive": "buff_strength_turns"
+      }
+    ]
+  },
+  {
+    "id": "w2_slimes",
+    "name": "史莱姆×3",
+    "isBoss": false,
+    "floor": 2,
+    "enemies": [
+      {
+        "id": "slime_1",
+        "name": "史莱姆",
+        "maxHp": 40,
+        "actionScript": ["def_harden", "def_sticky_wall", "atk_bounce", "def_share_block"],
+        "passive": ""
+      },
+      {
+        "id": "slime_2",
+        "name": "史莱姆",
+        "maxHp": 40,
+        "actionScript": ["def_harden", "def_sticky_wall", "atk_bounce", "def_share_block"],
+        "passive": ""
+      },
+      {
+        "id": "slime_3",
+        "name": "史莱姆",
+        "maxHp": 40,
+        "actionScript": ["def_harden", "def_sticky_wall", "atk_bounce", "def_share_block"],
+        "passive": ""
+      }
+    ]
+  },
+  // ===== 森林 — 紧急战斗 =====
+  {
+    "id": "w2_emergency_old_hunter",
+    "name": "老猎人",
+    "isBoss": false,
+    "floor": 2,
+    "enemies": [
+      {
+        "id": "old_hunter",
+        "name": "老猎人",
+        "maxHp": 95,
+        "actionScript": ["curse_mark", "inc_strength_block_4", "atk_dual_blade", "atk_finisher"],
+        "passive": ""
+      }
+    ]
+  },
+  {
+    "id": "w2_emergency_goblin_chief",
+    "name": "哥布林统领",
+    "isBoss": false,
+    "floor": 2,
+    "enemies": [
+      {
+        "id": "goblin_chief",
+        "name": "哥布林统领",
+        "maxHp": 100,
+        "actionScript": ["atk_poison_9", "atk_combo_chief", "atk_spray", "def_assemble"],
+        "passive": "buff_strength_5_turns"
+      }
+    ]
+  }
+]

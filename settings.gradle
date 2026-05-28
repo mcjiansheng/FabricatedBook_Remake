@@ -1,0 +1,4 @@
+rootProject.name = "FabricatedBookRemake"
+
+include "core"
+include "desktop"
