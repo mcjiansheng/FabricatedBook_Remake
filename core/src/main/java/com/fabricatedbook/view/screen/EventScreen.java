@@ -86,8 +86,10 @@ public class EventScreen implements Screen {
             final int index = i;
             EventHandler.EventOption option = options.get(i);
 
+            TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+            buttonStyle.font = game.getFont();
             TextButton btn = new TextButton(option.label + " - " + option.description,
-                    new TextButton.TextButtonStyle());
+                    buttonStyle);
             btn.addListener(new ClickListener() {
                 @Override
                 public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
@@ -139,8 +141,9 @@ public class EventScreen implements Screen {
         optionTable.add(resultLabel).width(600).pad(20);
         optionTable.row();
 
-        TextButton backBtn = new TextButton("继续前进",
-                new TextButton.TextButtonStyle());
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+        buttonStyle.font = game.getFont();
+        TextButton backBtn = new TextButton("继续前进", buttonStyle);
         backBtn.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,

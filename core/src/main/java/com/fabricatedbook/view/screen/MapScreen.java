@@ -9,7 +9,13 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.fabricatedbook.core.engine.CombatEngine;
+import com.fabricatedbook.core.entity.Enemy;
+import com.fabricatedbook.core.entity.EntityFactory;
 import com.fabricatedbook.core.entity.Player;
+import com.fabricatedbook.core.event.EventHandler;
+import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.view.FabricBookGame;
 
 import java.util.ArrayList;
@@ -93,7 +99,7 @@ public class MapScreen implements Screen {
     private final Player player;
     private int currentLayerIdx; // 当前楼层索引 0-4
     private MapNode[][][] allLayers; // [layer][col][row]
-    private int[] layerNodeCounts; // [layer][col] 每列节点数
+    private int[][] layerNodeCounts; // [layer][col] 每列节点数
     private MapNode currentNode; // 当前所在的节点
     private OrthographicCamera camera;
     private ShapeRenderer shapeRenderer;
@@ -209,6 +215,8 @@ public class MapScreen implements Screen {
                     int type = randomChoice(LAYER_PROBABILITIES[layerIdx]);
                     layer[col][row] = new MapNode(type);
                 }
+                layer[col][row].col = col;
+                layer[col][row].row = row;
             }
         }
 
@@ -450,29 +458,58 @@ public class MapScreen implements Screen {
             case EMERGENCY:
             case BOSS:
                 // 进入战斗
-                game.setScreen(new BattleScreen(game, null, player, new ArrayList<>()));
+                game.setScreen(new BattleScreen(game, createCombatEngine(), player,
+                        createEnemiesFor(node.type)));
                 break;
             case SHOP:
                 // 进入商店
-                game.setScreen(new ShopScreen(game, player));
+                ShopManager shopManager = new ShopManager(player, new RelicManager(player));
+                shopManager.generateItems();
+                game.setScreen(new ShopScreen(game, player, shopManager));
                 break;
             case UNEXPECTEDLY:
                 // 进入事件
-                game.setScreen(new EventScreen(game, player));
+                game.setScreen(new EventScreen(game, player, randomEventName()));
                 break;
             case REWARD:
                 // 宝箱奖励
-                game.setScreen(new EventScreen(game, player));
+                game.setScreen(new EventScreen(game, player, "好诗歪诗"));
                 break;
             case SAFE_HOUSE:
                 // 安全屋
-                game.setScreen(new EventScreen(game, player));
+                game.setScreen(new EventScreen(game, player, "人生意义"));
                 break;
             case DECISION:
                 // 命运抉择
-                game.setScreen(new EventScreen(game, player));
+                game.setScreen(new EventScreen(game, player, "投资"));
                 break;
         }
+    }
+
+    private CombatEngine createCombatEngine() {
+        CombatEngine engine = new CombatEngine();
+        engine.setRelicManager(new RelicManager(player));
+        return engine;
+    }
+
+    private List<Enemy> createEnemiesFor(int nodeType) {
+        List<Enemy> enemies = new ArrayList<>();
+        if (nodeType == BOSS) {
+            enemies.add(new Enemy("boss_training", "训练首领", 60,
+                    List.of("atk8", "def6", "atk10")));
+        } else if (nodeType == EMERGENCY) {
+            enemies.add(new Enemy("elite_training", "精英训练假人", 42,
+                    List.of("atk7", "atk5x2", "def8")));
+        } else {
+            enemies.add(EntityFactory.createSimpleEnemy("training_dummy",
+                    "训练假人", 32));
+        }
+        return enemies;
+    }
+
+    private String randomEventName() {
+        List<String> eventNames = new EventHandler().getEventNames();
+        return eventNames.get(random.nextInt(eventNames.size()));
     }
 
     /** 绘制节点之间的连接线 */

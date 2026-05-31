@@ -58,8 +58,9 @@ public class HandPanel extends Group {
         this.selectedCard = null;
 
         // 结束回合按钮
-        endTurnBtn = new TextButton("结束回合",
-                new TextButton.TextButtonStyle());
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+        buttonStyle.font = font;
+        endTurnBtn = new TextButton("结束回合", buttonStyle);
         endTurnBtn.setPosition(FabricBookGame.SCREEN_WIDTH - 150, 30);
         endTurnBtn.setSize(130, 50);
         endTurnBtn.addListener(new ClickListener() {

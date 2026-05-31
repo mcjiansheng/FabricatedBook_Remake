@@ -66,7 +66,7 @@ public class TitleScreen implements Screen {
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
                 // 创建新玩家并进入地图
-                Player newPlayer = new Player("战士", Profession.WARRIOR, 80);
+                Player newPlayer = new Player("player", "战士", Profession.WARRIOR);
                 game.setScreen(new MapScreen(game, newPlayer));
             }
         });

@@ -78,8 +78,9 @@ public class ShopScreen implements Screen {
         stage.addActor(itemTable);
 
         // 返回按钮
-        TextButton backBtn = new TextButton("离开商店",
-                new TextButton.TextButtonStyle());
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+        buttonStyle.font = game.getFont();
+        TextButton backBtn = new TextButton("离开商店", buttonStyle);
         backBtn.setPosition(FabricBookGame.SCREEN_WIDTH - 200, 30);
         backBtn.setSize(180, 50);
         backBtn.addListener(new ClickListener() {
@@ -112,8 +113,9 @@ public class ShopScreen implements Screen {
             itemTable.add(itemLabel).pad(5);
 
             if (!item.isPurchased()) {
-                TextButton buyBtn = new TextButton("购买",
-                        new TextButton.TextButtonStyle());
+                TextButton.TextButtonStyle buyStyle = new TextButton.TextButtonStyle();
+                buyStyle.font = game.getFont();
+                TextButton buyBtn = new TextButton("购买", buyStyle);
                 buyBtn.addListener(new ClickListener() {
                     @Override
                     public void clicked(

@@ -57,6 +57,7 @@ public class BattleScreen implements Screen, ViewNotifier {
     private Label turnLabel;
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
+    private boolean battleInitialized;
 
     /**
      * 构造战斗画面。
@@ -69,10 +70,11 @@ public class BattleScreen implements Screen, ViewNotifier {
     public BattleScreen(FabricBookGame game, CombatEngine combatEngine,
                         Player player, List<Enemy> enemies) {
         this.game = game;
-        this.combatEngine = combatEngine;
+        this.combatEngine = combatEngine != null ? combatEngine : new CombatEngine();
         this.player = player;
         this.enemies = enemies;
         this.enemyActors = new ArrayList<>();
+        this.battleInitialized = false;
 
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
@@ -133,6 +135,12 @@ public class BattleScreen implements Screen, ViewNotifier {
         turnLabel.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 50,
                 FabricBookGame.SCREEN_HEIGHT - 50);
         stage.addActor(turnLabel);
+
+        if (!battleInitialized) {
+            combatEngine.setViewNotifier(this);
+            combatEngine.initBattle(player, enemies);
+            battleInitialized = true;
+        }
     }
 
     @Override
