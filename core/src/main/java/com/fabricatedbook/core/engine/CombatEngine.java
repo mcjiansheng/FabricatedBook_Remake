@@ -413,7 +413,7 @@ public class CombatEngine {
                 case "buff": {
                     // buff:self:name:stack
                     String buffName = parts[2];
-                    int stack = Integer.parseInt(parts[3]);
+                    int stack = parts.length > 3 ? Integer.parseInt(parts[3]) : 1;
                     actions.add(new ApplyBuffAction(player, buffName, stack));
                     break;
                 }
