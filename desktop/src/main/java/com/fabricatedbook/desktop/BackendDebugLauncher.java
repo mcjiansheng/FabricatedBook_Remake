@@ -62,7 +62,14 @@ public class BackendDebugLauncher {
 
         while (running) {
             print("> ");
-            String line = scanner.nextLine().trim();
+            String line = readLine();
+            if (line == null) {
+                running = false;
+                println("");
+                println("输入结束，已退出。");
+                break;
+            }
+            line = line.trim();
             if (line.isEmpty()) {
                 continue;
             }
@@ -246,7 +253,11 @@ public class BackendDebugLauncher {
         }
         println("输入事件选项编号，或回车选择 1。");
         print("event> ");
-        String line = scanner.nextLine().trim();
+        String line = readLine();
+        if (line == null) {
+            line = "";
+        }
+        line = line.trim();
         int choice = line.isEmpty() ? 1 : parseInt(line, 1);
         choice = Math.max(1, Math.min(choice, options.size()));
 
@@ -295,7 +306,14 @@ public class BackendDebugLauncher {
         while (engine.isInBattle() && running) {
             printBattleState(engine);
             print("battle> ");
-            String line = scanner.nextLine().trim();
+            String line = readLine();
+            if (line == null) {
+                running = false;
+                println("");
+                println("输入结束，已退出。");
+                break;
+            }
+            line = line.trim();
             if (line.isEmpty()) {
                 continue;
             }
@@ -496,6 +514,10 @@ public class BackendDebugLauncher {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+    private String readLine() {
+        return scanner.hasNextLine() ? scanner.nextLine() : null;
     }
 
     private void print(String text) {
