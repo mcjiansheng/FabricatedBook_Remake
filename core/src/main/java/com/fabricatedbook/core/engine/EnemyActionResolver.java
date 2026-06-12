@@ -28,67 +28,67 @@ public final class EnemyActionResolver {
      */
     public static String describeIntent(String actionId) {
         if (actionId == null || actionId.isBlank()) {
-            return "意图 未知";
+            return "未知";
         }
 
         String basic = describeBasicDsl(actionId);
         if (basic != null) return basic;
 
         return switch (actionId) {
-            case "atk_double_3" -> "攻击 3x2";
-            case "atk_debuff_blockred" -> "攻击 5 / 易碎";
+            case "atk_double_3" -> "攻击 3 x 2";
+            case "atk_debuff_blockred" -> "攻击 5 / 削弱";
             case "def_fly" -> "防御 3";
             case "atk_peck" -> "攻击 3";
             case "atk_dive" -> "攻击 7";
-            case "atk_poison_3" -> "攻击 2 / 中毒";
-            case "atk_debuff_fragile" -> "攻击 5 / 脆弱";
+            case "atk_poison_3" -> "攻击 2 / 削弱";
+            case "atk_debuff_fragile" -> "攻击 5 / 削弱";
             case "def_block_5" -> "防御 5";
-            case "buff_resist_strength" -> "强化 / 回复";
-            case "atk_double_wither" -> "攻击 8x2 / 凋零";
-            case "curse_debuffs" -> "诅咒";
-            case "atk_trigger_wither" -> "攻击 8 / 引爆";
+            case "buff_resist_strength" -> "强化";
+            case "atk_double_wither" -> "攻击 8 x 2 / 削弱";
+            case "curse_debuffs" -> "削弱";
+            case "atk_trigger_wither" -> "攻击 8 / 削弱";
             case "def_block_10" -> "防御 10";
             case "inc_strength_block" -> "强化 / 防御 10";
-            case "atk_barrage" -> "攻击 2x5";
+            case "atk_barrage" -> "攻击 2 x 5";
             case "atk_heavy" -> "攻击 9 / 强化";
             case "atk_precise" -> "攻击 10+";
-            case "atk_vine" -> "攻击 8 / 中毒";
-            case "atk_thorn" -> "攻击 4x4";
+            case "atk_vine" -> "攻击 8 / 削弱";
+            case "atk_thorn" -> "攻击 4 x 4";
             case "def_root" -> "防御 10";
             case "heal_all_5" -> "回复 5";
-            case "atk_poison_blade" -> "攻击 6 / 中毒";
+            case "atk_poison_blade" -> "攻击 6 / 削弱";
             case "atk_combo_goblin" -> "攻击 8 / 防御 4";
             case "def_harden" -> "防御 8";
             case "def_sticky_wall" -> "群体防御 3";
-            case "atk_bounce" -> "攻击 ?";
+            case "atk_bounce" -> "攻击";
             case "def_share_block" -> "转移格挡";
-            case "curse_mark" -> "诅咒 / 攻击 3x5";
+            case "curse_mark" -> "削弱 / 攻击 3 x 5";
             case "inc_strength_block_4" -> "强化 / 防御 20";
-            case "atk_dual_blade" -> "攻击 7x2";
+            case "atk_dual_blade" -> "攻击 7 x 2";
             case "atk_finisher" -> "攻击 12 / 强化";
-            case "atk_poison_9" -> "攻击 9 / 中毒";
+            case "atk_poison_9" -> "攻击 9 / 削弱";
             case "atk_combo_chief" -> "攻击 8 / 防御 10";
-            case "atk_spray" -> "攻击 5x3 / 虚弱";
+            case "atk_spray" -> "攻击 5 x 3 / 削弱";
             case "def_assemble" -> "防御 10 / 回复";
-            case "atk_rot" -> "攻击 6 / 中毒";
-            case "atk_tear" -> "攻击 7x2";
+            case "atk_rot" -> "攻击 6 / 削弱";
+            case "atk_tear" -> "攻击 7 x 2";
             case "self_fragile" -> "自损";
             case "atk_berserk" -> "攻击 12-20";
             case "heal_self" -> "回复";
-            case "atk_wither_strike" -> "攻击 15 / 凋零";
-            case "atk_thorn_storm" -> "攻击 4x7";
+            case "atk_wither_strike" -> "攻击 15 / 削弱";
+            case "atk_thorn_storm" -> "攻击 4 x 7";
             case "idle", "stun" -> "无行动";
             default -> {
                 if (actionId.startsWith("buff") || actionId.startsWith("inc")) {
                     yield "强化";
                 }
                 if (actionId.startsWith("debuff") || actionId.startsWith("curse")) {
-                    yield "诅咒";
+                    yield "削弱";
                 }
                 if (actionId.startsWith("heal")) {
                     yield "回复 " + actionId.substring(4);
                 }
-                yield "意图 未知";
+                yield "未知";
             }
         };
     }
@@ -119,9 +119,21 @@ public final class EnemyActionResolver {
         if (numPart == null || numPart.isBlank()) return null;
         if (numPart.contains("x")) {
             String[] parts = numPart.split("x");
-            return "攻击 " + parts[0] + "x" + parts[1];
+            if (isInteger(parts[0]) && isInteger(parts[1])) {
+                return "攻击 " + parts[0] + " x " + parts[1];
+            }
+            return null;
         }
+        if (!isInteger(numPart)) return null;
         return "攻击 " + numPart;
+    }
+
+    private static boolean isInteger(String value) {
+        if (value == null || value.isBlank()) return false;
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isDigit(value.charAt(i))) return false;
+        }
+        return true;
     }
 
     /**

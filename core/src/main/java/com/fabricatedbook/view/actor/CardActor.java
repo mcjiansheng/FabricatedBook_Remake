@@ -29,6 +29,7 @@ public class CardActor extends Actor {
     private Texture typeIcon;
     private boolean hovered;
     private boolean dragging;
+    private boolean draggingEnabled;
     private float homeX;
     private float homeY;
     private CardInteractionHandler interactionHandler;
@@ -41,8 +42,6 @@ public class CardActor extends Actor {
     // 颜色常量
     private static final com.badlogic.gdx.graphics.Color BG_COLOR =
             new com.badlogic.gdx.graphics.Color(0.95f, 0.93f, 0.85f, 1f);
-    private static final com.badlogic.gdx.graphics.Color BORDER_COLOR =
-            new com.badlogic.gdx.graphics.Color(0.4f, 0.3f, 0.2f, 1f);
     private static final com.badlogic.gdx.graphics.Color SELECTED_COLOR =
             new com.badlogic.gdx.graphics.Color(1f, 0.8f, 0.2f, 0.5f);
 
@@ -58,6 +57,7 @@ public class CardActor extends Actor {
         this.font = font;
         this.shapeRenderer = renderer;
         setSize(CARD_WIDTH, CARD_HEIGHT);
+        draggingEnabled = true;
 
         // 根据卡牌类型加载图标
         String iconFile = "img/ukn.png";
@@ -94,6 +94,9 @@ public class CardActor extends Actor {
                 if (button == com.badlogic.gdx.Input.Buttons.RIGHT && dragging) {
                     cancelDrag();
                     return true;
+                }
+                if (!draggingEnabled) {
+                    return false;
                 }
                 if (button != com.badlogic.gdx.Input.Buttons.LEFT) {
                     return false;
@@ -146,6 +149,10 @@ public class CardActor extends Actor {
     /** 设置拖拽交互回调 */
     public void setInteractionHandler(CardInteractionHandler handler) {
         this.interactionHandler = handler;
+    }
+
+    public void setDraggingEnabled(boolean draggingEnabled) {
+        this.draggingEnabled = draggingEnabled;
     }
 
     /** 获取卡牌数据 */
@@ -202,8 +209,9 @@ public class CardActor extends Actor {
 
         // 绘制边框
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(BORDER_COLOR);
+        shapeRenderer.setColor(borderColor());
         shapeRenderer.rect(drawX, drawY, visualWidth, visualHeight);
+        shapeRenderer.rect(drawX + 3, drawY + 3, visualWidth - 6, visualHeight - 6);
         shapeRenderer.end();
 
         batch.begin();
@@ -236,6 +244,15 @@ public class CardActor extends Actor {
                     drawY + 14 * scale);
         }
         font.setColor(oldColor);
+    }
+
+    private Color borderColor() {
+        return switch (card.getType()) {
+            case ATTACK -> Color.RED;
+            case DEFENSE -> new Color(0.42f, 0.42f, 1f, 1f);
+            case SKILL -> new Color(0.35f, 0.95f, 0.40f, 1f);
+            case EQUIP -> Color.GOLD;
+        };
     }
 
     /**

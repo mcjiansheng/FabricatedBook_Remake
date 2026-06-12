@@ -83,6 +83,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private EnemyActor highlightedEnemyActor;
     private boolean rewardCardChosen;
     private RelicManager relicManager;
+    private String pendingExtraRewardsText;
 
     /**
      * 构造战斗画面。
@@ -111,6 +112,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         this.goldAtBattleStart = player.getGold();
         this.rewardCardChosen = false;
         this.relicManager = null;
+        this.pendingExtraRewardsText = "";
 
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
@@ -529,7 +531,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         Table table = new Table();
         table.setFillParent(true);
-        table.top().padTop(150);
+        table.top().padTop(185);
         modal.addActor(table);
 
         Label title = new Label("战斗奖励", new Label.LabelStyle(
@@ -543,66 +545,105 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 ? "金币 +" + gainedGold
                 : (rewardText != null ? rewardText : "战斗胜利");
         table.add(new Label(rewardLine, new Label.LabelStyle(
-                game.getFont(), Color.WHITE))).colspan(3).padBottom(14);
+                game.getFont(), Color.WHITE))).padBottom(30);
+        table.row();
+
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+        buttonStyle.font = game.getFont();
+        pendingExtraRewardsText = applyExtraRewards();
+        Label extras = new Label(pendingExtraRewardsText, new Label.LabelStyle(
+                game.getFont(), Color.LIGHT_GRAY));
+        extras.setWrap(true);
+        table.add(extras).width(520).padBottom(48);
+        table.row();
+
+        TextButton continueButton = new TextButton("选择卡牌", buttonStyle);
+        continueButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
+                                float x, float y) {
+                modal.remove();
+                showCardRewardSelection();
+            }
+        });
+        table.add(continueButton).width(220).height(52);
+        modal.toFront();
+    }
+
+    private void showCardRewardSelection() {
+        Group modal = new Group();
+        modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
+        stage.addActor(modal);
+
+        Actor backdrop = new Actor() {
+            @Override
+            public void draw(com.badlogic.gdx.graphics.g2d.Batch batch,
+                             float parentAlpha) {
+                batch.end();
+                shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                shapeRenderer.setColor(0.78f, 0.78f, 0.78f, 1f);
+                shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH,
+                        FabricBookGame.SCREEN_HEIGHT);
+                shapeRenderer.end();
+                batch.begin();
+            }
+        };
+        backdrop.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
+        modal.addActor(backdrop);
+
+        Table table = new Table();
+        table.setFillParent(true);
+        table.top().padTop(85);
+        modal.addActor(table);
+
+        Label title = new Label("请选择想要的卡牌", new Label.LabelStyle(
+                game.getFont(), Color.BLACK));
+        title.setFontScale(1.9f);
+        table.add(title).colspan(3).padBottom(45);
         table.row();
 
         List<Card> rewards = rollCardRewards();
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.getFont();
         for (Card card : rewards) {
-            TextButton cardButton = new TextButton(
-                    card.getName() + "\n费用 " + card.getCost() + "\n" + card.getDescription(),
-                    buttonStyle);
-            cardButton.addListener(new ClickListener() {
+            CardActor cardActor = new CardActor(card, game.getFont(), shapeRenderer);
+            cardActor.setDraggingEnabled(false);
+            cardActor.addListener(new ClickListener() {
                 @Override
                 public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                     float x, float y) {
                     if (rewardCardChosen) return;
                     rewardCardChosen = true;
                     player.getDrawPile().add(CardFactory.createFromTemplate(card));
-                    cardButton.setText("已选择\n" + card.getName());
                     statusLabel.setText("获得卡牌：" + card.getName());
+                    returnToMapAfterReward();
                 }
             });
-            table.add(cardButton).width(210).height(130).pad(8);
+            table.add(cardActor).width(CardActor.CARD_WIDTH)
+                    .height(CardActor.CARD_HEIGHT).pad(22);
         }
         table.row();
 
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+        buttonStyle.font = game.getFont();
         TextButton skipCard = new TextButton("跳过卡牌", buttonStyle);
         skipCard.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
                 rewardCardChosen = true;
-                skipCard.setText("已跳过");
+                returnToMapAfterReward();
             }
         });
-        table.add(skipCard).colspan(3).width(180).height(42).padTop(8);
-        table.row();
-
-        Label extras = new Label(applyExtraRewards(), new Label.LabelStyle(
-                game.getFont(), Color.LIGHT_GRAY));
-        table.add(extras).colspan(3).padTop(14).padBottom(16);
-        table.row();
-
-        TextButton continueButton = new TextButton("收下奖励，返回地图", buttonStyle);
-        continueButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
-                                float x, float y) {
-                if (!rewardCardChosen) {
-                    statusLabel.setText("请选择一张卡牌，或跳过卡牌");
-                    return;
-                }
-                if (returnMap != null) {
-                    returnMap.completeCurrentNodeAndReturn();
-                } else {
-                    game.setScreen(new TitleScreen(game));
-                }
-            }
-        });
-        table.add(continueButton).colspan(3).width(260).height(52);
+        table.add(skipCard).colspan(3).width(190).height(48).padTop(36);
         modal.toFront();
+    }
+
+    private void returnToMapAfterReward() {
+        if (returnMap != null) {
+            returnMap.completeCurrentNodeAndReturn();
+        } else {
+            game.setScreen(new TitleScreen(game));
+        }
     }
 
     private List<Card> rollCardRewards() {

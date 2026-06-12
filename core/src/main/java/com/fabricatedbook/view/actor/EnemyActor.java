@@ -135,7 +135,7 @@ public class EnemyActor extends Actor {
         float hpRatio = (float) enemy.getHp() / enemy.getMaxHp();
         float hpBarWidth = ENEMY_WIDTH - 28;
         shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 1f);
-        shapeRenderer.rect(getX() + 14, getY() + 10, hpBarWidth, 9);
+        shapeRenderer.rect(getX() + 14, getY() + 10, hpBarWidth, 10);
         if (hpRatio > 0.5f) {
             shapeRenderer.setColor(0.2f, 0.8f, 0.2f, 1f);
         } else if (hpRatio > 0.25f) {
@@ -143,7 +143,12 @@ public class EnemyActor extends Actor {
         } else {
             shapeRenderer.setColor(0.8f, 0.2f, 0.2f, 1f);
         }
-        shapeRenderer.rect(getX() + 14, getY() + 10, hpBarWidth * hpRatio, 9);
+        shapeRenderer.rect(getX() + 14, getY() + 10, hpBarWidth * hpRatio, 10);
+        if (enemy.getBlock() > 0) {
+            shapeRenderer.setColor(0.25f, 0.45f, 0.95f, 1f);
+            shapeRenderer.rect(getX() + 14, getY() + 24,
+                    Math.min(hpBarWidth, enemy.getBlock() * 6f), 6);
+        }
         shapeRenderer.end();
 
         if (highlighted) {
@@ -169,24 +174,24 @@ public class EnemyActor extends Actor {
             batch.draw(sprite, sx, sy, sWidth, sHeight);
         }
 
-        // 绘制敌人名称
-        font.draw(batch, enemy.getName(), getX() + 8, getY() + ENEMY_HEIGHT - 6);
-
-        // 绘制生命值
-        font.draw(batch, enemy.getHp() + "/" + enemy.getMaxHp(),
-                getX() + 8, getY() + ENEMY_HEIGHT - 24);
-
-        // 绘制格挡值
+        // 绘制敌人名称、数值与意图
+        font.draw(batch, enemy.getName(), getX() + 8, getY() + ENEMY_HEIGHT - 8);
+        font.draw(batch, "hp: " + enemy.getHp() + "/" + enemy.getMaxHp(),
+                getX() + 8, getY() + ENEMY_HEIGHT - 28);
         if (enemy.getBlock() > 0) {
             font.draw(batch, "格挡 " + enemy.getBlock(),
-                    getX() + 8, getY() + ENEMY_HEIGHT - 42);
+                    getX() + 8, getY() + ENEMY_HEIGHT - 48);
         }
 
-        // 绘制意图
         IntentType intent = enemy.getIntent();
-        if (intent != null && intent != IntentType.UNKNOWN) {
-            String intentStr = EnemyActionResolver.describeIntent(enemy.peekCurrentAction());
-            font.draw(batch, intentStr, getX() + 8, getY() + ENEMY_HEIGHT - 60);
+        String intentStr = intent != null
+                ? EnemyActionResolver.describeIntent(enemy.peekCurrentAction())
+                : "未知";
+        font.draw(batch, intentStr, getX() + 8, getY() + ENEMY_HEIGHT - 68);
+        font.draw(batch, enemy.getHp() + "/" + enemy.getMaxHp(),
+                getX() + 44, getY() + 22);
+        if (enemy.getBlock() > 0) {
+            font.draw(batch, String.valueOf(enemy.getBlock()), getX() + 44, getY() + 36);
         }
     }
 

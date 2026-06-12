@@ -90,11 +90,13 @@ public class Enemy extends AbstractEntity {
             this.intent = IntentType.UNKNOWN;
             return;
         }
-        if (actionId.startsWith("atk") || actionId.startsWith("attack")) {
+        if (actionId.startsWith("atk") || actionId.startsWith("attack")
+                || actionId.contains("_attack")) {
             this.intent = IntentType.ATTACK;
         } else if (actionId.startsWith("def") || actionId.startsWith("block")) {
             this.intent = IntentType.DEFEND;
-        } else if (actionId.startsWith("buff") || actionId.startsWith("inc")) {
+        } else if (actionId.startsWith("buff") || actionId.startsWith("inc")
+                || actionId.startsWith("heal")) {
             this.intent = IntentType.BUFF;
         } else if (actionId.startsWith("debuff") || actionId.startsWith("curse")) {
             this.intent = IntentType.DEBUFF;

@@ -114,31 +114,12 @@ public class PlayerActor extends Actor {
             batch.draw(sprite, sx, sy, sWidth, sHeight);
         }
 
-        // 绘制职业名称
-        String profName = switch (player.getProfession()) {
-            case WARRIOR -> "战士";
-            case MAGE -> "法师";
-            case WITCH -> "女巫";
-        };
-        font.draw(batch, profName, getX() + 10, getY() + PLAYER_HEIGHT - 5);
-
-        // 绘制生命值
-        font.draw(batch, "生命 " + player.getHp() + "/" + player.getMaxHp(),
-                getX() + 10, getY() + PLAYER_HEIGHT - 20);
-
-        // 绘制格挡
+        font.draw(batch, player.getHp() + "/" + player.getMaxHp(),
+                getX() + 42, getY() + 17);
         if (player.getBlock() > 0) {
-            font.draw(batch, "格挡 " + player.getBlock(),
-                    getX() + 10, getY() + PLAYER_HEIGHT - 35);
+            font.draw(batch, String.valueOf(player.getBlock()),
+                    getX() + 42, getY() + 31);
         }
-
-        // 绘制能量
-        font.draw(batch, "能量 " + player.getEnergy(),
-                getX() + 10, getY() + PLAYER_HEIGHT - 50);
-
-        // 绘制金币
-        font.draw(batch, "金币 " + player.getGold(),
-                getX() + 10, getY() + PLAYER_HEIGHT - 65);
     }
 
     /**

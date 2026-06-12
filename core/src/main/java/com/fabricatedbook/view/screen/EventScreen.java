@@ -2,8 +2,11 @@ package com.fabricatedbook.view.screen;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -34,7 +37,7 @@ public class EventScreen implements Screen {
     private final MapScreen returnMap;
     private Stage stage;
     private OrthographicCamera camera;
-    private Label descriptionLabel;
+    private ShapeRenderer shapeRenderer;
     private Table optionTable;
     private boolean resolved;
 
@@ -67,22 +70,32 @@ public class EventScreen implements Screen {
         stage = new Stage(new FitViewport(FabricBookGame.SCREEN_WIDTH,
                 FabricBookGame.SCREEN_HEIGHT));
         Gdx.input.setInputProcessor(stage);
+        shapeRenderer = new ShapeRenderer();
 
-        // 事件标题
-        Label titleLabel = new Label("【" + eventName + "】",
-                new Label.LabelStyle(game.getFont(),
-                        com.badlogic.gdx.graphics.Color.GOLD));
-        titleLabel.setFontScale(1.8f);
-        titleLabel.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 100,
-                FabricBookGame.SCREEN_HEIGHT - 80);
-        stage.addActor(titleLabel);
+        Table root = new Table();
+        root.setFillParent(true);
+        root.pad(94, 118, 70, 118);
+        stage.addActor(root);
 
-        // 选项列表
+        Table eventText = new Table();
+        eventText.top().left();
+
+        Label titleLabel = new Label(eventName, new Label.LabelStyle(game.getFont(), Color.BLACK));
+        titleLabel.setFontScale(1.7f);
+        eventText.add(titleLabel).left().padBottom(34);
+        eventText.row();
+
+        Label description = new Label(eventHandler.getEventDescription(eventName),
+                new Label.LabelStyle(game.getFont(), Color.BLACK));
+        description.setWrap(true);
+        eventText.add(description).width(480).left();
+
         optionTable = new Table();
-        optionTable.setFillParent(true);
-        optionTable.center();
+        optionTable.top().left();
         renderOptions();
-        stage.addActor(optionTable);
+
+        root.add(eventText).width(520).expandY().top().left().padRight(108);
+        root.add(optionTable).width(560).expandY().top().left();
     }
 
     /**
@@ -98,12 +111,12 @@ public class EventScreen implements Screen {
 
             TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
             buttonStyle.font = game.getFont();
-            TextButton btn = new TextButton(option.label + " - " + option.description,
+            buttonStyle.fontColor = Color.WHITE;
+            TextButton btn = new TextButton(cleanLabel(option.label) + "\n" + option.description,
                     buttonStyle);
             btn.addListener(new ClickListener() {
                 @Override
-                public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
-                                    float x, float y) {
+                public void clicked(InputEvent event, float x, float y) {
                     if (resolved) return;
                     resolved = true;
 
@@ -138,7 +151,7 @@ public class EventScreen implements Screen {
                     showResult(result.description);
                 }
             });
-            optionTable.add(btn).width(600).height(50).pad(8);
+            optionTable.add(btn).width(540).height(96).left().padBottom(28);
             optionTable.row();
         }
     }
@@ -152,18 +165,18 @@ public class EventScreen implements Screen {
         optionTable.clear();
 
         Label resultLabel = new Label(resultDescription, new Label.LabelStyle(
-                game.getFont(), com.badlogic.gdx.graphics.Color.WHITE));
+                game.getFont(), Color.WHITE));
         resultLabel.setWrap(true);
-        optionTable.add(resultLabel).width(600).pad(20);
+        optionTable.add(resultLabel).width(540).left().padBottom(34);
         optionTable.row();
 
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.font = game.getFont();
+        buttonStyle.fontColor = Color.WHITE;
         TextButton backBtn = new TextButton("继续前进", buttonStyle);
         backBtn.addListener(new ClickListener() {
             @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
-                                float x, float y) {
+            public void clicked(InputEvent event, float x, float y) {
                 if (returnMap != null) {
                     returnMap.completeCurrentNodeAndReturn();
                 } else {
@@ -171,16 +184,43 @@ public class EventScreen implements Screen {
                 }
             }
         });
-        optionTable.add(backBtn).width(200).height(50).pad(20);
+        optionTable.add(backBtn).width(220).height(56).left();
+    }
+
+    private String cleanLabel(String label) {
+        return label.replaceAll("[^\\p{IsHan}A-Za-z0-9 ]", "").trim();
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.15f, 0.12f, 0.1f, 1);
+        Gdx.gl.glClearColor(0.78f, 0.78f, 0.78f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        drawOptionBackplates();
 
         stage.act(delta);
         stage.draw();
+    }
+
+    private void drawOptionBackplates() {
+        if (optionTable == null || shapeRenderer == null) {
+            return;
+        }
+        shapeRenderer.setProjectionMatrix(stage.getCamera().combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.BLACK);
+        float x = 118f + 520f + 108f;
+        float top = FabricBookGame.SCREEN_HEIGHT - 94f;
+        int rows = resolved ? 1 : eventHandler.getOptions(eventName).size();
+        for (int i = 0; i < rows; i++) {
+            float cardY = top - 96 - i * 124;
+            shapeRenderer.rect(x, cardY, 540, resolved ? 150 : 96);
+        }
+        if (resolved) {
+            shapeRenderer.setColor(0.38f, 0.38f, 0.38f, 1f);
+            shapeRenderer.rect(x, top - 240, 220, 56);
+        }
+        shapeRenderer.end();
     }
 
     @Override public void resize(int width, int height) {
@@ -193,5 +233,8 @@ public class EventScreen implements Screen {
     }
     @Override public void dispose() {
         stage.dispose();
+        if (shapeRenderer != null) {
+            shapeRenderer.dispose();
+        }
     }
 }

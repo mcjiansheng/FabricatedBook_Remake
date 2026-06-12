@@ -3,6 +3,7 @@ package com.fabricatedbook.view.screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -125,6 +126,8 @@ public class MapScreen implements Screen {
     private static final float NODE_WIDTH = 112f;
     private static final float NODE_HEIGHT = 66f;
     private static final float MAP_LEFT_PAD = 120f;
+    private static final float TOP_BUTTON_W = 150f;
+    private static final float TOP_BUTTON_H = 42f;
 
     // UI 顶栏
     private static final float TOP_BAR_HEIGHT = 52f;
@@ -167,11 +170,7 @@ public class MapScreen implements Screen {
                 nodeTextures[i] = null;
             }
         }
-        try {
-            bgTexture = new Texture("img/background.png");
-        } catch (Exception e) {
-            bgTexture = null;
-        }
+        bgTexture = null;
     }
 
     /** 生成所有层的地图 */
@@ -359,7 +358,7 @@ public class MapScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.05f, 0.05f, 0.1f, 1);
+        Gdx.gl.glClearColor(0.78f, 0.78f, 0.78f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         handleInput(delta);
@@ -368,12 +367,6 @@ public class MapScreen implements Screen {
         }
 
         batch.begin();
-
-        // 绘制背景
-        if (bgTexture != null) {
-            batch.draw(bgTexture, 0, TOP_BAR_HEIGHT,
-                    FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT - TOP_BAR_HEIGHT);
-        }
 
         batch.end();
 
@@ -403,6 +396,9 @@ public class MapScreen implements Screen {
 
             // 如果点在顶栏区域内，不处理地图拖动
             if (touchY < TOP_BAR_HEIGHT) {
+                if (Gdx.input.justTouched()) {
+                    handleTopBarClick(touchX);
+                }
                 return;
             }
 
@@ -433,6 +429,16 @@ public class MapScreen implements Screen {
                 checkNodeClick(touchX, touchY);
             }
             isDragging = false;
+        }
+    }
+
+    private void handleTopBarClick(float touchX) {
+        float cardsX = FabricBookGame.SCREEN_WIDTH - 330;
+        float relicsX = FabricBookGame.SCREEN_WIDTH - 170;
+        if (touchX >= cardsX && touchX <= cardsX + TOP_BUTTON_W) {
+            game.setScreen(new InventoryScreen(game, player, this));
+        } else if (touchX >= relicsX && touchX <= relicsX + TOP_BUTTON_W) {
+            game.setScreen(new InventoryScreen(game, player, this));
         }
     }
 
@@ -705,13 +711,7 @@ public class MapScreen implements Screen {
                 if (node == null) continue;
                 float x = node.x + scrollX - NODE_WIDTH / 2f;
                 float y = node.y + scrollY - NODE_HEIGHT / 2f;
-                if (node.accessible) {
-                    shapeRenderer.setColor(0.33f, 0.24f, 0.70f, 0.92f);
-                } else if (node.visited) {
-                    shapeRenderer.setColor(0.22f, 0.22f, 0.25f, 0.78f);
-                } else {
-                    shapeRenderer.setColor(0.12f, 0.12f, 0.14f, 0.70f);
-                }
+                shapeRenderer.setColor(0.92f, 0.92f, 0.90f, 1f);
                 shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
             }
         }
@@ -724,10 +724,15 @@ public class MapScreen implements Screen {
                 if (node == null) continue;
                 float x = node.x + scrollX - NODE_WIDTH / 2f;
                 float y = node.y + scrollY - NODE_HEIGHT / 2f;
-                shapeRenderer.setColor(node.accessible ? 0.92f : 0.36f,
-                        node.accessible ? 0.82f : 0.36f,
-                        node.accessible ? 0.36f : 0.38f, 1f);
-                shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
+                if (node.accessible) {
+                    shapeRenderer.setColor(1f, 0.82f, 0f, 1f);
+                    shapeRenderer.rect(x - 3, y - 3, NODE_WIDTH + 6, NODE_HEIGHT + 6);
+                    shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
+                } else if (node.visited || node == currentNode) {
+                    shapeRenderer.setColor(0f, 0f, 0f, 1f);
+                    shapeRenderer.rect(x - 3, y - 3, NODE_WIDTH + 6, NODE_HEIGHT + 6);
+                    shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
+                }
             }
         }
         shapeRenderer.end();
@@ -754,25 +759,19 @@ public class MapScreen implements Screen {
                 }
 
                 // 根据节点状态设置透明度
-                if (node.accessible) {
-                    // 可进入节点：正常显示
-                    batch.setColor(1, 1, 1, 1);
-                } else if (node.visited) {
-                    // 已访问节点：半透明
-                    batch.setColor(0.5f, 0.5f, 0.5f, 0.6f);
-                } else {
-                    // 不可访问节点：暗色
-                    batch.setColor(0.3f, 0.3f, 0.3f, 0.5f);
-                }
+                batch.setColor(node.visited ? 0.85f : 1f,
+                        node.visited ? 0.85f : 1f,
+                        node.visited ? 0.85f : 1f,
+                        node.accessible || node.visited ? 1f : 0.72f);
 
                 if (tex != null) {
                     batch.draw(tex, drawX + 8, drawY + 14, 34, 34);
                 }
 
+                Color old = font.getColor().cpy();
+                font.setColor(Color.BLACK);
                 font.draw(batch, nodeTypeName(node.type), drawX + 48, drawY + 39);
-                if (node.accessible) {
-                    font.draw(batch, "点击可进入", drawX + 48, drawY + 18);
-                }
+                font.setColor(old);
 
                 batch.setColor(1, 1, 1, 1);
             }
@@ -786,28 +785,47 @@ public class MapScreen implements Screen {
 
         // 黑色半透明背景
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0.1f, 0.1f, 0.15f, 0.9f);
+        shapeRenderer.setColor(0.86f, 0.86f, 0.86f, 1f);
         shapeRenderer.rect(0, FabricBookGame.SCREEN_HEIGHT - TOP_BAR_HEIGHT,
                 FabricBookGame.SCREEN_WIDTH, TOP_BAR_HEIGHT);
+        shapeRenderer.setColor(0.38f, 0.38f, 0.38f, 1f);
+        shapeRenderer.rect(FabricBookGame.SCREEN_WIDTH - 330,
+                FabricBookGame.SCREEN_HEIGHT - TOP_BUTTON_H - 5,
+                TOP_BUTTON_W, TOP_BUTTON_H);
+        shapeRenderer.rect(FabricBookGame.SCREEN_WIDTH - 170,
+                FabricBookGame.SCREEN_HEIGHT - TOP_BUTTON_H - 5,
+                TOP_BUTTON_W, TOP_BUTTON_H);
         shapeRenderer.end();
 
         batch.begin();
 
-        // HP
+        Color old = font.getColor().cpy();
+        font.setColor(1f, 0.38f, 0.42f, 1f);
         font.draw(batch, "生命 " + player.getHp() + "/" + player.getMaxHp(),
                 10, FabricBookGame.SCREEN_HEIGHT - 10);
 
-        // 金币
+        font.setColor(0.95f, 0.82f, 0f, 1f);
         font.draw(batch, "金币 " + player.getGold(),
                 210, FabricBookGame.SCREEN_HEIGHT - 10);
 
-        // 药水
+        font.setColor(Color.BLACK);
         font.draw(batch, "药水 " + player.getPotions().size() + "/3",
                 360, FabricBookGame.SCREEN_HEIGHT - 10);
+        for (int i = 0; i < player.getPotions().size(); i++) {
+            font.draw(batch, player.getPotions().get(i).getName(),
+                    470 + i * 95, FabricBookGame.SCREEN_HEIGHT - 10);
+        }
 
-        // 当前层名
+        font.setColor(Color.WHITE);
+        font.draw(batch, "卡牌", FabricBookGame.SCREEN_WIDTH - 282,
+                FabricBookGame.SCREEN_HEIGHT - 16);
+        font.draw(batch, "藏品", FabricBookGame.SCREEN_WIDTH - 122,
+                FabricBookGame.SCREEN_HEIGHT - 16);
+
+        font.setColor(Color.BLACK);
         font.draw(batch, "第 " + (currentLayerIdx + 1) + " 层  " + LAYER_NAMES[currentLayerIdx],
-                FabricBookGame.SCREEN_WIDTH - 260, FabricBookGame.SCREEN_HEIGHT - 10);
+                FabricBookGame.SCREEN_WIDTH - 570, FabricBookGame.SCREEN_HEIGHT - 10);
+        font.setColor(old);
 
         batch.end();
     }
