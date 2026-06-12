@@ -103,9 +103,9 @@ gradlew.bat runBackendDebug
 | `EMERGENCY` | 启动精英战斗 |
 | `BOSS` | 启动 Boss 战斗 |
 | `UNEXPECTED` | 随机抽取一个 `EventHandler` 事件并显示选项 |
-| `DECISION` | 按事件节点处理 |
-| `SHOP` | 当前为轻量占位处理，获得 15 金币 |
-| `REWARD` | 当前为轻量占位处理，获得 25 金币 |
+| `DECISION` | 显示命运抉择，支持继续旅程或隐藏结局 |
+| `SHOP` | 命令行调试器仍为轻量占位处理；正式前端商店已接入真实商品 |
+| `REWARD` | 命令行调试器仍为轻量占位处理；正式前端战斗奖励已接入卡牌/藏品/药水 |
 | `SAFEHOUSE` | 回复 12 点生命值 |
 
 当玩家到达当前层终点时，调试器会自动进入下一层地图。到达第五层终点后，路线调试结束。
@@ -118,7 +118,7 @@ gradlew.bat runBackendDebug
 2. 使用 `EventHandler.getOptions(eventName)` 打印选项。
 3. 等待输入选项编号。
 4. 调用 `EventHandler.executeEvent(eventName, optionIndex)`。
-5. 将 `EventResult` 中的金币和生命变化应用到玩家。
+5. 将 `EventResult` 中的金币、生命变化和 `relicId` 应用到玩家。
 
 示例：
 
@@ -260,9 +260,8 @@ printf 'choose 1\n1\nquit\n' | ./gradlew runBackendDebug
 
 命令行调试器的目标是调通后端机制，不是完整替代游戏前端。当前有以下边界：
 
-- 商店节点目前是占位处理，只给玩家增加少量金币，没有进入完整购买界面。
-- 奖励节点目前是占位处理，只给玩家增加金币，没有选择卡牌或藏品。
-- 事件结果目前只应用金币和生命变化，`relicId` 暂未实例化为真实藏品。
+- 命令行调试器里的商店和奖励节点仍是轻量处理；正式 LibGDX 前端已接入完整商店商品和战斗奖励。
+- 事件结果中的 `relicId` 已在正式前端实例化为真实藏品；命令行调试器后续也可同步这条路径。
 - 地图和敌人调试数据采用轻量固定配置，尚未完全接入 JSON 怪物池。
 - `auto` 战斗用于流程回归，不代表真实 AI 或最佳出牌策略。
 
@@ -274,7 +273,7 @@ printf 'choose 1\n1\nquit\n' | ./gradlew runBackendDebug
 
 1. 让战斗敌人从 `DataLoader.loadMonsters(level)` 中抽取。
 2. 给 `runBackendDebug` 增加参数，如 `--level 3`、`--seed 1234`、`--battle boss`。
-3. 将商店节点接入 `ShopManager` 的购买流程。
-4. 将奖励节点接入卡牌奖励和藏品奖励。
-5. 将事件的 `relicId` 结果接入 `RelicManager`。
+3. 如需命令行覆盖商店购买，复用 `ShopManager` 做交互式商品选择。
+4. 如需命令行覆盖奖励选择，复用 `BattleScreen` 当前的奖励生成规则或下沉为后端奖励服务。
+5. 将命令行事件的 `relicId` 结果同步接入 `RelicManager`。
 6. 增加 JUnit 测试覆盖 `MapGraph` 路线可达性和 `CombatEngine` 基础战斗流。

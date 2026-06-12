@@ -66,6 +66,7 @@ InputHandler (玩家操作)
 ### 1.3 数据层 (Data Layer)
 
 - 卡牌、怪物、藏品、地图配置 → **JSON 文件存储**
+- 藏品和药水 → 数据对象实例化后进入商店、事件、奖励和存档
 - 玩家存档 → 本地序列化
 - 数据与逻辑分离，便于调试和用工具辅助修改
 
@@ -135,6 +136,8 @@ AbstractEntity
 │   ├── 格挡值 (Block)
 │   ├── 能量 (Energy)
 │   ├── 手牌 / 抽牌堆 / 弃牌堆
+│   ├── 药水栏（最多 3 瓶）
+│   ├── 藏品列表
 │   └── List<Buff>
 └── Enemy (怪物基类)
     ├── HP / MaxHP
@@ -204,19 +207,22 @@ MapGraph (地图图结构)
 
 ### 4.4 藏品与环境系统
 
-藏品不再是静态属性，而是 **事件订阅者**：
+藏品不再是静态属性，而是 **数据驱动对象 + 事件订阅者**：
 
 ```java
-// 示例："吸血鬼的尖牙" 订阅伤害事件
-public class VampireFang implements Relic {
-    @Override
-    public void subscribe(EventBus bus) {
-        bus.on(OnDamageDealt.class, event -> {
-            player.heal(event.getFinalDamage() * 0.2);
-        });
-    }
-}
+RelicData (JSON DTO)
+    -> RelicFactory
+    -> DataRelic implements Relic
+    -> RelicManager.addRelic(...)
 ```
+
+当前已接入：
+
+- 商店出售真实卡牌、藏品、药水。
+- 事件 `relicId` 会实例化为真实藏品。
+- 战斗奖励可掉落藏品和药水。
+- 战斗内可使用药水，使用后从药水栏移除。
+- 存档保存/恢复牌组、藏品 ID 和药水 ID。
 
 ---
 
