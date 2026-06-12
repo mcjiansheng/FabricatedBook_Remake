@@ -15,7 +15,13 @@ import com.fabricatedbook.core.map.MapConfig;
 import com.fabricatedbook.core.map.MapGraph;
 import com.fabricatedbook.core.map.Node;
 import com.fabricatedbook.core.map.NodeType;
+import com.fabricatedbook.core.potion.Potion;
+import com.fabricatedbook.core.relic.Relic;
+import com.fabricatedbook.core.relic.RelicData;
+import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.shop.ShopManager;
+import com.fabricatedbook.data.DataLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -108,6 +114,21 @@ public class BackendDebugLauncher {
             case "deck":
                 printDeck();
                 break;
+            case "potions":
+                printPotions();
+                break;
+            case "relics":
+                printRelics();
+                break;
+            case "givepotion":
+                givePotion(parts.length >= 2 ? parts[1] : "");
+                break;
+            case "giverelic":
+                giveRelic(parts.length >= 2 ? parts[1] : "");
+                break;
+            case "selftest":
+                runSelfTest();
+                break;
             case "newmap":
                 createMap();
                 printMap();
@@ -132,6 +153,11 @@ public class BackendDebugLauncher {
         println("  choose <编号>       选择一条可达路线并进入节点");
         println("  battle             直接启动一场普通战斗");
         println("  deck               查看当前牌堆/手牌/弃牌堆数量");
+        println("  potions            查看药水栏");
+        println("  relics             查看藏品列表");
+        println("  givepotion <id>    获得一瓶药水，random 随机");
+        println("  giverelic <id>     获得一个藏品，random 随机");
+        println("  selftest           运行数据/卡牌/怪物/药水/藏品自检");
         println("  newmap             重新生成当前层地图");
         println("  quit               退出调试控制台");
         println("");
@@ -303,6 +329,13 @@ public class BackendDebugLauncher {
         } else if (result.hpChange < 0) {
             player.takeDamage(-result.hpChange);
         }
+
+        if (result.relicId != null && !result.relicId.isBlank()) {
+            Relic relic = RelicFactory.createById(result.relicId, player);
+            if (relic != null) {
+                new RelicManager(player).addRelic(relic);
+            }
+        }
     }
 
     private void advanceLevel() {
@@ -366,6 +399,15 @@ public class BackendDebugLauncher {
             case "enemies":
                 printEnemies(engine.getEnemies());
                 break;
+            case "potions":
+                printPotions();
+                break;
+            case "usepotion":
+                usePotion(engine, parts);
+                break;
+            case "relics":
+                printRelics();
+                break;
             case "play":
                 playCard(engine, parts);
                 break;
@@ -383,6 +425,24 @@ public class BackendDebugLauncher {
                 printBattleHelp();
                 break;
         }
+    }
+
+    private void usePotion(CombatEngine engine, String[] parts) {
+        if (parts.length < 2) {
+            println("用法: usepotion <药水编号>");
+            printPotions();
+            return;
+        }
+        int index = parseInt(parts[1], -1) - 1;
+        if (index < 0 || index >= player.getPotions().size()) {
+            println("药水编号无效。");
+            printPotions();
+            return;
+        }
+        Potion potion = player.removePotion(index);
+        boolean used = potion != null && potion.use(player, engine.getEnemies(), new RelicManager(player));
+        println(used ? "使用药水: " + potion.getName() : "药水使用失败。");
+        engine.checkBattleEnd();
     }
 
     private void playCard(CombatEngine engine, String[] parts) {
@@ -469,21 +529,57 @@ public class BackendDebugLauncher {
     }
 
     private List<Enemy> createEnemies(NodeType nodeType) {
-        List<Enemy> enemies = new ArrayList<>();
-        switch (nodeType) {
-            case BOSS:
-                enemies.add(new Enemy("debug_boss", "命令行首领", 70,
-                        List.of("atk8", "def8", "atk12")));
-                break;
-            case EMERGENCY:
-                enemies.add(new Enemy("debug_elite", "命令行精英", 48,
-                        List.of("atk7", "atk5x2", "def10")));
-                break;
-            default:
-                enemies.add(EntityFactory.createSimpleEnemy("debug_dummy", "命令行假人", 36));
-                break;
+        DataLoader loader = new DataLoader();
+        int level = configs.get(levelIndex).getLevel();
+        List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
+        List<DataLoader.EnemyGroup> matched = new ArrayList<>();
+        for (DataLoader.EnemyGroup group : groups) {
+            if (nodeType == NodeType.BOSS && group.isBoss()) {
+                matched.add(group);
+            } else if (nodeType != NodeType.BOSS && !group.isBoss()) {
+                matched.add(group);
+            }
         }
-        return enemies;
+        if (!matched.isEmpty()) {
+            DataLoader.EnemyGroup selected = matched.get(random.nextInt(matched.size()));
+            if (nodeType == NodeType.EMERGENCY) {
+                for (int i = 0; i < 3; i++) {
+                    DataLoader.EnemyGroup candidate = matched.get(random.nextInt(matched.size()));
+                    if (totalHp(candidate) > totalHp(selected)) {
+                        selected = candidate;
+                    }
+                }
+            }
+            List<Enemy> enemies = new ArrayList<>();
+            for (DataLoader.EnemyData data : selected.getEnemies()) {
+                enemies.add(data.toEnemy());
+            }
+            if (!enemies.isEmpty()) {
+                println("敌人组: " + selected.getName() + " (" + selected.getId() + ")");
+                return enemies;
+            }
+        }
+
+        List<Enemy> fallback = new ArrayList<>();
+        switch (nodeType) {
+            case BOSS -> fallback.add(new Enemy("debug_boss", "命令行首领", 70,
+                    List.of("atk8", "def8", "atk12")));
+            case EMERGENCY -> fallback.add(new Enemy("debug_elite", "命令行精英", 48,
+                    List.of("atk7", "atk5x2", "def10")));
+            default -> fallback.add(EntityFactory.createSimpleEnemy("debug_dummy", "命令行假人", 36));
+        }
+        println("未找到 JSON 敌人组，使用 fallback 调试敌人。");
+        return fallback;
+    }
+
+    private static int totalHp(DataLoader.EnemyGroup group) {
+        int total = 0;
+        if (group.getEnemies() != null) {
+            for (DataLoader.EnemyData data : group.getEnemies()) {
+                total += data.getMaxHp();
+            }
+        }
+        return total;
     }
 
     private void printBattleHelp() {
@@ -492,6 +588,9 @@ public class BackendDebugLauncher {
         println("  state              查看战斗状态");
         println("  hand               查看手牌");
         println("  enemies            查看敌人");
+        println("  potions            查看药水栏");
+        println("  usepotion <编号>    使用药水");
+        println("  relics             查看藏品列表");
         println("  play <牌> [敌人]    使用手牌，编号从 1 开始；多张牌用逗号分隔");
         println("  end                结束当前回合");
         println("  auto               自动打完整场战斗");
@@ -538,6 +637,135 @@ public class BackendDebugLauncher {
         println("牌堆: 抽牌堆 " + player.getDrawPile().size()
                 + " / 手牌 " + player.getHand().size()
                 + " / 弃牌堆 " + player.getDiscardPile().size());
+    }
+
+    private void printPotions() {
+        println("药水: " + player.getPotions().size() + "/3");
+        if (player.getPotions().isEmpty()) {
+            println("  (空)");
+            return;
+        }
+        for (int i = 0; i < player.getPotions().size(); i++) {
+            Potion potion = player.getPotions().get(i);
+            println("  " + (i + 1) + ". " + potion.getName()
+                    + " - " + potion.getDescription());
+        }
+    }
+
+    private void printRelics() {
+        println("藏品: " + player.getRelics().size());
+        if (player.getRelics().isEmpty()) {
+            println("  (空)");
+            return;
+        }
+        for (Relic relic : player.getRelics()) {
+            println("  - " + relic.getName() + " [" + relic.getRarity().getDisplayName()
+                    + "] " + relic.getDescription());
+        }
+    }
+
+    private void givePotion(String id) {
+        List<Potion> potions = new DataLoader().loadPotions();
+        Potion selected = null;
+        if ("random".equalsIgnoreCase(id) && !potions.isEmpty()) {
+            selected = potions.get(random.nextInt(potions.size()));
+        } else {
+            for (Potion potion : potions) {
+                if (potion.getId().equals(id) || potion.getName().equals(id)) {
+                    selected = potion;
+                    break;
+                }
+            }
+        }
+        if (selected == null) {
+            println("未找到药水: " + id);
+            return;
+        }
+        if (player.addPotion(selected.copy())) {
+            println("获得药水: " + selected.getName());
+        } else {
+            println("药水栏已满。");
+        }
+    }
+
+    private void giveRelic(String id) {
+        Relic relic = "random".equalsIgnoreCase(id)
+                ? RelicFactory.randomRelic(player, true)
+                : RelicFactory.createById(id, player);
+        if (relic == null) {
+            println("未找到藏品: " + id);
+            return;
+        }
+        new RelicManager(player).addRelic(relic);
+    }
+
+    private void runSelfTest() {
+        println("开始后端自检...");
+        boolean ok = true;
+        DataLoader loader = new DataLoader();
+
+        List<Card> cards = loader.loadCards("warrior");
+        ok &= assertCheck(!cards.isEmpty(), "战士 JSON 卡牌可加载: " + cards.size());
+
+        List<Potion> potions = loader.loadPotions();
+        ok &= assertCheck(!potions.isEmpty(), "药水可加载: " + potions.size());
+
+        List<RelicData> relics = loader.loadRelicData();
+        ok &= assertCheck(!relics.isEmpty(), "藏品可加载: " + relics.size());
+
+        for (int level = 1; level <= 5; level++) {
+            List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
+            ok &= assertCheck(!groups.isEmpty(), "第 " + level + " 层怪物组可加载: " + groups.size());
+        }
+
+        Player testPlayer = new Player("selftest", "自检战士", Profession.WARRIOR);
+        int oldMaxHp = testPlayer.getMaxHp();
+        Relic hotWater = RelicFactory.createById("relic_hot_water_flask", testPlayer);
+        new RelicManager(testPlayer).addRelic(hotWater);
+        ok &= assertCheck(testPlayer.getMaxHp() == oldMaxHp + 5, "藏品即时效果生效: 热水壶");
+
+        testPlayer.takeDamage(20);
+        Potion healPotion = findPotion(potions, "potion_heal");
+        int hpBeforeHeal = testPlayer.getHp();
+        ok &= assertCheck(healPotion != null && healPotion.use(testPlayer, List.of(), new RelicManager(testPlayer))
+                        && testPlayer.getHp() > hpBeforeHeal,
+                "药水治疗效果生效: 回血药水");
+
+        Enemy potionDummy = EntityFactory.createSimpleEnemy("potion_dummy", "药水假人", 30);
+        Potion attackPotion = findPotion(potions, "potion_attack");
+        ok &= assertCheck(attackPotion != null
+                        && attackPotion.use(testPlayer, List.of(potionDummy), new RelicManager(testPlayer))
+                        && potionDummy.getHp() < potionDummy.getMaxHp(),
+                "药水伤害效果生效: 攻击药水");
+
+        ShopManager shop = new ShopManager(testPlayer, new RelicManager(testPlayer));
+        shop.generateItems();
+        boolean hasRelic = shop.getItems().stream()
+                .anyMatch(item -> item.getType() == ShopManager.ShopItem.ItemType.RELIC);
+        boolean hasPotion = shop.getItems().stream()
+                .anyMatch(item -> item.getType() == ShopManager.ShopItem.ItemType.POTION);
+        ok &= assertCheck(hasRelic && hasPotion, "商店生成真实藏品和药水商品");
+
+        List<Enemy> jsonEnemies = createEnemies(NodeType.FIGHT);
+        ok &= assertCheck(!jsonEnemies.isEmpty()
+                        && !"debug_dummy".equals(jsonEnemies.get(0).getId()),
+                "命令行战斗从 JSON 怪物池创建敌人");
+
+        println(ok ? "SELFTEST PASS" : "SELFTEST FAIL");
+    }
+
+    private Potion findPotion(List<Potion> potions, String id) {
+        for (Potion potion : potions) {
+            if (potion.getId().equals(id)) {
+                return potion;
+            }
+        }
+        return null;
+    }
+
+    private boolean assertCheck(boolean condition, String message) {
+        println((condition ? "[OK] " : "[FAIL] ") + message);
+        return condition;
     }
 
     private void initDebugDeck() {

@@ -68,6 +68,11 @@ gradlew.bat runBackendDebug
 | `go <编号>` | `choose` 的别名 |
 | `battle` | 不走地图，直接启动一场普通战斗 |
 | `deck` | 查看抽牌堆、手牌、弃牌堆数量 |
+| `potions` | 查看药水栏 |
+| `relics` | 查看已持有藏品 |
+| `givepotion <id>` | 获得指定药水；`random` 表示随机 |
+| `giverelic <id>` | 获得指定藏品；`random` 表示随机 |
+| `selftest` | 运行卡牌、怪物、药水、藏品和商店自检 |
 | `newmap` | 重新生成当前层地图 |
 | `quit` / `exit` | 退出调试控制台 |
 
@@ -143,6 +148,9 @@ event> 2
 | `state` | 查看玩家、敌人、手牌状态 |
 | `hand` | 查看当前手牌 |
 | `enemies` | 查看敌人 HP、格挡和意图 |
+| `potions` | 查看药水栏 |
+| `usepotion <编号>` | 使用指定药水 |
+| `relics` | 查看已持有藏品 |
 | `play <牌编号> [敌人编号]` | 使用指定手牌，敌人编号可省略，默认第 1 个存活敌人 |
 | `end` | 结束当前回合，让敌人行动并进入下一回合 |
 | `auto` | 自动打完整场战斗 |
@@ -208,7 +216,14 @@ BackendDebugLauncher
 
 ## 八、敌人配置
 
-当前命令行调试器使用轻量测试敌人，便于稳定验证流程：
+当前命令行调试器优先从 `DataLoader.loadMonsters(level)` 读取 JSON 怪物组：
+
+- 普通战斗：选择当前层非 Boss 组。
+- 紧急作战：在非 Boss 组中偏向总 HP 更高的组。
+- Boss：选择 `isBoss=true` 的组。
+- 如果 JSON 没有可用组，才 fallback 到轻量测试敌人。
+
+fallback 敌人如下：
 
 | 节点类型 | 敌人 | HP | 行动脚本 |
 |:--|:--|--:|:--|
@@ -216,7 +231,28 @@ BackendDebugLauncher
 | `EMERGENCY` | 命令行精英 | 48 | `atk7`, `atk5x2`, `def10` |
 | `BOSS` | 命令行首领 | 70 | `atk8`, `def8`, `atk12` |
 
-后续如果要调试 JSON 怪物数据，可以把 `createEnemies(NodeType nodeType)` 改为从 `DataLoader.loadMonsters(level)` 里选择怪物组。
+## 九、自检命令
+
+`selftest` 用于快速验证后端核心数据链路。它会检查：
+
+- `warrior.json` 卡牌可加载。
+- 1-5 层怪物组可加载。
+- `potions.json` 药水可加载并能执行治疗/伤害效果。
+- `relics.json` 藏品可加载并能执行即时效果。
+- `ShopManager` 能生成真实藏品和药水商品。
+- 命令行战斗能从 JSON 怪物池创建敌人。
+
+示例：
+
+```bash
+printf 'selftest\nquit\n' | ./gradlew runBackendDebug
+```
+
+成功时会输出：
+
+```text
+SELFTEST PASS
+```
 
 ## 九、脚本化回归示例
 
