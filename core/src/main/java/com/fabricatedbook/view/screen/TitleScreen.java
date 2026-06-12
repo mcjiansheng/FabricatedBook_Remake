@@ -4,16 +4,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.fabricatedbook.core.entity.Player;
-import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.FabricBookGame;
-import com.fabricatedbook.view.actor.ButtonActor;
 
 /**
  * TitleScreen — 标题画面
@@ -27,8 +25,8 @@ public class TitleScreen implements Screen {
 
     private final FabricBookGame game;
     private Stage stage;
-    private Skin skin;
     private OrthographicCamera camera;
+    private Texture background;
 
     public TitleScreen(FabricBookGame game) {
         this.game = game;
@@ -42,6 +40,11 @@ public class TitleScreen implements Screen {
         stage = new Stage(new FitViewport(FabricBookGame.SCREEN_WIDTH,
                 FabricBookGame.SCREEN_HEIGHT));
         Gdx.input.setInputProcessor(stage);
+        try {
+            background = new Texture("img/background.png");
+        } catch (Exception e) {
+            background = null;
+        }
 
         // 创建UI
         Table table = new Table();
@@ -65,9 +68,7 @@ public class TitleScreen implements Screen {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
-                // 创建新玩家并进入地图
-                Player newPlayer = new Player("player", "战士", Profession.WARRIOR);
-                game.setScreen(new MapScreen(game, newPlayer));
+                game.setScreen(new CharacterSelectScreen(game));
             }
         });
         table.add(newGameBtn).width(250).height(50).padBottom(20);
@@ -105,8 +106,18 @@ public class TitleScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.1f, 0.1f, 0.15f, 1);
+        Gdx.gl.glClearColor(0.08f, 0.08f, 0.12f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        SpriteBatch batch = game.getBatch();
+        batch.begin();
+        if (background != null) {
+            batch.setColor(0.34f, 0.34f, 0.38f, 1f);
+            batch.draw(background, 0, 0, FabricBookGame.SCREEN_WIDTH,
+                    FabricBookGame.SCREEN_HEIGHT);
+            batch.setColor(1f, 1f, 1f, 1f);
+        }
+        batch.end();
 
         stage.act(delta);
         stage.draw();
@@ -122,5 +133,6 @@ public class TitleScreen implements Screen {
     }
     @Override public void dispose() {
         stage.dispose();
+        if (background != null) background.dispose();
     }
 }

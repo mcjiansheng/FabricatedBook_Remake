@@ -3,7 +3,8 @@ package com.fabricatedbook.data;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.map.MapConfig;
 import com.fabricatedbook.core.entity.Enemy;
-import com.fabricatedbook.core.relic.Relic;
+import com.fabricatedbook.core.potion.Potion;
+import com.fabricatedbook.core.relic.RelicData;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -97,15 +98,28 @@ public class DataLoader {
      *
      * @return 藏品列表
      */
-    public List<Relic> loadRelics() {
+    public List<RelicData> loadRelicData() {
         String path = dataPath + "relics.json";
         try {
             String json = readFileAsString(path);
-            Type listType = new TypeToken<List<Relic>>() {}.getType();
-            List<Relic> relics = gson.fromJson(json, listType);
+            Type listType = new TypeToken<List<RelicData>>() {}.getType();
+            List<RelicData> relics = gson.fromJson(json, listType);
             return relics != null ? relics : new ArrayList<>();
         } catch (Exception e) {
             System.err.println("[DataLoader] 加载藏品失败: " + path + " - " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public List<Potion> loadPotions() {
+        String path = dataPath + "potions.json";
+        try {
+            String json = readFileAsString(path);
+            Type listType = new TypeToken<List<Potion>>() {}.getType();
+            List<Potion> potions = gson.fromJson(json, listType);
+            return potions != null ? potions : new ArrayList<>();
+        } catch (Exception e) {
+            System.err.println("[DataLoader] 加载药水失败: " + path + " - " + e.getMessage());
             return new ArrayList<>();
         }
     }

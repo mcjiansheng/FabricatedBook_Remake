@@ -20,7 +20,7 @@ public class NodeFactory {
     /**
      * 根据配置生成地图的所有节点。
      * <p>
-     * 第一行是起点，最后一行是终点（指定类型），中间行按权重随机生成。
+     * 起点和终点使用指定类型，其余节点按权重随机生成。
      *
      * @param config 地图配置
      * @return 生成的节点列表（按列优先排列）
@@ -34,23 +34,15 @@ public class NodeFactory {
             List<Node> rowNodes = new ArrayList<>();
             for (int col = 0; col < width; col++) {
                 Node node;
-                if (row == 0) {
-                    // 起点行：只有指定类型的节点
-                    if (col == config.getStartCol()) {
-                        node = new Node(config.getStartNodeType(), row, col);
-                    } else {
-                        // 起点行其他位置为空（但在网格中仍然占位）
-                        node = new Node(NodeType.FIGHT, row, col);
-                    }
+                if (row == 0 && col == config.getStartCol()) {
+                    node = new Node(config.getStartNodeType(), row, col);
                 } else if (row == config.getEndRow() && config.getEndNodeType() != null) {
-                    // 终点行
                     if (col == width / 2) {
                         node = new Node(config.getEndNodeType(), row, col);
                     } else {
-                        node = new Node(NodeType.FIGHT, row, col);
+                        node = new Node(randomNodeType(config.getNodeWeights()), row, col);
                     }
                 } else {
-                    // 中间行：按权重随机生成类型
                     NodeType type = randomNodeType(config.getNodeWeights());
                     node = new Node(type, row, col);
                 }

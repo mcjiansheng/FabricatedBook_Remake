@@ -27,6 +27,7 @@ public class ShopScreen implements Screen {
     private final FabricBookGame game;
     private final Player player;
     private final ShopManager shopManager;
+    private final MapScreen returnMap;
     private Stage stage;
     private OrthographicCamera camera;
     private Table itemTable;
@@ -41,9 +42,15 @@ public class ShopScreen implements Screen {
      */
     public ShopScreen(FabricBookGame game, Player player,
                       ShopManager shopManager) {
+        this(game, player, shopManager, null);
+    }
+
+    public ShopScreen(FabricBookGame game, Player player,
+                      ShopManager shopManager, MapScreen returnMap) {
         this.game = game;
         this.player = player;
         this.shopManager = shopManager;
+        this.returnMap = returnMap;
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
                 FabricBookGame.SCREEN_HEIGHT);
@@ -87,7 +94,11 @@ public class ShopScreen implements Screen {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
-                game.setScreen(new MapScreen(game, player));
+                if (returnMap != null) {
+                    returnMap.completeCurrentNodeAndReturn();
+                } else {
+                    game.setScreen(new MapScreen(game, player));
+                }
             }
         });
         stage.addActor(backBtn);
@@ -111,6 +122,11 @@ public class ShopScreen implements Screen {
                     item.isPurchased() ? com.badlogic.gdx.graphics.Color.GRAY
                             : com.badlogic.gdx.graphics.Color.WHITE));
             itemTable.add(itemLabel).pad(5);
+
+            Label descLabel = new Label(item.getDescription(), new Label.LabelStyle(
+                    game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
+            descLabel.setWrap(true);
+            itemTable.add(descLabel).width(420).pad(5);
 
             if (!item.isPurchased()) {
                 TextButton.TextButtonStyle buyStyle = new TextButton.TextButtonStyle();

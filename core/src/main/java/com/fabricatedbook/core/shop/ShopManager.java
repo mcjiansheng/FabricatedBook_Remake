@@ -1,10 +1,15 @@
 package com.fabricatedbook.core.shop;
 
 import com.fabricatedbook.core.card.Card;
+import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.entity.Player;
+import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
+import com.fabricatedbook.core.relic.RelicData;
+import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.data.DataLoader;
 
 import java.util.*;
 
@@ -98,6 +103,7 @@ public class ShopManager {
      */
     public void generateItems() {
         items.clear();
+        relicManager.onEnterShop();
 
         // 1. 7 张卡牌 — 从玩家职业的卡牌池随机选择
         String profession = player.getProfession().name().toLowerCase();
@@ -111,33 +117,28 @@ public class ShopManager {
                     price, card));
         }
 
-        // 2. 3 个藏品 — 随机生成（简化：使用名称占位）
-        // 实际藏品通过 JSON 配置或硬编码列表获取
-        String[] relicNames = {"古旧钱币", "热水壶", "靶子", "石像鬼塑像",
-                "微缩舞台模型", "道具箱"};
-        for (int i = 0; i < 3; i++) {
-            String relicName = relicNames[random.nextInt(relicNames.length)];
-            int relicValue = switch (relicName) {
-                case "古旧钱币", "热水壶", "靶子" -> 0;
-                case "石像鬼塑像" -> 1;
-                case "微缩舞台模型", "道具箱" -> 2;
-                default -> 1;
-            };
-            int price = relicValue * 25 + (55 + random.nextInt(16));
+        // 2. 3 个藏品 — 从 JSON 数据池创建真实藏品
+        List<RelicData> relicPool = new DataLoader().loadRelicData().stream()
+                .filter(data -> data.getRarity() != Relic.Rarity.CURSED)
+                .filter(data -> !player.hasRelic(data.getId()))
+                .toList();
+        List<RelicData> shopRelics = randomSelect(relicPool, Math.min(3, relicPool.size()));
+        for (RelicData data : shopRelics) {
+            Relic relic = RelicFactory.create(data, player);
+            int price = data.getRarity().getValue() * 25 + (55 + random.nextInt(16));
             items.add(new ShopItem(ShopItem.ItemType.RELIC,
-                    relicName, "藏品效果描述",
-                    price, relicName));
+                    relic.getName(), relic.getDescription(),
+                    price, relic));
         }
 
-        // 3. 3 个药水
-        String[] potionNames = {"回血药水", "护盾药水", "攻击药水",
-                "能量药水", "力量药水", "中毒药水"};
-        for (int i = 0; i < 3; i++) {
-            String potionName = potionNames[random.nextInt(potionNames.length)];
+        // 3. 3 个药水 — 从 JSON 数据池创建真实药水
+        List<Potion> potionPool = new DataLoader().loadPotions();
+        List<Potion> shopPotions = randomSelect(potionPool, Math.min(3, potionPool.size()));
+        for (Potion potion : shopPotions) {
             int price = 30 + random.nextInt(41);
             items.add(new ShopItem(ShopItem.ItemType.POTION,
-                    potionName, "药水效果描述",
-                    price, potionName));
+                    potion.getName(), potion.getDescription(),
+                    price, potion.copy()));
         }
 
         // 4. 弃牌机会
@@ -167,23 +168,19 @@ public class ShopManager {
             case CARD:
                 // 卡牌进入玩家卡组
                 Card card = (Card) item.getData();
-                player.getDrawPile().add(new Card(card.getId(), card.getName(),
-                        card.getCost(), card.getDescription(), card.getType(),
-                        card.getRarity(), card.getValue(), card.getTargetType(),
-                        card.getTargetCount(), new ArrayList<>(card.getEffects()),
-                        card.isExhaust(), card.getProfession()));
+                player.getDrawPile().add(CardFactory.createFromTemplate(card));
                 player.setCardCount(player.getCardCount() + 1);
                 break;
 
             case RELIC:
-                // 藏品通过 RelicManager 添加
-                // 简化：记录购买
-                System.out.println("[Shop] 购买藏品: " + item.getName());
+                relicManager.addRelic((Relic) item.getData());
                 break;
 
             case POTION:
-                // 药水（暂未实现药水系统）
-                System.out.println("[Shop] 购买药水: " + item.getName());
+                if (!player.addPotion(((Potion) item.getData()).copy())) {
+                    player.gainGold(item.getPrice());
+                    return false;
+                }
                 break;
         }
 
@@ -246,5 +243,11 @@ public class ShopManager {
      */
     public int getPlayerGold() {
         return player.getGold();
+    }
+
+    private <T> List<T> randomSelect(List<T> source, int count) {
+        List<T> copy = new ArrayList<>(source);
+        Collections.shuffle(copy, random);
+        return copy.subList(0, Math.min(count, copy.size()));
     }
 }

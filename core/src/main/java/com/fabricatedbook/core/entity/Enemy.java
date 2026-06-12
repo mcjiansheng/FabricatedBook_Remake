@@ -63,9 +63,21 @@ public class Enemy extends AbstractEntity {
         if (actionScript == null || actionScript.isEmpty()) {
             return "atk1";
         }
-        String action = actionScript.get(actionIndex % actionScript.size());
+        String action = peekCurrentAction();
         actionIndex = (actionIndex + 1) % actionScript.size();
         return action;
+    }
+
+    /**
+     * 预览当前回合行动，不推进行动脚本。
+     *
+     * @return 当前行动标识字符串
+     */
+    public String peekCurrentAction() {
+        if (actionScript == null || actionScript.isEmpty()) {
+            return "atk1";
+        }
+        return actionScript.get(actionIndex % actionScript.size());
     }
 
     /**

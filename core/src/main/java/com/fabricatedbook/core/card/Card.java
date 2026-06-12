@@ -93,6 +93,9 @@ public class Card {
     /** 所属职业（"warrior"/"mage"/"witch"/null=通用） */
     private String profession;
 
+    /** 扩散伤害累计加成（不参与 JSON 序列化，仅战斗中用于 escalating 效果） */
+    private transient int escalatingBonus = 0;
+
     /** 唯一标识符 */
     private String id;
 
@@ -164,6 +167,10 @@ public class Card {
 
     public String getProfession() { return profession; }
     public void setProfession(String profession) { this.profession = profession; }
+
+    /** 扩散伤害累计加成（用于 escalating 效果，不参与 JSON 序列化） */
+    public int getEscalatingBonus() { return escalatingBonus; }
+    public void addEscalatingBonus(int bonus) { this.escalatingBonus += bonus; }
 
     // ====== 工具方法 ======
 

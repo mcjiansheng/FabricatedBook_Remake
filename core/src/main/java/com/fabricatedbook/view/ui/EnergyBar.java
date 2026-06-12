@@ -1,6 +1,7 @@
 package com.fabricatedbook.view.ui;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.fabricatedbook.core.entity.Player;
@@ -23,11 +24,14 @@ public class EnergyBar extends Group {
      * @param player 玩家实体
      */
     public EnergyBar(Player player) {
+        this(player, new BitmapFont());
+    }
+
+    public EnergyBar(Player player, BitmapFont font) {
         this.player = player;
 
         energyLabel = new Label("", new Label.LabelStyle(
-                new com.badlogic.gdx.graphics.g2d.BitmapFont(),
-                Color.YELLOW));
+                font, Color.YELLOW));
         energyLabel.setFontScale(1.2f);
         addActor(energyLabel);
 
@@ -38,7 +42,7 @@ public class EnergyBar extends Group {
      * 更新能量显示。
      */
     public void update() {
-        energyLabel.setText("⚡ " + player.getEnergy()
+        energyLabel.setText("能量 " + player.getEnergy()
                 + "/" + player.getMaxEnergy());
     }
 }

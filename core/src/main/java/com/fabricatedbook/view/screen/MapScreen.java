@@ -14,8 +14,10 @@ import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.EntityFactory;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.event.EventHandler;
+import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.core.shop.ShopManager;
+import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.view.FabricBookGame;
 
 import java.util.ArrayList;
@@ -113,22 +115,28 @@ public class MapScreen implements Screen {
 
     // 拖动状态
     private float scrollX;
+    private float scrollY;
     private float lastTouchX;
+    private float lastTouchY;
+    private float dragDistance;
     private boolean isDragging;
     private static final float SCROLL_SPEED = 1.0f;
-    private static final float STEP_X = 140f;
-    private static final float NODE_SIZE = 48f;
+    private static final float STEP_X = 190f;
+    private static final float NODE_WIDTH = 112f;
+    private static final float NODE_HEIGHT = 66f;
+    private static final float MAP_LEFT_PAD = 120f;
 
     // UI 顶栏
-    private static final float TOP_BAR_HEIGHT = 35f;
-
-    // 药水
-    private List<PotionInfo> potions;
-
-    public static class PotionInfo {
-        public String name;
-        public PotionInfo(String name) { this.name = name; }
-    }
+    private static final float TOP_BAR_HEIGHT = 52f;
+    private static final String[] LAYER_NAMES = {"荒野", "森林", "诡异秘林", "迷雾", "高塔"};
+    private static final String[] LAYER_EFFECTS = {
+            "当前层效果：无",
+            "当前层效果：奖励与商店出现",
+            "当前层效果：Boss 节点出现",
+            "当前层效果：路线更窄，Boss 连战",
+            "当前层效果：最终高塔"
+    };
+    private float layerIntroTimer;
 
     public MapScreen(FabricBookGame game, Player player) {
         this.game = game;
@@ -136,12 +144,9 @@ public class MapScreen implements Screen {
         this.currentLayerIdx = 0;
         this.currentNode = null;
         this.scrollX = 0;
+        this.scrollY = 0;
         this.random = new Random();
-        this.potions = new ArrayList<>();
-
-        // 初始化药水
-        potions.add(new PotionInfo("回血药水"));
-        potions.add(new PotionInfo("攻击药水"));
+        this.layerIntroTimer = 2.2f;
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
@@ -273,7 +278,7 @@ public class MapScreen implements Screen {
         int[] lineNum = layerNodeCounts[layerIdx];
         int len = LAYER_LENGTHS[layerIdx];
 
-        float startX = 50;
+        float startX = MAP_LEFT_PAD;
 
         for (int col = 0; col < len; col++) {
             int size = lineNum[col];
@@ -281,13 +286,13 @@ public class MapScreen implements Screen {
             float startY;
 
             if (size == 3) {
-                stepY = FabricBookGame.SCREEN_HEIGHT / 4f;
+                stepY = 150f;
                 startY = FabricBookGame.SCREEN_HEIGHT / 2f - stepY;
             } else if (size == 2) {
-                stepY = FabricBookGame.SCREEN_HEIGHT / 3f;
+                stepY = 170f;
                 startY = FabricBookGame.SCREEN_HEIGHT / 2f - stepY / 2;
             } else if (size == 4) {
-                stepY = FabricBookGame.SCREEN_HEIGHT / 5f;
+                stepY = 125f;
                 startY = FabricBookGame.SCREEN_HEIGHT / 2f - stepY * 1.5f;
             } else {
                 stepY = 0;
@@ -358,6 +363,9 @@ public class MapScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         handleInput(delta);
+        if (layerIntroTimer > 0) {
+            layerIntroTimer -= delta;
+        }
 
         batch.begin();
 
@@ -372,6 +380,9 @@ public class MapScreen implements Screen {
         // 绘制地图连接线
         drawConnectionLines();
 
+        // 绘制矩形节点底板
+        drawNodeBackplates();
+
         batch.begin();
 
         // 绘制节点
@@ -381,6 +392,7 @@ public class MapScreen implements Screen {
 
         // 绘制顶栏（在 batch.end() 后绘制，使用 shapeRenderer + batch）
         drawTopBar();
+        drawLayerIntro();
     }
 
     /** 处理输入（横向拖动） */
@@ -390,32 +402,31 @@ public class MapScreen implements Screen {
             float touchY = Gdx.input.getY();
 
             // 如果点在顶栏区域内，不处理地图拖动
-            if (touchY > FabricBookGame.SCREEN_HEIGHT - TOP_BAR_HEIGHT) {
+            if (touchY < TOP_BAR_HEIGHT) {
                 return;
             }
 
             if (!isDragging) {
                 lastTouchX = touchX;
+                lastTouchY = touchY;
+                dragDistance = 0;
                 isDragging = true;
             } else {
                 float dx = touchX - lastTouchX;
-                if (Math.abs(dx) > 5) {
+                float dy = lastTouchY - touchY;
+                dragDistance += Math.abs(dx) + Math.abs(dy);
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
                     // 拖动
                     scrollX += dx * SCROLL_SPEED;
+                    scrollY += dy * SCROLL_SPEED;
                     lastTouchX = touchX;
+                    lastTouchY = touchY;
                     // 限制滚动范围
-                    MapNode[][] layer = allLayers[currentLayerIdx];
-                    if (layer != null && layer.length > 0) {
-                        float maxScroll = (layer.length - 1) * STEP_X;
-                        if (scrollX > 50) scrollX = 50;
-                        if (scrollX < -(maxScroll - FabricBookGame.SCREEN_WIDTH + 50)) {
-                            scrollX = -(maxScroll - FabricBookGame.SCREEN_WIDTH + 50);
-                        }
-                    }
+                    clampScroll();
                 }
             }
         } else {
-            if (isDragging) {
+            if (isDragging && dragDistance < 12f) {
                 // 检测点击（拖动结束后检测是否点击了节点）
                 float touchX = Gdx.input.getX();
                 float touchY = Gdx.input.getY();
@@ -429,14 +440,14 @@ public class MapScreen implements Screen {
     private void checkNodeClick(float screenX, float screenY) {
         MapNode[][] layer = allLayers[currentLayerIdx];
         float worldX = screenX - scrollX;
+        float worldY = (FabricBookGame.SCREEN_HEIGHT - screenY) - scrollY;
 
         for (int col = 0; col < layer.length; col++) {
             for (int row = 0; row < layer[col].length; row++) {
                 MapNode node = layer[col][row];
                 if (node != null && node.accessible) {
-                    float dx = node.x - worldX;
-                    float dy = node.y - screenY;
-                    if (Math.abs(dx) < NODE_SIZE && Math.abs(dy) < NODE_SIZE) {
+                    if (Math.abs(node.x - worldX) <= NODE_WIDTH / 2f
+                            && Math.abs(node.y - worldY) <= NODE_HEIGHT / 2f) {
                         // 进入节点
                         enterNode(node);
                         return;
@@ -459,40 +470,157 @@ public class MapScreen implements Screen {
             case BOSS:
                 // 进入战斗
                 game.setScreen(new BattleScreen(game, createCombatEngine(), player,
-                        createEnemiesFor(node.type)));
+                        createEnemiesFor(node.type), this));
                 break;
             case SHOP:
                 // 进入商店
                 ShopManager shopManager = new ShopManager(player, new RelicManager(player));
                 shopManager.generateItems();
-                game.setScreen(new ShopScreen(game, player, shopManager));
+                game.setScreen(new ShopScreen(game, player, shopManager, this));
                 break;
             case UNEXPECTEDLY:
                 // 进入事件
-                game.setScreen(new EventScreen(game, player, randomEventName()));
+                game.setScreen(new EventScreen(game, player, randomEventName(), this));
                 break;
             case REWARD:
                 // 宝箱奖励
-                game.setScreen(new EventScreen(game, player, "好诗歪诗"));
+                game.setScreen(new EventScreen(game, player, "好诗歪诗", this));
                 break;
             case SAFE_HOUSE:
                 // 安全屋
-                game.setScreen(new EventScreen(game, player, "人生意义"));
+                game.setScreen(new EventScreen(game, player, "人生意义", this));
                 break;
             case DECISION:
                 // 命运抉择
-                game.setScreen(new EventScreen(game, player, "投资"));
+                game.setScreen(new EventScreen(game, player, "投资", this));
                 break;
         }
     }
 
+    /** 当前节点结算完成后回到地图，必要时进入下一层。 */
+    public void completeCurrentNodeAndReturn() {
+        if (currentNode != null && currentNode.nxtNum == 0 && currentLayerIdx < allLayers.length - 1) {
+            currentLayerIdx++;
+            currentNode = null;
+            scrollX = 0;
+            scrollY = 0;
+            layerIntroTimer = 2.2f;
+        }
+        updateAccessibleNodes();
+        game.setScreen(this);
+    }
+
+    private void clampScroll() {
+        MapNode[][] layer = allLayers[currentLayerIdx];
+        if (layer == null || layer.length == 0) return;
+        float mapWidth = MAP_LEFT_PAD * 2 + (layer.length - 1) * STEP_X + NODE_WIDTH;
+        float minX = Math.min(0, FabricBookGame.SCREEN_WIDTH - mapWidth);
+        if (scrollX > 80) scrollX = 80;
+        if (scrollX < minX - 80) scrollX = minX - 80;
+        if (scrollY > 90) scrollY = 90;
+        if (scrollY < -90) scrollY = -90;
+    }
+
     private CombatEngine createCombatEngine() {
         CombatEngine engine = new CombatEngine();
+        player.setCurrentFloor(currentLayerIdx + 1);
+        if (currentNode != null) {
+            switch (currentNode.type) {
+                case EMERGENCY:
+                    engine.setBattleNodeType(NodeType.EMERGENCY);
+                    break;
+                case BOSS:
+                    engine.setBattleNodeType(NodeType.BOSS);
+                    break;
+                default:
+                    engine.setBattleNodeType(NodeType.FIGHT);
+                    break;
+            }
+        }
         engine.setRelicManager(new RelicManager(player));
         return engine;
     }
 
+    /**
+     * 根据节点类型和当前楼层从 JSON 数据中选取敌人组。
+     * <p>
+     * 规则：
+     * - BOSS 节点：选 isBoss=true 的组
+     * - EMERGENCY 节点：优先选非 Boss 组（代表精英/高难度）
+     * - FIGHT 节点：选非 Boss 组
+     * - 如果当前楼层没有匹配组，fallback 到训练假人
+     */
     private List<Enemy> createEnemiesFor(int nodeType) {
+        DataLoader loader = new DataLoader();
+        int level = currentLayerIdx + 1;
+        List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
+
+        // 筛选匹配的怪物组
+        List<DataLoader.EnemyGroup> matched = new ArrayList<>();
+        for (DataLoader.EnemyGroup group : groups) {
+            boolean isBossGroup = group.isBoss();
+            if (nodeType == BOSS && isBossGroup) {
+                matched.add(group);
+            } else if (nodeType != BOSS && !isBossGroup) {
+                matched.add(group);
+            }
+        }
+
+        // 紧急作战：优先尝试从同层中挑选精英级或更高 HP 的组
+        // 若没有专门的精英标记，则使用所有非 Boss 组
+        if (!matched.isEmpty()) {
+            DataLoader.EnemyGroup selected;
+            if (nodeType == EMERGENCY) {
+                // 优先选敌人数量多/HP 高的组作为精英
+                selected = matched.get(random.nextInt(matched.size()));
+                // 尝试偏向选总 HP 更高的
+                for (int attempt = 0; attempt < 3; attempt++) {
+                    DataLoader.EnemyGroup candidate = matched.get(random.nextInt(matched.size()));
+                    if (totalHp(candidate) > totalHp(selected)) {
+                        selected = candidate;
+                    }
+                }
+            } else {
+                selected = matched.get(random.nextInt(matched.size()));
+            }
+
+            List<Enemy> enemies = new ArrayList<>();
+            if (selected.getEnemies() != null) {
+                for (DataLoader.EnemyData data : selected.getEnemies()) {
+                    enemies.add(data.toEnemy());
+                }
+            }
+            if (!enemies.isEmpty()) return enemies;
+        }
+
+        // 跨层 fallback：尝试相邻层
+        for (int fallbackLevel : new int[]{level - 1, level + 1}) {
+            if (fallbackLevel < 1 || fallbackLevel > 5) continue;
+            List<DataLoader.EnemyGroup> fbGroups = loader.loadMonsters(fallbackLevel);
+            for (DataLoader.EnemyGroup group : fbGroups) {
+                boolean isBossGroup = group.isBoss();
+                if (nodeType == BOSS && isBossGroup) {
+                    if (group.getEnemies() != null && !group.getEnemies().isEmpty()) {
+                        List<Enemy> enemies = new ArrayList<>();
+                        for (DataLoader.EnemyData data : group.getEnemies()) {
+                            enemies.add(data.toEnemy());
+                        }
+                        return enemies;
+                    }
+                } else if (nodeType != BOSS && !isBossGroup) {
+                    if (group.getEnemies() != null && !group.getEnemies().isEmpty()) {
+                        List<Enemy> enemies = new ArrayList<>();
+                        for (DataLoader.EnemyData data : group.getEnemies()) {
+                            enemies.add(data.toEnemy());
+                        }
+                        return enemies;
+                    }
+                }
+            }
+        }
+
+        // 最终 fallback：训练假人
+        System.out.println("[MapScreen] 楼层 " + level + " 无匹配敌人组，使用训练假人");
         List<Enemy> enemies = new ArrayList<>();
         if (nodeType == BOSS) {
             enemies.add(new Enemy("boss_training", "训练首领", 60,
@@ -505,6 +633,16 @@ public class MapScreen implements Screen {
                     "训练假人", 32));
         }
         return enemies;
+    }
+
+    /** 计算怪物组的总生命值（用于精英偏好选择） */
+    private static int totalHp(DataLoader.EnemyGroup group) {
+        if (group.getEnemies() == null) return 0;
+        int total = 0;
+        for (DataLoader.EnemyData data : group.getEnemies()) {
+            total += data.getMaxHp();
+        }
+        return total;
     }
 
     private String randomEventName() {
@@ -544,13 +682,54 @@ public class MapScreen implements Screen {
                         shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 0.5f); // 灰色
                     }
                     shapeRenderer.line(
-                            node.x + scrollX, node.y,
-                            next.x + scrollX, next.y
+                            node.x + scrollX, node.y + scrollY,
+                            next.x + scrollX, next.y + scrollY
                     );
                 }
             }
         }
 
+        shapeRenderer.end();
+    }
+
+    /** 绘制矩形节点底板和高亮边框。 */
+    private void drawNodeBackplates() {
+        MapNode[][] layer = allLayers[currentLayerIdx];
+        if (layer == null) return;
+
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (int col = 0; col < layer.length; col++) {
+            for (int row = 0; row < layer[col].length; row++) {
+                MapNode node = layer[col][row];
+                if (node == null) continue;
+                float x = node.x + scrollX - NODE_WIDTH / 2f;
+                float y = node.y + scrollY - NODE_HEIGHT / 2f;
+                if (node.accessible) {
+                    shapeRenderer.setColor(0.33f, 0.24f, 0.70f, 0.92f);
+                } else if (node.visited) {
+                    shapeRenderer.setColor(0.22f, 0.22f, 0.25f, 0.78f);
+                } else {
+                    shapeRenderer.setColor(0.12f, 0.12f, 0.14f, 0.70f);
+                }
+                shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
+            }
+        }
+        shapeRenderer.end();
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        for (int col = 0; col < layer.length; col++) {
+            for (int row = 0; row < layer[col].length; row++) {
+                MapNode node = layer[col][row];
+                if (node == null) continue;
+                float x = node.x + scrollX - NODE_WIDTH / 2f;
+                float y = node.y + scrollY - NODE_HEIGHT / 2f;
+                shapeRenderer.setColor(node.accessible ? 0.92f : 0.36f,
+                        node.accessible ? 0.82f : 0.36f,
+                        node.accessible ? 0.36f : 0.38f, 1f);
+                shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
+            }
+        }
         shapeRenderer.end();
     }
 
@@ -564,8 +743,8 @@ public class MapScreen implements Screen {
                 MapNode node = layer[col][row];
                 if (node == null) continue;
 
-                float drawX = node.x + scrollX - NODE_SIZE / 2;
-                float drawY = node.y - NODE_SIZE / 2;
+                float drawX = node.x + scrollX - NODE_WIDTH / 2f;
+                float drawY = node.y + scrollY - NODE_HEIGHT / 2f;
 
                 // 获取对应贴图
                 Texture tex = null;
@@ -587,12 +766,12 @@ public class MapScreen implements Screen {
                 }
 
                 if (tex != null) {
-                    batch.draw(tex, drawX, drawY, NODE_SIZE, NODE_SIZE);
+                    batch.draw(tex, drawX + 8, drawY + 14, 34, 34);
                 }
 
-                // 如果是可访问节点，加上高亮边框
+                font.draw(batch, nodeTypeName(node.type), drawX + 48, drawY + 39);
                 if (node.accessible) {
-                    // 无法在 batch 中绘制边框，在之后的 shapeRenderer 中处理
+                    font.draw(batch, "点击可进入", drawX + 48, drawY + 18);
                 }
 
                 batch.setColor(1, 1, 1, 1);
@@ -615,27 +794,62 @@ public class MapScreen implements Screen {
         batch.begin();
 
         // HP
-        font.draw(batch, "❤ " + player.getHp() + "/" + player.getMaxHp(),
+        font.draw(batch, "生命 " + player.getHp() + "/" + player.getMaxHp(),
                 10, FabricBookGame.SCREEN_HEIGHT - 10);
 
         // 金币
-        font.draw(batch, "💰 " + player.getGold(),
-                180, FabricBookGame.SCREEN_HEIGHT - 10);
+        font.draw(batch, "金币 " + player.getGold(),
+                210, FabricBookGame.SCREEN_HEIGHT - 10);
 
         // 药水
-        float potionX = 350;
-        for (int i = 0; i < potions.size(); i++) {
-            font.draw(batch, "🧪 " + potions.get(i).name,
-                    potionX, FabricBookGame.SCREEN_HEIGHT - 10);
-            potionX += 100;
-        }
+        font.draw(batch, "药水 " + player.getPotions().size() + "/3",
+                360, FabricBookGame.SCREEN_HEIGHT - 10);
 
         // 当前层名
-        String[] layerNames = {"荒野", "森林", "诡异秘林", "迷雾", "高塔"};
-        font.draw(batch, "🌍 " + layerNames[currentLayerIdx],
-                FabricBookGame.SCREEN_WIDTH - 200, FabricBookGame.SCREEN_HEIGHT - 10);
+        font.draw(batch, "第 " + (currentLayerIdx + 1) + " 层  " + LAYER_NAMES[currentLayerIdx],
+                FabricBookGame.SCREEN_WIDTH - 260, FabricBookGame.SCREEN_HEIGHT - 10);
 
         batch.end();
+    }
+
+    private void drawLayerIntro() {
+        if (layerIntroTimer <= 0) return;
+
+        float alpha = Math.min(1f, layerIntroTimer / 0.7f);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.55f * alpha);
+        shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
+        shapeRenderer.end();
+
+        batch.begin();
+        batch.setColor(1f, 1f, 1f, alpha);
+        font.getData().setScale(2.2f);
+        font.draw(batch, "第 " + (currentLayerIdx + 1) + " 层",
+                FabricBookGame.SCREEN_WIDTH / 2f - 70, FabricBookGame.SCREEN_HEIGHT / 2f + 40);
+        font.getData().setScale(1.1f);
+        font.draw(batch, LAYER_NAMES[currentLayerIdx],
+                FabricBookGame.SCREEN_WIDTH / 2f - 60, FabricBookGame.SCREEN_HEIGHT / 2f);
+        font.getData().setScale(1f);
+        font.draw(batch, LAYER_EFFECTS[currentLayerIdx],
+                FabricBookGame.SCREEN_WIDTH / 2f - 160, FabricBookGame.SCREEN_HEIGHT / 2f - 42);
+        batch.setColor(1f, 1f, 1f, 1f);
+        batch.end();
+    }
+
+    private String nodeTypeName(int type) {
+        return switch (type) {
+            case FIGHT -> "战斗";
+            case EMERGENCY -> "精英";
+            case BOSS -> "首领";
+            case UNEXPECTEDLY -> "事件";
+            case REWARD -> "奖励";
+            case SHOP -> "商店";
+            case ANOTHER_PATH -> "岔路";
+            case DECISION -> "抉择";
+            case SAFE_HOUSE -> "安全屋";
+            default -> "未知";
+        };
     }
 
     @Override

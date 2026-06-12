@@ -11,6 +11,7 @@ import com.fabricatedbook.core.event.OnCombatStart;
 import com.fabricatedbook.core.event.OnEntityDeath;
 import com.fabricatedbook.core.event.OnTurnEnd;
 import com.fabricatedbook.core.event.OnCardUsed;
+import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.relic.EventBus;
 import com.fabricatedbook.core.relic.RelicManager;
 
@@ -62,6 +63,9 @@ public class CombatEngine {
     /** 事件总线 */
     private EventBus eventBus;
 
+    /** 当前战斗来源节点类型，用于结算正式奖励区间。 */
+    private NodeType battleNodeType;
+
     /**
      * 构造战斗引擎。
      */
@@ -72,6 +76,7 @@ public class CombatEngine {
         this.inBattle = false;
         this.victory = false;
         this.eventBus = EventBus.getInstance();
+        this.battleNodeType = NodeType.FIGHT;
     }
 
     /**
@@ -108,10 +113,6 @@ public class CombatEngine {
         if (relicManager != null) {
             relicManager.onCombatStart();
         }
-
-        // 发布战斗开始事件
-        eventBus.publish(new OnCombatStart(player.getId(),
-                player.getCurrentFloor()));
 
         // 通知视图
         if (viewNotifier != null) {
@@ -223,7 +224,7 @@ public class CombatEngine {
         // 8. 检查敌人意图
         for (Enemy enemy : enemies) {
             if (enemy.isAlive()) {
-                String actionId = enemy.getCurrentAction();
+                String actionId = enemy.peekCurrentAction();
                 enemy.deduceIntent(actionId);
             }
         }
@@ -255,8 +256,8 @@ public class CombatEngine {
             return false;
         }
 
-        // 从手牌移除
-        if (!player.getHand().remove(card)) {
+        // 从手牌移除。手牌可能有多张同 ID 基础牌，必须按实例移除。
+        if (!removeCardInstanceFromHand(card)) {
             return false;
         }
 
@@ -268,7 +269,7 @@ public class CombatEngine {
 
         // 将动作加入队列
         for (CombatAction action : actions) {
-            actionManager.push(action);
+            queueAction(action);
         }
 
         // 处理消耗
@@ -282,10 +283,8 @@ public class CombatEngine {
         // 执行队列
         executeActionQueue();
 
-        // 发布卡牌使用事件
-        eventBus.publish(new OnCardUsed(player.getId(), card, card.getCost()));
         if (relicManager != null) {
-            relicManager.fireCardUsed(card.getName());
+            relicManager.fireCardUsed(card, card.getCost());
         }
 
         // 通知视图
@@ -548,6 +547,57 @@ public class CombatEngine {
                     }
                     break;
                 }
+                case "escalating": {
+                    // escalating:N — 每使用一次该牌，伤害 +N（通过卡牌实例累计）
+                    int bonus = Integer.parseInt(parts[1]);
+                    card.addEscalatingBonus(bonus);
+                    List<AbstractEntity> escTargets = new ArrayList<>();
+                    if (target != null && target.isAlive()) {
+                        escTargets.add(target);
+                    } else if (!aliveEnemies.isEmpty()) {
+                        escTargets.add(aliveEnemies.get(0));
+                    }
+                    if (!escTargets.isEmpty() && card.getEscalatingBonus() > 0) {
+                        actions.add(new DamageAction(player, escTargets,
+                                card.getEscalatingBonus() - bonus)); // 本次之前已累计的额外伤害
+                    }
+                    break;
+                }
+                case "chance_debuff": {
+                    // chance_debuff:BuffName:Stack:Chance
+                    String buffName = parts[1];
+                    int stack = Integer.parseInt(parts[2]);
+                    int chance = Integer.parseInt(parts[3]);
+                    if (random.nextInt(100) < chance) {
+                        List<AbstractEntity> cdTargets = new ArrayList<>();
+                        if (target != null && target.isAlive()) {
+                            cdTargets.add(target);
+                        } else if (!aliveEnemies.isEmpty()) {
+                            cdTargets.add(aliveEnemies.get(0));
+                        }
+                        if (!cdTargets.isEmpty()) {
+                            actions.add(new ApplyBuffAction(cdTargets.get(0), buffName, stack));
+                        }
+                    }
+                    break;
+                }
+                case "trigger_withering": {
+                    // trigger_withering 或 trigger_withering:N — 引爆凋零
+                    int times = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
+                    if (target != null && target.isAlive()) {
+                        for (int i = 0; i < times; i++) {
+                            for (BuffHook buff : new ArrayList<>(target.getBuffs())) {
+                                if (buff.getBuffName().equals("Withering") && buff.getStack() > 0) {
+                                    int witherDmg = buff.getStack() * 2;
+                                    target.takeDamage(witherDmg);
+                                    target.removeBuff("Withering");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
                 default:
                     System.out.println("[CombatEngine] 未知效果: " + effect);
                     break;
@@ -640,7 +690,7 @@ public class CombatEngine {
             // 解析敌人动作
             List<CombatAction> actions = parseEnemyAction(enemy, actionId);
             for (CombatAction action : actions) {
-                actionManager.push(action);
+                queueAction(action);
             }
         }
 
@@ -663,6 +713,11 @@ public class CombatEngine {
     private List<CombatAction> parseEnemyAction(Enemy enemy, String actionId) {
         List<CombatAction> actions = new ArrayList<>();
         if (actionId == null) return actions;
+
+        // 优先使用 EnemyActionResolver 解析原版动作名
+        List<CombatAction> resolved = EnemyActionResolver.resolve(
+                enemy, actionId, player, getAliveEnemyList(), random);
+        if (resolved != null) return resolved;
 
         try {
             if (actionId.startsWith("atk")) {
@@ -769,12 +824,16 @@ public class CombatEngine {
             inBattle = false;
             victory = true;
 
-            // 战斗胜利奖励
-            int goldReward = 20 + random.nextInt(21); // 20-40
-            player.gainGold(goldReward);
+            boolean finalBoss = battleNodeType == NodeType.BOSS && player.getCurrentFloor() == 5;
+            int goldReward = finalBoss ? 0 : calculateGoldReward();
+            if (relicManager != null) {
+                goldReward = relicManager.modifyGoldReward(goldReward);
+            }
+            if (goldReward > 0) {
+                player.gainGold(goldReward);
+            }
 
-            // 战士特性：回复生命
-            int healAmount = player.battleRewardHeal();
+            int healAmount = finalBoss ? 0 : player.battleRewardHeal();
 
             // 发布死亡事件
             for (Enemy enemy : enemies) {
@@ -789,7 +848,7 @@ public class CombatEngine {
                 relicManager.onCombatEnd();
             }
 
-            String reward = "获得 " + goldReward + " 金币";
+            String reward = finalBoss ? "最终 Boss 已击败，进入结局" : "获得 " + goldReward + " 金币";
             if (healAmount > 0) {
                 reward += "，回复 " + healAmount + " 生命值";
             }
@@ -843,7 +902,47 @@ public class CombatEngine {
     public boolean isVictory() { return victory; }
     public ActionManager getActionManager() { return actionManager; }
 
+    public void setBattleNodeType(NodeType battleNodeType) {
+        this.battleNodeType = battleNodeType != null ? battleNodeType : NodeType.FIGHT;
+    }
+
     public void setRelicManager(RelicManager relicManager) {
         this.relicManager = relicManager;
+    }
+
+    private void queueAction(CombatAction action) {
+        if (action instanceof DamageAction damageAction && relicManager != null) {
+            damageAction.setDamageModifier(relicManager::modifyDamage);
+        }
+        if (action instanceof HealAction healAction && relicManager != null) {
+            healAction.setHealModifier(relicManager::modifyHeal);
+        }
+        actionManager.push(action);
+    }
+
+    private int calculateGoldReward() {
+        int gold = randomBetween(15, 30);
+        if (battleNodeType == NodeType.EMERGENCY) {
+            gold += randomBetween(20, 30);
+        }
+        if (player.getCurrentFloor() == 2) {
+            gold += randomBetween(10, 15);
+        }
+        return gold;
+    }
+
+    private int randomBetween(int min, int max) {
+        return min + random.nextInt(max - min + 1);
+    }
+
+    private boolean removeCardInstanceFromHand(Card card) {
+        List<Card> hand = player.getHand();
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i) == card) {
+                hand.remove(i);
+                return true;
+            }
+        }
+        return hand.remove(card);
     }
 }

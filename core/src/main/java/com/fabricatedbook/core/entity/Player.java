@@ -1,6 +1,7 @@
 package com.fabricatedbook.core.entity;
 
 import com.fabricatedbook.core.relic.Relic;
+import com.fabricatedbook.core.potion.Potion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,9 @@ public class Player extends AbstractEntity {
     /** 已获得的藏品列表 */
     private List<Relic> relics;
 
+    /** 药水栏，最多 3 瓶。 */
+    private List<Potion> potions;
+
     /** 当前楼层编号（1-5） */
     private int currentFloor;
 
@@ -44,6 +48,7 @@ public class Player extends AbstractEntity {
         this.profession = profession;
         this.gold = 0;
         this.relics = new ArrayList<>();
+        this.potions = new ArrayList<>();
         this.currentFloor = 1;
         this.cardCount = 0;
     }
@@ -102,7 +107,25 @@ public class Player extends AbstractEntity {
      * @return true 如果已持有
      */
     public boolean hasRelic(String relicName) {
-        return relics.stream().anyMatch(r -> r.getName().equals(relicName));
+        return relics.stream().anyMatch(r -> r.getName().equals(relicName)
+                || r.getId().equals(relicName));
+    }
+
+    // ====== 药水相关 ======
+
+    public List<Potion> getPotions() { return potions; }
+    public void setPotions(List<Potion> potions) { this.potions = potions; }
+    public boolean canAddPotion() { return potions.size() < 3; }
+
+    public boolean addPotion(Potion potion) {
+        if (potion == null || !canAddPotion()) return false;
+        potions.add(potion);
+        return true;
+    }
+
+    public Potion removePotion(int index) {
+        if (index < 0 || index >= potions.size()) return null;
+        return potions.remove(index);
     }
 
     // ====== 楼层相关 ======

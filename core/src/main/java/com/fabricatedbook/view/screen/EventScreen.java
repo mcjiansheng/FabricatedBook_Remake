@@ -10,6 +10,9 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.entity.Player;
+import com.fabricatedbook.core.relic.Relic;
+import com.fabricatedbook.core.relic.RelicFactory;
+import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.view.FabricBookGame;
 
 import java.util.List;
@@ -28,6 +31,7 @@ public class EventScreen implements Screen {
     private final Player player;
     private final EventHandler eventHandler;
     private final String eventName;
+    private final MapScreen returnMap;
     private Stage stage;
     private OrthographicCamera camera;
     private Label descriptionLabel;
@@ -42,10 +46,16 @@ public class EventScreen implements Screen {
      * @param eventName     事件名称
      */
     public EventScreen(FabricBookGame game, Player player, String eventName) {
+        this(game, player, eventName, null);
+    }
+
+    public EventScreen(FabricBookGame game, Player player, String eventName,
+                       MapScreen returnMap) {
         this.game = game;
         this.player = player;
         this.eventHandler = new EventHandler();
         this.eventName = eventName;
+        this.returnMap = returnMap;
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
                 FabricBookGame.SCREEN_HEIGHT);
@@ -117,6 +127,12 @@ public class EventScreen implements Screen {
                             player.takeDamage(-result.hpChange);
                         }
                     }
+                    if (result.relicId != null && !result.relicId.isBlank()) {
+                        Relic relic = RelicFactory.createById(result.relicId, player);
+                        if (relic != null) {
+                            new RelicManager(player).addRelic(relic);
+                        }
+                    }
 
                     // 显示结果
                     showResult(result.description);
@@ -148,7 +164,11 @@ public class EventScreen implements Screen {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
-                game.setScreen(new MapScreen(game, player));
+                if (returnMap != null) {
+                    returnMap.completeCurrentNodeAndReturn();
+                } else {
+                    game.setScreen(new MapScreen(game, player));
+                }
             }
         });
         optionTable.add(backBtn).width(200).height(50).pad(20);

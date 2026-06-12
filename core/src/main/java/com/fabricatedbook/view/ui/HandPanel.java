@@ -9,7 +9,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.engine.CombatEngine;
 import com.fabricatedbook.core.entity.Player;
-import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.actor.CardActor;
 import com.fabricatedbook.view.screen.BattleScreen;
@@ -33,6 +32,7 @@ public class HandPanel extends Group {
     private final List<CardActor> cardActors;
     private CardActor selectedCard;
     private TextButton endTurnBtn;
+    private String lastHandSignature;
 
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
@@ -56,6 +56,7 @@ public class HandPanel extends Group {
         this.shapeRenderer = new ShapeRenderer();
         this.cardActors = new ArrayList<>();
         this.selectedCard = null;
+        this.lastHandSignature = "";
 
         // 结束回合按钮
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
@@ -78,17 +79,24 @@ public class HandPanel extends Group {
      * 更新手牌显示。
      */
     public void update() {
+        Player player = combatEngine.getPlayer();
+        if (player == null) return;
+        List<Card> hand = player.getHand();
+        String signature = buildSignature(hand, player.getEnergy(),
+                combatEngine.getAliveEnemyList().size(), combatEngine.isInBattle());
+        if (signature.equals(lastHandSignature)) {
+            return;
+        }
+        lastHandSignature = signature;
+
         // 清除旧的卡牌 Actor
         for (CardActor ca : cardActors) {
             removeActor(ca);
+            ca.dispose();
         }
         cardActors.clear();
 
         // 获取当前手牌
-        Player player = combatEngine.getPlayer();
-        List<Card> hand = player.getHand();
-        List<Enemy> enemies = combatEngine.getAliveEnemyList();
-
         // 重新创建卡牌 Actor
         float totalWidth = hand.size() * CardActor.CARD_WIDTH
                 + (hand.size() - 1) * CARD_GAP;
@@ -97,21 +105,38 @@ public class HandPanel extends Group {
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
             CardActor actor = new CardActor(card, font, shapeRenderer);
-
-            final int index = i;
-            actor.setOnClick(() -> {
-                // 使用卡牌
-                Enemy target = enemies.isEmpty() ? null : enemies.get(0);
-                boolean success = combatEngine.playCard(card, target);
-                if (success) {
-                    update();
-                }
-            });
+            actor.setInteractionHandler(battleScreen);
 
             actor.setPosition(startX + i * (CardActor.CARD_WIDTH + CARD_GAP),
                     PANEL_Y);
             addActor(actor);
             cardActors.add(actor);
         }
+    }
+
+    public void forceRefresh() {
+        lastHandSignature = "";
+        update();
+    }
+
+    private String buildSignature(List<Card> hand, int energy, int aliveEnemies,
+                                  boolean inBattle) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(energy).append('|').append(aliveEnemies).append('|')
+                .append(inBattle).append('|').append(hand.size());
+        for (Card card : hand) {
+            sb.append('|').append(System.identityHashCode(card))
+                    .append(':').append(card.getId());
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public boolean remove() {
+        for (CardActor ca : cardActors) {
+            ca.dispose();
+        }
+        shapeRenderer.dispose();
+        return super.remove();
     }
 }

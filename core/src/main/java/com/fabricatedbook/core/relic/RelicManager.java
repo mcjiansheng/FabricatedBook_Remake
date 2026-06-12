@@ -1,5 +1,6 @@
 package com.fabricatedbook.core.relic;
 
+import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.event.*;
 import com.fabricatedbook.core.entity.AbstractEntity;
 import com.fabricatedbook.core.entity.Enemy;
@@ -48,8 +49,59 @@ public class RelicManager {
      */
     public void addRelic(Relic relic) {
         if (relic == null) return;
+        if (player.hasRelic(relic.getId())) {
+            return;
+        }
         player.addRelic(relic);
+        if (relic instanceof DataRelic dataRelic) {
+            dataRelic.applyOnPickup();
+        }
         System.out.println("[RelicManager] 获得藏品: " + relic.getName());
+    }
+
+    public int modifyDamage(int damage, AbstractEntity source, AbstractEntity target) {
+        int modified = damage;
+        if (source == player) {
+            for (Relic relic : player.getRelics()) {
+                if (relic instanceof DataRelic dataRelic) {
+                    modified = dataRelic.modifyOutgoingDamage(modified, target);
+                }
+            }
+        }
+        if (target == player) {
+            for (Relic relic : player.getRelics()) {
+                if (relic instanceof DataRelic dataRelic) {
+                    modified = dataRelic.modifyIncomingDamage(modified);
+                }
+            }
+        }
+        return Math.max(0, modified);
+    }
+
+    public int modifyGoldReward(int gold) {
+        int modified = gold;
+        for (Relic relic : player.getRelics()) {
+            if (relic instanceof DataRelic dataRelic) {
+                modified = dataRelic.modifyGoldReward(modified);
+            }
+        }
+        return Math.max(0, modified);
+    }
+
+    public int modifyHeal(int heal) {
+        int modified = heal;
+        for (Relic relic : player.getRelics()) {
+            if (relic instanceof DataRelic dataRelic) {
+                modified = dataRelic.modifyHeal(modified);
+            }
+        }
+        return Math.max(0, modified);
+    }
+
+    public void onEnterShop() {
+        if (player.hasRelic("relic_bankbook")) {
+            player.gainGold(25);
+        }
     }
 
     /**
@@ -108,9 +160,9 @@ public class RelicManager {
      *
      * @param effect 描述（简化版）
      */
-    public void fireCardUsed(String effect) {
+    public void fireCardUsed(Card card, int energyCost) {
         if (!inCombat) return;
-        bus.publish(new OnCardUsed(player.getId(), null, 0));
+        bus.publish(new OnCardUsed(player.getId(), card, energyCost));
     }
 
     /**

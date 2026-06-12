@@ -3,7 +3,9 @@ package com.fabricatedbook.core.action;
 import com.fabricatedbook.core.engine.DamageCalculator;
 import com.fabricatedbook.core.entity.AbstractEntity;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DamageAction — 伤害动作
@@ -30,6 +32,16 @@ public class DamageAction implements CombatAction {
 
     /** 执行完成标志 */
     private boolean finished;
+
+    /** 每个目标实际承受的最终伤害（已计算 Buff，未扣格挡前的攻击数值）。 */
+    private final Map<AbstractEntity, Integer> finalDamageByTarget;
+
+    private DamageModifier damageModifier;
+
+    @FunctionalInterface
+    public interface DamageModifier {
+        int modify(int damage, AbstractEntity source, AbstractEntity target);
+    }
 
     /**
      * 构造伤害动作。
@@ -58,15 +70,21 @@ public class DamageAction implements CombatAction {
         this.baseDamage = Math.max(0, baseDamage);
         this.isMultiHit = isMultiHit;
         this.finished = false;
+        this.finalDamageByTarget = new HashMap<>();
     }
 
     @Override
     public void execute() {
+        finalDamageByTarget.clear();
         for (AbstractEntity target : targets) {
             if (target == null || !target.isAlive()) continue;
 
             // 通过 DamageCalculator 进行 Buff 修正
             int finalDamage = DamageCalculator.calculateDamage(baseDamage, source, target);
+            if (damageModifier != null) {
+                finalDamage = damageModifier.modify(finalDamage, source, target);
+            }
+            finalDamageByTarget.put(target, finalDamage);
 
             // 扣除格挡和生命值
             target.takeDamage(finalDamage);
@@ -99,4 +117,8 @@ public class DamageAction implements CombatAction {
     public List<AbstractEntity> getTargets() { return targets; }
     public int getBaseDamage() { return baseDamage; }
     public boolean isMultiHit() { return isMultiHit; }
+    public Map<AbstractEntity, Integer> getFinalDamageByTarget() { return finalDamageByTarget; }
+    public void setDamageModifier(DamageModifier damageModifier) {
+        this.damageModifier = damageModifier;
+    }
 }

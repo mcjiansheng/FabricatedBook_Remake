@@ -1,6 +1,7 @@
 package com.fabricatedbook.view.ui;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.fabricatedbook.core.buff.BuffHook;
@@ -24,11 +25,14 @@ public class BuffBar extends Group {
      * @param player 玩家实体
      */
     public BuffBar(Player player) {
+        this(player, new BitmapFont());
+    }
+
+    public BuffBar(Player player, BitmapFont font) {
         this.player = player;
 
         buffLabel = new Label("", new Label.LabelStyle(
-                new com.badlogic.gdx.graphics.g2d.BitmapFont(),
-                Color.CYAN));
+                font, Color.CYAN));
         buffLabel.setFontScale(0.9f);
         addActor(buffLabel);
 

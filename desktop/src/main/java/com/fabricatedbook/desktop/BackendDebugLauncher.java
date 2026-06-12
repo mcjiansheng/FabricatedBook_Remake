@@ -49,8 +49,8 @@ public class BackendDebugLauncher {
     }
 
     private void run() {
-        CardPool.getCardsByProfession("warrior");
         player = new Player("debug-player", "调试战士", Profession.WARRIOR);
+        initDebugDeck();
         player.setGold(80);
         levelIndex = 0;
         createMap();
@@ -236,8 +236,29 @@ public class BackendDebugLauncher {
         } else if (type == NodeType.SAFEHOUSE) {
             int healed = player.heal(12);
             println("安全屋: 回复 " + healed + " 生命值。");
+        } else if (type == NodeType.DECISION) {
+            resolveDecision();
         } else {
             resolveEvent();
+        }
+    }
+
+    private void resolveDecision() {
+        println("命运抉择: 迷雾挡住了来路。");
+        println("  1. 前进 - 突破迷雾，继续旅程");
+        println("  2. 回头 - 结束游戏，获得隐藏结局「讲述中断」");
+        println("输入抉择编号，或回车选择 1。");
+        print("decision> ");
+        String line = readLine();
+        if (line == null) {
+            line = "";
+        }
+        int choice = line.trim().isEmpty() ? 1 : parseInt(line.trim(), 1);
+        if (choice == 2) {
+            println("隐藏结局: 讲述中断。");
+            running = false;
+        } else {
+            println("你选择继续前进。");
         }
     }
 
@@ -298,6 +319,7 @@ public class BackendDebugLauncher {
     private void runBattle(NodeType nodeType) {
         List<Enemy> enemies = createEnemies(nodeType);
         CombatEngine engine = new CombatEngine();
+        engine.setBattleNodeType(nodeType);
         engine.setRelicManager(new RelicManager(player));
         engine.setViewNotifier(new ConsoleNotifier());
         engine.initBattle(player, enemies);
@@ -368,9 +390,22 @@ public class BackendDebugLauncher {
             println("用法: play <手牌编号> [敌人编号]");
             return;
         }
-        int cardIndex = parseInt(parts[1], -1) - 1;
-        List<Card> hand = engine.getPlayer().getHand();
-        if (cardIndex < 0 || cardIndex >= hand.size()) {
+        List<Integer> cardIndexes = parseCardIndexes(parts[1]);
+        if (cardIndexes.isEmpty()) {
+            println("用法: play <手牌编号或编号列表> [敌人编号]，例如 play 1 或 play 2,3");
+            return;
+        }
+
+        List<Card> handSnapshot = new ArrayList<>(engine.getPlayer().getHand());
+        for (int cardIndex : cardIndexes) {
+            if (cardIndex < 0 || cardIndex >= handSnapshot.size()) {
+                println("手牌编号无效。");
+                printHand(engine.getPlayer());
+                return;
+            }
+        }
+
+        if (engine.getPlayer().getHand().isEmpty()) {
             println("手牌编号无效。");
             printHand(engine.getPlayer());
             return;
@@ -388,10 +423,21 @@ public class BackendDebugLauncher {
             target = alive.get(targetIndex);
         }
 
-        Card card = hand.get(cardIndex);
-        boolean played = engine.playCard(card, target);
-        if (!played) {
-            println("出牌失败，可能是能量不足或卡牌已不在手牌。");
+        for (int cardIndex : cardIndexes) {
+            Card card = handSnapshot.get(cardIndex);
+            if (!handContainsInstance(engine.getPlayer().getHand(), card)) {
+                println("出牌失败: " + cardLabel(card, handSnapshot)
+                        + " 已不在手牌。");
+                continue;
+            }
+            boolean played = engine.playCard(card, target);
+            if (!played) {
+                println("出牌失败: " + cardLabel(card, handSnapshot)
+                        + "，可能是能量不足或目标无效。");
+            }
+            if (!engine.isInBattle()) {
+                break;
+            }
         }
     }
 
@@ -446,7 +492,7 @@ public class BackendDebugLauncher {
         println("  state              查看战斗状态");
         println("  hand               查看手牌");
         println("  enemies            查看敌人");
-        println("  play <牌> [敌人]    使用手牌，编号从 1 开始");
+        println("  play <牌> [敌人]    使用手牌，编号从 1 开始；多张牌用逗号分隔");
         println("  end                结束当前回合");
         println("  auto               自动打完整场战斗");
         println("  quit               退出调试控制台");
@@ -484,7 +530,7 @@ public class BackendDebugLauncher {
         for (int i = 0; i < p.getHand().size(); i++) {
             Card card = p.getHand().get(i);
             println("  " + (i + 1) + ". [" + card.getCost() + "] "
-                    + card.getName() + " - " + card.getDescription());
+                    + cardLabel(card, p.getHand()) + " - " + card.getDescription());
         }
     }
 
@@ -492,6 +538,29 @@ public class BackendDebugLauncher {
         println("牌堆: 抽牌堆 " + player.getDrawPile().size()
                 + " / 手牌 " + player.getHand().size()
                 + " / 弃牌堆 " + player.getDiscardPile().size());
+    }
+
+    private void initDebugDeck() {
+        addCopiesToDrawPile("war_atk1", 5);
+        addCopiesToDrawPile("war_def1", 5);
+    }
+
+    private void addCopiesToDrawPile(String cardId, int count) {
+        Card source = CardPool.findById(cardId);
+        if (source == null) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            player.getDrawPile().add(copyCard(source));
+        }
+    }
+
+    private Card copyCard(Card source) {
+        return new Card(source.getId(), source.getName(),
+                source.getCost(), source.getDescription(), source.getType(),
+                source.getRarity(), source.getValue(), source.getTargetType(),
+                source.getTargetCount(), new ArrayList<>(source.getEffects()),
+                source.isExhaust(), source.getProfession());
     }
 
     private String shortName(NodeType type) {
@@ -514,6 +583,44 @@ public class BackendDebugLauncher {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+    private List<Integer> parseCardIndexes(String value) {
+        List<Integer> indexes = new ArrayList<>();
+        for (String token : value.split(",")) {
+            int index = parseInt(token.trim(), -1);
+            if (index < 1) {
+                return new ArrayList<>();
+            }
+            indexes.add(index - 1);
+        }
+        return indexes;
+    }
+
+    private String cardLabel(Card card, List<Card> cards) {
+        int sameNameCount = 0;
+        int occurrence = 0;
+        for (Card current : cards) {
+            if (current.getName().equals(card.getName())) {
+                sameNameCount++;
+                if (current == card) {
+                    occurrence = sameNameCount;
+                }
+            }
+        }
+        if (sameNameCount <= 1) {
+            return card.getName();
+        }
+        return card.getName() + "#" + occurrence;
+    }
+
+    private boolean handContainsInstance(List<Card> hand, Card card) {
+        for (Card current : hand) {
+            if (current == card) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String readLine() {

@@ -24,6 +24,13 @@ public class HealAction implements CombatAction {
     /** 实际回血记录 */
     private int actualHeal;
 
+    private HealModifier healModifier;
+
+    @FunctionalInterface
+    public interface HealModifier {
+        int modify(int heal);
+    }
+
     /**
      * 构造回血动作。
      *
@@ -46,6 +53,9 @@ public class HealAction implements CombatAction {
 
         // 计算回血量（未来可在此处应用治疗效果增益）
         int healAmount = baseHeal;
+        if (healModifier != null) {
+            healAmount = healModifier.modify(healAmount);
+        }
 
         // 执行回血
         this.actualHeal = target.heal(healAmount);
@@ -67,4 +77,7 @@ public class HealAction implements CombatAction {
     public AbstractEntity getTarget() { return target; }
     public int getBaseHeal() { return baseHeal; }
     public int getActualHeal() { return actualHeal; }
+    public void setHealModifier(HealModifier healModifier) {
+        this.healModifier = healModifier;
+    }
 }

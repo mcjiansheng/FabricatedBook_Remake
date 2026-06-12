@@ -159,6 +159,8 @@ public abstract class AbstractEntity {
 
     public int getBlock() { return block; }
 
+    public void setBlock(int block) { this.block = Math.max(0, block); }
+
     /**
      * 获得格挡值。
      *

@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.fabricatedbook.core.engine.EnemyActionResolver;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.IntentType;
 
@@ -26,9 +27,10 @@ public class EnemyActor extends Actor {
     private final BitmapFont font;
     private final ShapeRenderer shapeRenderer;
     private Texture sprite;
+    private boolean highlighted;
 
-    public static final float ENEMY_WIDTH = 160;
-    public static final float ENEMY_HEIGHT = 140;
+    public static final float ENEMY_WIDTH = 170;
+    public static final float ENEMY_HEIGHT = 245;
 
     // 敌人名称→图片文件名映射表（英文名→中文图片名）
     private static final Map<String, String> NAME_TO_FILE = new HashMap<>();
@@ -67,6 +69,10 @@ public class EnemyActor extends Actor {
         NAME_TO_FILE.put("幕后黑手", "Puppetmaster");
         NAME_TO_FILE.put("傀儡", "puppet");
         NAME_TO_FILE.put("战士", "Warrior");
+        // 训练假人 fallback（对应 img/train.png）
+        NAME_TO_FILE.put("训练假人", "train");
+        NAME_TO_FILE.put("训练首领", "train");
+        NAME_TO_FILE.put("精英训练假人", "train");
     }
 
     /**
@@ -84,6 +90,10 @@ public class EnemyActor extends Actor {
 
         // 加载对应立绘
         loadSprite();
+    }
+
+    public void setHighlighted(boolean highlighted) {
+        this.highlighted = highlighted;
     }
 
     /** 根据敌人名称加载对应立绘 */
@@ -106,16 +116,26 @@ public class EnemyActor extends Actor {
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
+        if (!enemy.isAlive()) {
+            setVisible(false);
+            return;
+        }
+
         batch.end();
 
         // 绘制血条背景
         shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        if (highlighted) {
+            shapeRenderer.setColor(1f, 0.55f, 0.25f, 0.35f);
+            shapeRenderer.rect(getX() - 12, getY() - 12,
+                    ENEMY_WIDTH + 24, ENEMY_HEIGHT + 24);
+        }
         // 生命值条（红色→绿色根据血量比例）
         float hpRatio = (float) enemy.getHp() / enemy.getMaxHp();
-        float hpBarWidth = ENEMY_WIDTH - 20;
+        float hpBarWidth = ENEMY_WIDTH - 28;
         shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 1f);
-        shapeRenderer.rect(getX() + 10, getY() + 5, hpBarWidth, 8);
+        shapeRenderer.rect(getX() + 14, getY() + 10, hpBarWidth, 9);
         if (hpRatio > 0.5f) {
             shapeRenderer.setColor(0.2f, 0.8f, 0.2f, 1f);
         } else if (hpRatio > 0.25f) {
@@ -123,44 +143,50 @@ public class EnemyActor extends Actor {
         } else {
             shapeRenderer.setColor(0.8f, 0.2f, 0.2f, 1f);
         }
-        shapeRenderer.rect(getX() + 10, getY() + 5, hpBarWidth * hpRatio, 8);
+        shapeRenderer.rect(getX() + 14, getY() + 10, hpBarWidth * hpRatio, 9);
         shapeRenderer.end();
+
+        if (highlighted) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(1f, 0.82f, 0.35f, 1f);
+            shapeRenderer.rect(getX() - 12, getY() - 12,
+                    ENEMY_WIDTH + 24, ENEMY_HEIGHT + 24);
+            shapeRenderer.end();
+        }
 
         batch.begin();
 
         // 绘制敌人立绘
         if (sprite != null) {
-            float sWidth = Math.min(ENEMY_WIDTH - 20, sprite.getWidth());
-            float sHeight = Math.min(ENEMY_HEIGHT - 40, sprite.getHeight());
+            float maxSpriteWidth = ENEMY_WIDTH - 24;
+            float maxSpriteHeight = ENEMY_HEIGHT - 92;
+            float scale = Math.min(maxSpriteWidth / sprite.getWidth(),
+                    maxSpriteHeight / sprite.getHeight());
+            float sWidth = sprite.getWidth() * scale;
+            float sHeight = sprite.getHeight() * scale;
             float sx = getX() + (ENEMY_WIDTH - sWidth) / 2;
-            float sy = getY() + 20;
+            float sy = getY() + 28;
             batch.draw(sprite, sx, sy, sWidth, sHeight);
         }
 
         // 绘制敌人名称
-        font.draw(batch, enemy.getName(), getX() + 10, getY() + ENEMY_HEIGHT - 5);
+        font.draw(batch, enemy.getName(), getX() + 8, getY() + ENEMY_HEIGHT - 6);
 
         // 绘制生命值
         font.draw(batch, enemy.getHp() + "/" + enemy.getMaxHp(),
-                getX() + 10, getY() + ENEMY_HEIGHT - 20);
+                getX() + 8, getY() + ENEMY_HEIGHT - 24);
 
         // 绘制格挡值
         if (enemy.getBlock() > 0) {
-            font.draw(batch, "🛡" + enemy.getBlock(),
-                    getX() + 10, getY() + ENEMY_HEIGHT - 35);
+            font.draw(batch, "格挡 " + enemy.getBlock(),
+                    getX() + 8, getY() + ENEMY_HEIGHT - 42);
         }
 
         // 绘制意图
         IntentType intent = enemy.getIntent();
         if (intent != null && intent != IntentType.UNKNOWN) {
-            String intentStr = switch (intent) {
-                case ATTACK -> "⚔️ 攻击";
-                case DEFEND -> "🛡️ 防御";
-                case BUFF -> "💪 强化";
-                case DEBUFF -> "🟣 诅咒";
-                default -> "";
-            };
-            font.draw(batch, intentStr, getX() + 10, getY() + ENEMY_HEIGHT - 50);
+            String intentStr = EnemyActionResolver.describeIntent(enemy.peekCurrentAction());
+            font.draw(batch, intentStr, getX() + 8, getY() + ENEMY_HEIGHT - 60);
         }
     }
 

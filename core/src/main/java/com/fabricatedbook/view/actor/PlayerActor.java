@@ -23,6 +23,7 @@ public class PlayerActor extends Actor {
     private final BitmapFont font;
     private final ShapeRenderer shapeRenderer;
     private Texture sprite;
+    private boolean highlighted;
 
     public static final float PLAYER_WIDTH = 150;
     public static final float PLAYER_HEIGHT = 180;
@@ -40,6 +41,10 @@ public class PlayerActor extends Actor {
         this.shapeRenderer = renderer;
         setSize(PLAYER_WIDTH, PLAYER_HEIGHT);
         loadSprite();
+    }
+
+    public void setHighlighted(boolean highlighted) {
+        this.highlighted = highlighted;
     }
 
     /** 根据职业加载对应角色立绘 */
@@ -63,6 +68,11 @@ public class PlayerActor extends Actor {
         // 绘制生命条
         shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        if (highlighted) {
+            shapeRenderer.setColor(0.3f, 0.65f, 1f, 0.35f);
+            shapeRenderer.rect(getX() - 12, getY() - 12,
+                    PLAYER_WIDTH + 24, PLAYER_HEIGHT + 24);
+        }
         float hpRatio = (float) player.getHp() / player.getMaxHp();
         float hpBarWidth = PLAYER_WIDTH - 20;
         // 背景
@@ -85,6 +95,14 @@ public class PlayerActor extends Actor {
         }
         shapeRenderer.end();
 
+        if (highlighted) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(0.65f, 0.90f, 1f, 1f);
+            shapeRenderer.rect(getX() - 12, getY() - 12,
+                    PLAYER_WIDTH + 24, PLAYER_HEIGHT + 24);
+            shapeRenderer.end();
+        }
+
         batch.begin();
 
         // 绘制角色立绘
@@ -98,28 +116,28 @@ public class PlayerActor extends Actor {
 
         // 绘制职业名称
         String profName = switch (player.getProfession()) {
-            case WARRIOR -> "🗡️ 战士";
-            case MAGE -> "🔮 法师";
-            case WITCH -> "🧙 女巫";
+            case WARRIOR -> "战士";
+            case MAGE -> "法师";
+            case WITCH -> "女巫";
         };
         font.draw(batch, profName, getX() + 10, getY() + PLAYER_HEIGHT - 5);
 
         // 绘制生命值
-        font.draw(batch, "❤ " + player.getHp() + "/" + player.getMaxHp(),
+        font.draw(batch, "生命 " + player.getHp() + "/" + player.getMaxHp(),
                 getX() + 10, getY() + PLAYER_HEIGHT - 20);
 
         // 绘制格挡
         if (player.getBlock() > 0) {
-            font.draw(batch, "🛡 " + player.getBlock(),
+            font.draw(batch, "格挡 " + player.getBlock(),
                     getX() + 10, getY() + PLAYER_HEIGHT - 35);
         }
 
         // 绘制能量
-        font.draw(batch, "⚡ " + player.getEnergy(),
+        font.draw(batch, "能量 " + player.getEnergy(),
                 getX() + 10, getY() + PLAYER_HEIGHT - 50);
 
         // 绘制金币
-        font.draw(batch, "💰 " + player.getGold(),
+        font.draw(batch, "金币 " + player.getGold(),
                 getX() + 10, getY() + PLAYER_HEIGHT - 65);
     }
 

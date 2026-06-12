@@ -1,9 +1,14 @@
 package com.fabricatedbook.data;
 
 import com.fabricatedbook.core.card.Card;
+import com.fabricatedbook.core.card.CardFactory;
+import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
+import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
+import com.fabricatedbook.core.relic.RelicFactory;
+import com.fabricatedbook.core.relic.RelicManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -45,11 +50,13 @@ public class SaveManager {
         public int currentFloor;
         public int cardCount;
         public List<String> relicIds;
+        public List<String> potionIds;
         public List<SerializableCard> deck;
 
         /** 无参构造（Gson 反序列化需要） */
         public SaveData() {
             this.relicIds = new ArrayList<>();
+            this.potionIds = new ArrayList<>();
             this.deck = new ArrayList<>();
         }
     }
@@ -104,6 +111,10 @@ public class SaveManager {
             // 保存藏品 ID
             for (Relic relic : player.getRelics()) {
                 data.relicIds.add(relic.getId());
+            }
+
+            for (Potion potion : player.getPotions()) {
+                data.potionIds.add(potion.getId());
             }
 
             // 保存卡牌组（从drawPile+hand+discardPile）
@@ -168,21 +179,48 @@ public class SaveManager {
             // 恢复玩家
             Profession profession = Profession.valueOf(data.profession);
             Player player = new Player(data.playerId, data.playerName, profession);
-            player.setHp(Math.min(data.hp, data.maxHp));
             player.setMaxHp(data.maxHp);
+            player.setHp(Math.min(data.hp, data.maxHp));
             player.setGold(data.gold);
             player.setCurrentFloor(data.currentFloor);
             player.setCardCount(data.cardCount);
 
             // 恢复卡牌组到抽牌堆
             for (SerializableCard sc : data.deck) {
-                Card.CardType type = Card.CardType.valueOf(sc.type);
-                Card.Rarity rarity = Card.Rarity.valueOf(sc.rarity);
-                Card.TargetType targetType = Card.TargetType.valueOf(sc.targetType);
-                Card card = new Card(sc.id, sc.name, sc.cost, sc.description,
-                        type, rarity, sc.value, targetType, 1,
-                        new ArrayList<>(), sc.exhaust, data.profession.toLowerCase());
-                player.getDrawPile().add(card);
+                Card template = CardPool.findById(sc.id);
+                if (template != null) {
+                    player.getDrawPile().add(CardFactory.createFromTemplate(template));
+                } else {
+                    Card.CardType type = Card.CardType.valueOf(sc.type);
+                    Card.Rarity rarity = Card.Rarity.valueOf(sc.rarity);
+                    Card.TargetType targetType = Card.TargetType.valueOf(sc.targetType);
+                    Card card = new Card(sc.id, sc.name, sc.cost, sc.description,
+                            type, rarity, sc.value, targetType, 1,
+                            new ArrayList<>(), sc.exhaust, data.profession.toLowerCase());
+                    player.getDrawPile().add(card);
+                }
+            }
+
+            if (data.relicIds != null) {
+                for (String relicId : data.relicIds) {
+                    Relic relic = RelicFactory.createById(relicId, player);
+                    if (relic != null) {
+                        player.addRelic(relic);
+                    }
+                }
+                player.setHp(Math.min(data.hp, player.getMaxHp()));
+            }
+
+            if (data.potionIds != null) {
+                List<Potion> potions = new DataLoader().loadPotions();
+                for (String potionId : data.potionIds) {
+                    for (Potion potion : potions) {
+                        if (potion.getId().equals(potionId)) {
+                            player.addPotion(potion.copy());
+                            break;
+                        }
+                    }
+                }
             }
 
             System.out.println("[SaveManager] 读档成功: " + SAVE_FILE);
