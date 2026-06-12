@@ -104,15 +104,28 @@ public final class EnemyActionResolver {
                 return describeAttackNumber(numPart);
             }
             if (actionId.startsWith("def")) {
-                return "防御 " + actionId.substring(3);
+                return describeBlockNumber(actionId.substring(3));
             }
             if (actionId.startsWith("block")) {
-                return "防御 " + actionId.substring(5);
+                return describeBlockNumber(actionId.substring(5));
             }
         } catch (Exception ignored) {
             return null;
         }
         return null;
+    }
+
+    private static String describeBlockNumber(String numPart) {
+        if (numPart == null || numPart.isBlank()) return null;
+        String normalized = numPart;
+        while (normalized.startsWith("_")) {
+            normalized = normalized.substring(1);
+        }
+        if (normalized.startsWith("block_")) {
+            normalized = normalized.substring("block_".length());
+        }
+        if (!isInteger(normalized)) return null;
+        return "防御 " + normalized;
     }
 
     private static String describeAttackNumber(String numPart) {

@@ -67,6 +67,7 @@ public class FabricBookGame extends Game {
                 + "点击可进入拖动地图第层开始当前层效果无"
                 + "继续前进离开商店胜利返回地图失败重新开始"
                 + "意图多段诅咒强化"
+                + "未发现额外物品跳过藏品掉落战斗失败"
                 + "，。、；：！？（）【】《》“”‘’—…·～/=+*#@&%￥①②③④⑤";
         font = generator.generateFont(parameter);
         generator.dispose();

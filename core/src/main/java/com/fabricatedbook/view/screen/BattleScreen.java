@@ -37,7 +37,6 @@ import com.fabricatedbook.view.actor.EnemyActor;
 import com.fabricatedbook.view.actor.PlayerActor;
 import com.fabricatedbook.view.ui.HandPanel;
 import com.fabricatedbook.view.ui.EnergyBar;
-import com.fabricatedbook.view.ui.BuffBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +66,6 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     // UI 组件
     private HandPanel handPanel;
     private EnergyBar energyBar;
-    private BuffBar buffBar;
     private PlayerActor playerActor;
     private List<EnemyActor> enemyActors;
     private Label statusLabel;
@@ -157,11 +155,6 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 FabricBookGame.SCREEN_HEIGHT - 62);
         stage.addActor(energyBar);
 
-        // Buff 栏
-        buffBar = new BuffBar(player, game.getFont());
-        buffBar.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 62);
-        stage.addActor(buffBar);
-
         // 状态信息
         statusLabel = new Label("", new Label.LabelStyle(
                 game.getFont(), com.badlogic.gdx.graphics.Color.WHITE));
@@ -201,7 +194,6 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         // UI 更新
         energyBar.update();
-        buffBar.update();
         handPanel.update();
 
         stage.act(delta);
@@ -231,7 +223,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             showRewardModal(reward);
         } else {
             statusLabel.setText("失败...");
-            showResultButton(false);
+            showDefeatModal();
         }
     }
 
@@ -239,7 +231,6 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     public void onTurnStart(int turnNumber) {
         turnLabel.setText("回合 " + turnNumber);
         energyBar.update();
-        buffBar.update();
     }
 
     @Override
@@ -501,6 +492,59 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         stage.addActor(button);
     }
 
+    private void showDefeatModal() {
+        if (resultShown) return;
+        resultShown = true;
+        clearTargetHighlight();
+
+        Group modal = new Group();
+        modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
+        stage.addActor(modal);
+
+        Actor backdrop = new Actor() {
+            @Override
+            public void draw(com.badlogic.gdx.graphics.g2d.Batch batch,
+                             float parentAlpha) {
+                batch.end();
+                shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                shapeRenderer.setColor(0f, 0f, 0f, 0.66f);
+                shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH,
+                        FabricBookGame.SCREEN_HEIGHT);
+                shapeRenderer.setColor(0.12f, 0.11f, 0.09f, 0.96f);
+                shapeRenderer.rect(315, 185, 650, 330);
+                shapeRenderer.end();
+                batch.begin();
+            }
+        };
+        backdrop.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
+        modal.addActor(backdrop);
+
+        Table table = new Table();
+        table.setFillParent(true);
+        table.center();
+        modal.addActor(table);
+
+        Label title = new Label("战斗失败", new Label.LabelStyle(game.getFont(), Color.GOLD));
+        title.setFontScale(1.8f);
+        table.add(title).padBottom(42);
+        table.row();
+
+        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
+        style.font = game.getFont();
+        style.fontColor = Color.WHITE;
+        TextButton restart = new TextButton("重新开始", style);
+        restart.addListener(new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
+                                float x, float y) {
+                game.setScreen(new TitleScreen(game));
+            }
+        });
+        table.add(restart).width(220).height(54);
+        modal.toFront();
+    }
+
     private void showRewardModal(String rewardText) {
         if (resultShown) return;
         resultShown = true;
@@ -551,6 +595,9 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.font = game.getFont();
         pendingExtraRewardsText = applyExtraRewards();
+        if (pendingExtraRewardsText.isBlank()) {
+            pendingExtraRewardsText = "未发现额外物品";
+        }
         Label extras = new Label(pendingExtraRewardsText, new Label.LabelStyle(
                 game.getFont(), Color.LIGHT_GRAY));
         extras.setWrap(true);
@@ -625,7 +672,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.font = game.getFont();
-        TextButton skipCard = new TextButton("跳过卡牌", buttonStyle);
+        buttonStyle.fontColor = Color.WHITE;
+        TextButton skipCard = new TextButton("跳过", buttonStyle);
         skipCard.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
@@ -634,7 +682,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 returnToMapAfterReward();
             }
         });
-        table.add(skipCard).colspan(3).width(190).height(48).padTop(36);
+        table.add(skipCard).colspan(3).width(150).height(48).padTop(36);
         modal.toFront();
     }
 
@@ -663,24 +711,19 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             Relic relic = RelicFactory.randomRelic(player, false);
             if (relic != null) {
                 new RelicManager(player).addRelic(relic);
-                sb.append("藏品掉落：").append(relic.getName()).append("  ");
-            } else {
-                sb.append("藏品掉落：无  ");
+                sb.append("藏品：").append(relic.getName());
             }
-        } else {
-            sb.append("藏品掉落：无  ");
         }
         if (random.nextFloat() < 0.45f) {
             List<Potion> potions = new com.fabricatedbook.data.DataLoader().loadPotions();
             if (!potions.isEmpty() && player.canAddPotion()) {
                 Potion potion = potions.get(random.nextInt(potions.size())).copy();
                 player.addPotion(potion);
-                sb.append("药水掉落：").append(potion.getName());
-            } else {
-                sb.append("药水掉落：无");
+                if (!sb.isEmpty()) {
+                    sb.append("\n");
+                }
+                sb.append("药水：").append(potion.getName());
             }
-        } else {
-            sb.append("药水掉落：无");
         }
         return sb.toString();
     }

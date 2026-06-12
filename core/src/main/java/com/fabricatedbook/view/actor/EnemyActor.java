@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.fabricatedbook.core.buff.BuffHook;
 import com.fabricatedbook.core.engine.EnemyActionResolver;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.IntentType;
@@ -28,6 +29,8 @@ public class EnemyActor extends Actor {
     private final ShapeRenderer shapeRenderer;
     private Texture sprite;
     private boolean highlighted;
+    private final Map<String, Texture> buffIcons = new HashMap<>();
+    private final Map<IntentType, Texture> intentIcons = new HashMap<>();
 
     public static final float ENEMY_WIDTH = 170;
     public static final float ENEMY_HEIGHT = 245;
@@ -90,6 +93,37 @@ public class EnemyActor extends Actor {
 
         // 加载对应立绘
         loadSprite();
+        loadIntentIcons();
+        loadBuffIcons();
+    }
+
+    private void loadIntentIcons() {
+        loadIntentIcon(IntentType.ATTACK, "atk");
+        loadIntentIcon(IntentType.DEFEND, "def");
+        loadIntentIcon(IntentType.BUFF, "inc");
+        loadIntentIcon(IntentType.DEBUFF, "weak");
+        loadIntentIcon(IntentType.UNKNOWN, "ukn");
+    }
+
+    private void loadIntentIcon(IntentType intentType, String fileName) {
+        try {
+            intentIcons.put(intentType, new Texture("img/" + fileName + ".png"));
+        } catch (Exception ignored) {
+            // Text fallback is drawn if the image is missing.
+        }
+    }
+
+    private void loadBuffIcons() {
+        String[] names = {"Poison", "Fragile", "Weak", "Withering", "Strength",
+                "Resistance", "Armor", "BlockIncrease", "BlockReduction",
+                "Dizziness", "ExtraEnergy", "Undead"};
+        for (String name : names) {
+            try {
+                buffIcons.put(name, new Texture("img/" + buffIconFile(name) + ".png"));
+            } catch (Exception ignored) {
+                // Missing icons fall back to text in drawBuffs.
+            }
+        }
     }
 
     public void setHighlighted(boolean highlighted) {
@@ -174,25 +208,92 @@ public class EnemyActor extends Actor {
             batch.draw(sprite, sx, sy, sWidth, sHeight);
         }
 
-        // 绘制敌人名称、数值与意图
+        // 绘制敌人名称、意图、生命和状态。后端 action id 不直接露出。
         font.draw(batch, enemy.getName(), getX() + 8, getY() + ENEMY_HEIGHT - 8);
-        font.draw(batch, "hp: " + enemy.getHp() + "/" + enemy.getMaxHp(),
-                getX() + 8, getY() + ENEMY_HEIGHT - 28);
-        if (enemy.getBlock() > 0) {
-            font.draw(batch, "格挡 " + enemy.getBlock(),
-                    getX() + 8, getY() + ENEMY_HEIGHT - 48);
-        }
+        drawIntent(batch);
 
-        IntentType intent = enemy.getIntent();
-        String intentStr = intent != null
-                ? EnemyActionResolver.describeIntent(enemy.peekCurrentAction())
-                : "未知";
-        font.draw(batch, intentStr, getX() + 8, getY() + ENEMY_HEIGHT - 68);
         font.draw(batch, enemy.getHp() + "/" + enemy.getMaxHp(),
                 getX() + 44, getY() + 22);
         if (enemy.getBlock() > 0) {
             font.draw(batch, String.valueOf(enemy.getBlock()), getX() + 44, getY() + 36);
         }
+        drawBuffs(batch);
+    }
+
+    private void drawIntent(Batch batch) {
+        IntentType intent = enemy.getIntent() != null ? enemy.getIntent() : IntentType.UNKNOWN;
+        Texture icon = intentIcons.getOrDefault(intent, intentIcons.get(IntentType.UNKNOWN));
+        float iconX = getX() + ENEMY_WIDTH / 2f - 24;
+        float iconY = getY() + ENEMY_HEIGHT - 64;
+        if (icon != null) {
+            batch.draw(icon, iconX, iconY, 32, 32);
+        }
+        String detail = intentDetail(EnemyActionResolver.describeIntent(enemy.peekCurrentAction()));
+        if (!detail.isBlank()) {
+            font.draw(batch, detail, iconX + 38, iconY + 23);
+        }
+    }
+
+    private String intentDetail(String description) {
+        if (description == null || description.isBlank()) return "";
+        String cleaned = description
+                .replace("攻击", "")
+                .replace("防御", "")
+                .replace("强化", "")
+                .replace("削弱", "")
+                .replace("未知", "")
+                .replace("回复", "")
+                .replace("群体", "")
+                .replace("/", "")
+                .trim();
+        return cleaned.length() > 12 ? cleaned.substring(0, 12) : cleaned;
+    }
+
+    private void drawBuffs(Batch batch) {
+        float x = getX() + 12;
+        float y = getY() - 30;
+        int shown = 0;
+        for (BuffHook buff : enemy.getBuffs()) {
+            if (buff.getStack() <= 0) continue;
+            Texture icon = buffIcons.get(buff.getBuffName());
+            float iconX = x + shown * 38f;
+            if (icon != null) {
+                batch.draw(icon, iconX, y, 26, 26);
+            } else {
+                font.draw(batch, buffLabel(buff.getBuffName()), iconX, y + 22);
+            }
+            font.draw(batch, String.valueOf(buff.getStack()), iconX + 20, y + 10);
+            shown++;
+        }
+    }
+
+    private String buffIconFile(String buffName) {
+        return switch (buffName) {
+            case "Poison" -> "poisoning";
+            case "Fragile" -> "fragile";
+            case "Weak" -> "weak";
+            case "Withering" -> "withering";
+            case "Strength" -> "strength";
+            case "Resistance" -> "resistance";
+            case "Armor" -> "armor";
+            case "BlockIncrease" -> "block_increase";
+            case "BlockReduction" -> "block_reduction";
+            case "Dizziness" -> "dizziness";
+            case "ExtraEnergy" -> "extra_energy";
+            case "Undead" -> "undead";
+            default -> "ukn";
+        };
+    }
+
+    private String buffLabel(String buffName) {
+        return switch (buffName) {
+            case "Poison" -> "毒";
+            case "Fragile" -> "脆";
+            case "Weak" -> "弱";
+            case "Withering" -> "凋";
+            case "Strength" -> "力";
+            default -> "?";
+        };
     }
 
     /**
@@ -200,5 +301,11 @@ public class EnemyActor extends Actor {
      */
     public void dispose() {
         if (sprite != null) sprite.dispose();
+        for (Texture texture : intentIcons.values()) {
+            texture.dispose();
+        }
+        for (Texture texture : buffIcons.values()) {
+            texture.dispose();
+        }
     }
 }

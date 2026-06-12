@@ -5,8 +5,11 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.fabricatedbook.core.buff.BuffHook;
 import com.fabricatedbook.core.entity.Player;
-import com.fabricatedbook.core.entity.Profession;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * PlayerActor — 玩家 Actor
@@ -24,6 +27,7 @@ public class PlayerActor extends Actor {
     private final ShapeRenderer shapeRenderer;
     private Texture sprite;
     private boolean highlighted;
+    private final Map<String, Texture> buffIcons = new HashMap<>();
 
     public static final float PLAYER_WIDTH = 150;
     public static final float PLAYER_HEIGHT = 180;
@@ -41,6 +45,20 @@ public class PlayerActor extends Actor {
         this.shapeRenderer = renderer;
         setSize(PLAYER_WIDTH, PLAYER_HEIGHT);
         loadSprite();
+        loadBuffIcons();
+    }
+
+    private void loadBuffIcons() {
+        String[] names = {"Poison", "Fragile", "Weak", "Withering", "Strength",
+                "Resistance", "Armor", "BlockIncrease", "BlockReduction",
+                "Dizziness", "ExtraEnergy", "Undead"};
+        for (String name : names) {
+            try {
+                buffIcons.put(name, new Texture("img/" + buffIconFile(name) + ".png"));
+            } catch (Exception ignored) {
+                // Missing icons fall back to text in drawBuffs.
+            }
+        }
     }
 
     public void setHighlighted(boolean highlighted) {
@@ -120,6 +138,54 @@ public class PlayerActor extends Actor {
             font.draw(batch, String.valueOf(player.getBlock()),
                     getX() + 42, getY() + 31);
         }
+        drawBuffs(batch);
+    }
+
+    private void drawBuffs(Batch batch) {
+        float x = getX() + 8;
+        float y = getY() - 30;
+        int shown = 0;
+        for (BuffHook buff : player.getBuffs()) {
+            if (buff.getStack() <= 0) continue;
+            Texture icon = buffIcons.get(buff.getBuffName());
+            float iconX = x + shown * 38f;
+            if (icon != null) {
+                batch.draw(icon, iconX, y, 26, 26);
+            } else {
+                font.draw(batch, buffLabel(buff.getBuffName()), iconX, y + 22);
+            }
+            font.draw(batch, String.valueOf(buff.getStack()), iconX + 20, y + 10);
+            shown++;
+        }
+    }
+
+    private String buffIconFile(String buffName) {
+        return switch (buffName) {
+            case "Poison" -> "poisoning";
+            case "Fragile" -> "fragile";
+            case "Weak" -> "weak";
+            case "Withering" -> "withering";
+            case "Strength" -> "strength";
+            case "Resistance" -> "resistance";
+            case "Armor" -> "armor";
+            case "BlockIncrease" -> "block_increase";
+            case "BlockReduction" -> "block_reduction";
+            case "Dizziness" -> "dizziness";
+            case "ExtraEnergy" -> "extra_energy";
+            case "Undead" -> "undead";
+            default -> "ukn";
+        };
+    }
+
+    private String buffLabel(String buffName) {
+        return switch (buffName) {
+            case "Poison" -> "毒";
+            case "Fragile" -> "脆";
+            case "Weak" -> "弱";
+            case "Withering" -> "凋";
+            case "Strength" -> "力";
+            default -> "?";
+        };
     }
 
     /**
@@ -127,5 +193,8 @@ public class PlayerActor extends Actor {
      */
     public void dispose() {
         if (sprite != null) sprite.dispose();
+        for (Texture texture : buffIcons.values()) {
+            texture.dispose();
+        }
     }
 }

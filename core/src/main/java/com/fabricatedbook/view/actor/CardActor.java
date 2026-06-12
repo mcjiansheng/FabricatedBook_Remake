@@ -63,6 +63,7 @@ public class CardActor extends Actor {
         String iconFile = "img/ukn.png";
         if (card.getType() == Card.CardType.ATTACK) iconFile = "img/atk.png";
         else if (card.getType() == Card.CardType.DEFENSE) iconFile = "img/def.png";
+        else if (card.getType() == Card.CardType.SKILL) iconFile = "img/inc.png";
         try {
             typeIcon = new Texture(iconFile);
         } catch (Exception e) {
@@ -216,7 +217,10 @@ public class CardActor extends Actor {
 
         batch.begin();
         Color oldColor = font.getColor().cpy();
+        float oldScaleX = font.getData().scaleX;
+        float oldScaleY = font.getData().scaleY;
         font.setColor(0.12f, 0.10f, 0.08f, 1f);
+        font.getData().setScale(0.78f * scale);
 
         // 绘制类型图标
         if (typeIcon != null) {
@@ -228,22 +232,46 @@ public class CardActor extends Actor {
         font.draw(batch, card.getName(), drawX + 32 * scale, drawY + visualHeight - 10 * scale);
 
         // 绘制消耗
-        font.draw(batch, "费用 " + card.getCost(), drawX + 8 * scale,
+        font.draw(batch, "用 " + card.getCost(), drawX + 8 * scale,
                 drawY + visualHeight - 42 * scale);
 
         // 绘制描述
         String desc = card.getDescription();
         if (desc != null) {
-            font.draw(batch, desc, drawX + 8 * scale, drawY + visualHeight - 72 * scale,
-                    visualWidth - 16 * scale, com.badlogic.gdx.utils.Align.left, true);
+            float lineY = drawY + visualHeight - 70 * scale;
+            for (String line : wrapLines(desc, 8, 5)) {
+                font.draw(batch, line, drawX + 8 * scale, lineY);
+                lineY -= 18 * scale;
+            }
         }
 
         // 绘制价值/稀有度
         if (card.getValue() > 0) {
-            font.draw(batch, "价值 " + card.getValue(), drawX + 8 * scale,
+            font.draw(batch, "值 " + card.getValue(), drawX + 8 * scale,
                     drawY + 14 * scale);
         }
         font.setColor(oldColor);
+        font.getData().setScale(oldScaleX, oldScaleY);
+    }
+
+    private String[] wrapLines(String text, int maxChars, int maxLines) {
+        String normalized = text.replace("，", ",").replace("。", ".")
+                .replace("；", ";").replace("：", ":").trim();
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        int start = 0;
+        while (start < normalized.length() && lines.size() < maxLines) {
+            int end = Math.min(normalized.length(), start + maxChars);
+            lines.add(normalized.substring(start, end));
+            start = end;
+        }
+        if (start < normalized.length() && !lines.isEmpty()) {
+            int last = lines.size() - 1;
+            String current = lines.get(last);
+            lines.set(last, current.length() > 1
+                    ? current.substring(0, current.length() - 1) + "..."
+                    : "...");
+        }
+        return lines.toArray(new String[0]);
     }
 
     private Color borderColor() {
