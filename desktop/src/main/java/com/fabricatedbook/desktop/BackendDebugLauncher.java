@@ -534,10 +534,15 @@ public class BackendDebugLauncher {
         List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
         List<DataLoader.EnemyGroup> matched = new ArrayList<>();
         for (DataLoader.EnemyGroup group : groups) {
-            if (nodeType == NodeType.BOSS && group.isBoss()) {
+            if (matchesNodeType(group, nodeType)) {
                 matched.add(group);
-            } else if (nodeType != NodeType.BOSS && !group.isBoss()) {
-                matched.add(group);
+            }
+        }
+        if (matched.isEmpty() && nodeType == NodeType.EMERGENCY) {
+            for (DataLoader.EnemyGroup group : groups) {
+                if (!group.isBoss() && !isEmergencyGroup(group)) {
+                    matched.add(group);
+                }
             }
         }
         if (!matched.isEmpty()) {
@@ -570,6 +575,23 @@ public class BackendDebugLauncher {
         }
         println("未找到 JSON 敌人组，使用 fallback 调试敌人。");
         return fallback;
+    }
+
+    private boolean matchesNodeType(DataLoader.EnemyGroup group, NodeType nodeType) {
+        boolean emergency = isEmergencyGroup(group);
+        if (nodeType == NodeType.BOSS) {
+            return group.isBoss();
+        }
+        if (nodeType == NodeType.EMERGENCY) {
+            return !group.isBoss() && emergency;
+        }
+        return !group.isBoss() && !emergency;
+    }
+
+    private boolean isEmergencyGroup(DataLoader.EnemyGroup group) {
+        String id = group.getId() == null ? "" : group.getId().toLowerCase();
+        String name = group.getName() == null ? "" : group.getName();
+        return id.contains("emergency") || name.contains("紧急");
     }
 
     private static int totalHp(DataLoader.EnemyGroup group) {

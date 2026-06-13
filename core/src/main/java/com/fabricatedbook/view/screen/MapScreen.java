@@ -561,14 +561,21 @@ public class MapScreen implements Screen {
         int level = currentLayerIdx + 1;
         List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
 
-        // 筛选匹配的怪物组
+        // 筛选匹配的怪物组。普通战斗不能混入 emergency 专用组。
         List<DataLoader.EnemyGroup> matched = new ArrayList<>();
         for (DataLoader.EnemyGroup group : groups) {
-            boolean isBossGroup = group.isBoss();
-            if (nodeType == BOSS && isBossGroup) {
-                matched.add(group);
-            } else if (nodeType != BOSS && !isBossGroup) {
-                matched.add(group);
+            if (!matchesNodeType(group, nodeType)) {
+                continue;
+            }
+            matched.add(group);
+        }
+
+        // 如果紧急作战暂时没有专用组，才退回到非 Boss 高 HP 组。
+        if (matched.isEmpty() && nodeType == EMERGENCY) {
+            for (DataLoader.EnemyGroup group : groups) {
+                if (!group.isBoss() && !isEmergencyGroup(group)) {
+                    matched.add(group);
+                }
             }
         }
 
@@ -604,23 +611,33 @@ public class MapScreen implements Screen {
             if (fallbackLevel < 1 || fallbackLevel > 5) continue;
             List<DataLoader.EnemyGroup> fbGroups = loader.loadMonsters(fallbackLevel);
             for (DataLoader.EnemyGroup group : fbGroups) {
-                boolean isBossGroup = group.isBoss();
-                if (nodeType == BOSS && isBossGroup) {
-                    if (group.getEnemies() != null && !group.getEnemies().isEmpty()) {
-                        List<Enemy> enemies = new ArrayList<>();
-                        for (DataLoader.EnemyData data : group.getEnemies()) {
-                            enemies.add(data.toEnemy());
-                        }
-                        return enemies;
+                if (!matchesNodeType(group, nodeType)) {
+                    continue;
+                }
+                if (group.getEnemies() != null && !group.getEnemies().isEmpty()) {
+                    List<Enemy> enemies = new ArrayList<>();
+                    for (DataLoader.EnemyData data : group.getEnemies()) {
+                        enemies.add(data.toEnemy());
                     }
-                } else if (nodeType != BOSS && !isBossGroup) {
-                    if (group.getEnemies() != null && !group.getEnemies().isEmpty()) {
-                        List<Enemy> enemies = new ArrayList<>();
-                        for (DataLoader.EnemyData data : group.getEnemies()) {
-                            enemies.add(data.toEnemy());
-                        }
-                        return enemies;
+                    return enemies;
+                }
+            }
+        }
+
+        if (nodeType == EMERGENCY) {
+            for (int fallbackLevel : new int[]{level - 1, level + 1}) {
+                if (fallbackLevel < 1 || fallbackLevel > 5) continue;
+                List<DataLoader.EnemyGroup> fbGroups = loader.loadMonsters(fallbackLevel);
+                for (DataLoader.EnemyGroup group : fbGroups) {
+                    if (group.isBoss() || isEmergencyGroup(group)
+                            || group.getEnemies() == null || group.getEnemies().isEmpty()) {
+                        continue;
                     }
+                    List<Enemy> enemies = new ArrayList<>();
+                    for (DataLoader.EnemyData data : group.getEnemies()) {
+                        enemies.add(data.toEnemy());
+                    }
+                    return enemies;
                 }
             }
         }
@@ -649,6 +666,23 @@ public class MapScreen implements Screen {
             total += data.getMaxHp();
         }
         return total;
+    }
+
+    private static boolean matchesNodeType(DataLoader.EnemyGroup group, int nodeType) {
+        boolean emergency = isEmergencyGroup(group);
+        if (nodeType == BOSS) {
+            return group.isBoss();
+        }
+        if (nodeType == EMERGENCY) {
+            return !group.isBoss() && emergency;
+        }
+        return !group.isBoss() && !emergency;
+    }
+
+    private static boolean isEmergencyGroup(DataLoader.EnemyGroup group) {
+        String id = group.getId() == null ? "" : group.getId().toLowerCase();
+        String name = group.getName() == null ? "" : group.getName();
+        return id.contains("emergency") || name.contains("紧急");
     }
 
     private String randomEventName() {

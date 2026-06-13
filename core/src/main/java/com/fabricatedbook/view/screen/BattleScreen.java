@@ -349,14 +349,14 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         Card card = actor.getCard();
         if (targetsSelf(card)) {
             playerActor.setHighlighted(true);
-            statusLabel.setText("目标：自己");
+            statusLabel.setText("");
         } else if (targetsAllEnemies(card)) {
             for (EnemyActor enemyActor : enemyActors) {
                 if (enemyActor.getEnemy().isAlive()) {
                     enemyActor.setHighlighted(true);
                 }
             }
-            statusLabel.setText("目标：所有敌人");
+            statusLabel.setText("");
         } else {
             EnemyActor targetActor = enemyActorAt(stageX, stageY);
             if (targetActor != null) {
@@ -564,8 +564,11 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 shapeRenderer.setColor(0f, 0f, 0f, 0.62f);
                 shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH,
                         FabricBookGame.SCREEN_HEIGHT);
-                shapeRenderer.setColor(0.12f, 0.11f, 0.09f, 0.96f);
-                shapeRenderer.rect(240, 120, 800, 480);
+                shapeRenderer.setColor(0.78f, 0.78f, 0.78f, 1f);
+                shapeRenderer.rect(170, 80, 940, 560);
+                shapeRenderer.setColor(Color.WHITE);
+                shapeRenderer.rect(510, 330, 260, 58);
+                shapeRenderer.rect(510, 258, 260, 58);
                 shapeRenderer.end();
                 batch.begin();
             }
@@ -575,36 +578,41 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         Table table = new Table();
         table.setFillParent(true);
-        table.top().padTop(185);
+        table.top().padTop(150);
         modal.addActor(table);
 
-        Label title = new Label("战斗奖励", new Label.LabelStyle(
+        Label title = new Label("胜利", new Label.LabelStyle(
                 game.getFont(), Color.GOLD));
         title.setFontScale(1.8f);
-        table.add(title).colspan(3).padBottom(18);
+        table.add(title).padBottom(70);
         table.row();
 
         int gainedGold = Math.max(0, player.getGold() - goldAtBattleStart);
-        String rewardLine = gainedGold > 0
-                ? "金币 +" + gainedGold
-                : (rewardText != null ? rewardText : "战斗胜利");
-        table.add(new Label(rewardLine, new Label.LabelStyle(
-                game.getFont(), Color.WHITE))).padBottom(30);
+        Label goldLabel = new Label("金币：" + gainedGold,
+                new Label.LabelStyle(game.getFont(), Color.GOLD));
+        table.add(goldLabel).width(260).height(58).padBottom(14);
         table.row();
+
+        Label cardLabel = new Label("一张卡牌",
+                new Label.LabelStyle(game.getFont(), Color.BLACK));
+        table.add(cardLabel).width(260).height(58).padBottom(14);
+        table.row();
+
+        pendingExtraRewardsText = applyExtraRewards();
+        for (String extra : pendingExtraRewardsText.split("\\n")) {
+            if (extra.isBlank()) {
+                continue;
+            }
+            Label extraLabel = new Label(extra, new Label.LabelStyle(
+                    game.getFont(), extra.startsWith("药水") ? Color.BLACK : Color.GOLD));
+            table.add(extraLabel).width(300).height(34).padBottom(4);
+            table.row();
+        }
 
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.font = game.getFont();
-        pendingExtraRewardsText = applyExtraRewards();
-        if (pendingExtraRewardsText.isBlank()) {
-            pendingExtraRewardsText = "未发现额外物品";
-        }
-        Label extras = new Label(pendingExtraRewardsText, new Label.LabelStyle(
-                game.getFont(), Color.LIGHT_GRAY));
-        extras.setWrap(true);
-        table.add(extras).width(520).padBottom(48);
-        table.row();
-
-        TextButton continueButton = new TextButton("选择卡牌", buttonStyle);
+        buttonStyle.fontColor = Color.WHITE;
+        TextButton continueButton = new TextButton("继续", buttonStyle);
         continueButton.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
@@ -613,7 +621,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 showCardRewardSelection();
             }
         });
-        table.add(continueButton).width(220).height(52);
+        table.add(continueButton).width(220).height(52).padTop(42);
         modal.toFront();
     }
 

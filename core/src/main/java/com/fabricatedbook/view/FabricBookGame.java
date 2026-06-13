@@ -49,7 +49,7 @@ public class FabricBookGame extends Game {
         FreeTypeFontParameter parameter = new FreeTypeFontParameter();
         parameter.size = 18;
         // 包含中英文全部字符（从字体文件读取所有可用字符）
-        parameter.characters = FreeTypeFontGenerator.DEFAULT_CHARS
+        parameter.characters = buildFontCharacters(FreeTypeFontGenerator.DEFAULT_CHARS
                 + "的一是不了人我在有他这为之大小个中上国到来时出可"
                 + "以发会子得要于对生下也而就年过后作里用道行所"
                 + "然家种事成方多如学日关前回到长又月入进同面都各"
@@ -68,7 +68,7 @@ public class FabricBookGame extends Game {
                 + "继续前进离开商店胜利返回地图失败重新开始"
                 + "意图多段诅咒强化"
                 + "未发现额外物品跳过藏品掉落战斗失败"
-                + "，。、；：！？（）【】《》“”‘’—…·～/=+*#@&%￥①②③④⑤";
+                + "，。、；：！？（）【】《》“”‘’—…·～/=+*#@&%￥①②③④⑤");
         font = generator.generateFont(parameter);
         generator.dispose();
         dataLoader = new DataLoader("data/");
@@ -101,4 +101,34 @@ public class FabricBookGame extends Game {
     public BitmapFont getFont() { return font; }
     public DataLoader getDataLoader() { return dataLoader; }
     public SaveManager getSaveManager() { return saveManager; }
+
+    private String buildFontCharacters(String baseCharacters) {
+        StringBuilder builder = new StringBuilder(baseCharacters);
+        appendResourceText(builder, "data/cards/warrior.json");
+        appendResourceText(builder, "data/relics.json");
+        appendResourceText(builder, "data/potions.json");
+        appendResourceText(builder, "data/events.json");
+        appendResourceText(builder, "data/maps/levels.json");
+        for (int i = 1; i <= 5; i++) {
+            appendResourceText(builder, "data/monsters/level" + i + ".json");
+        }
+        String raw = builder.toString();
+        StringBuilder unique = new StringBuilder();
+        java.util.HashSet<Character> seen = new java.util.HashSet<>();
+        for (int i = 0; i < raw.length(); i++) {
+            char ch = raw.charAt(i);
+            if (seen.add(ch)) {
+                unique.append(ch);
+            }
+        }
+        return unique.toString();
+    }
+
+    private void appendResourceText(StringBuilder builder, String path) {
+        try {
+            builder.append(Gdx.files.classpath(path).readString("UTF-8"));
+        } catch (Exception ignored) {
+            // Font generation should not fail just because an optional data file is absent.
+        }
+    }
 }
