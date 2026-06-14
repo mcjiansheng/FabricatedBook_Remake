@@ -152,9 +152,13 @@ public class MapScreen implements Screen {
     private float layerIntroTimer;
 
     public MapScreen(FabricBookGame game, Player player) {
+        this(game, player, 1);
+    }
+
+    public MapScreen(FabricBookGame game, Player player, int initialLayer) {
         this.game = game;
         this.player = player;
-        this.currentLayerIdx = 0;
+        this.currentLayerIdx = Math.max(0, Math.min(4, initialLayer - 1));
         this.currentNode = null;
         this.scrollX = 0;
         this.scrollY = 0;

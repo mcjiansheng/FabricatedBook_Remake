@@ -10,11 +10,25 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.fabricatedbook.core.card.CardPool;
+import com.fabricatedbook.core.engine.CombatEngine;
+import com.fabricatedbook.core.entity.Enemy;
+import com.fabricatedbook.core.entity.EntityFactory;
+import com.fabricatedbook.core.entity.Player;
+import com.fabricatedbook.core.entity.Profession;
+import com.fabricatedbook.core.potion.Potion;
+import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.data.SaveManager;
+import com.fabricatedbook.view.screen.BattleScreen;
+import com.fabricatedbook.view.screen.EventScreen;
+import com.fabricatedbook.view.screen.FontDebugScreen;
+import com.fabricatedbook.view.screen.MapScreen;
+import com.fabricatedbook.view.screen.ShopScreen;
 import com.fabricatedbook.view.screen.TitleScreen;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -70,6 +84,19 @@ public class FabricBookGame extends Game {
     private int lastWindowedHeight = SCREEN_HEIGHT;
     private boolean fullscreen;
     private boolean borderless;
+    private final FrontendDebugConfig debugConfig;
+
+    public FabricBookGame() {
+        this(FrontendDebugConfig.title());
+    }
+
+    public FabricBookGame(String[] args) {
+        this(FrontendDebugConfig.parse(args));
+    }
+
+    public FabricBookGame(FrontendDebugConfig debugConfig) {
+        this.debugConfig = debugConfig == null ? FrontendDebugConfig.title() : debugConfig;
+    }
 
     @Override
     public void create() {
@@ -99,6 +126,10 @@ public class FabricBookGame extends Game {
                 + "继续前进离开商店胜利返回地图失败重新开始"
                 + "意图多段诅咒强化"
                 + "未发现额外物品跳过藏品掉落战斗失败"
+                + "虚妄之书Fabricated Book"
+                + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+                + "字体调试前端调试命令行标题商店事件不同层地图"
+                + "红绿蓝黄白黑灰紫青橙粉符号图片ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 + "，。、；：！？（）【】《》“”‘’—…·～/=+*#@&%￥①②③④⑤");
         font = getFontSize(BASE_FONT_SIZE);
         dataLoader = new DataLoader("data/");
@@ -107,8 +138,7 @@ public class FabricBookGame extends Game {
         // 初始化卡牌池（确保战士卡牌已注册）
         CardPool.getCardsByProfession("warrior");
 
-        // 切换到标题屏幕
-        setScreen(new TitleScreen(this));
+        setInitialScreen();
     }
 
     @Override
@@ -161,6 +191,62 @@ public class FabricBookGame extends Game {
         parameter.magFilter = TextureFilter.Linear;
         parameter.characters = fontCharacters;
         return fontGenerator.generateFont(parameter);
+    }
+
+    private void setInitialScreen() {
+        Player player = createDebugPlayer();
+        switch (debugConfig.getScreenKind()) {
+            case FONT_DEBUG:
+                setScreen(new FontDebugScreen(this));
+                break;
+            case MAP:
+                setScreen(new MapScreen(this, player, debugConfig.getLayer()));
+                break;
+            case BATTLE:
+                CombatEngine engine = new CombatEngine();
+                engine.setRelicManager(new RelicManager(player));
+                setScreen(new BattleScreen(this, engine, player, createDebugEnemies()));
+                break;
+            case SHOP:
+                ShopManager shopManager = new ShopManager(player, new RelicManager(player));
+                shopManager.generateItems();
+                setScreen(new ShopScreen(this, player, shopManager));
+                break;
+            case EVENT:
+                String eventName = debugConfig.getEventName();
+                if (eventName == null || eventName.isBlank()) {
+                    eventName = "投资";
+                }
+                setScreen(new EventScreen(this, player, eventName));
+                break;
+            case TITLE:
+            default:
+                setScreen(new TitleScreen(this));
+                break;
+        }
+    }
+
+    private Player createDebugPlayer() {
+        Player player = new Player("debug-player", "调试战士", Profession.WARRIOR);
+        player.setGold(99);
+        List<Potion> potions = new DataLoader().loadPotions();
+        for (int i = 0; i < potions.size() && i < 3; i++) {
+            player.addPotion(potions.get(i).copy());
+        }
+        return player;
+    }
+
+    private List<Enemy> createDebugEnemies() {
+        List<DataLoader.EnemyGroup> groups = new DataLoader().loadMonsters(1);
+        for (DataLoader.EnemyGroup group : groups) {
+            if (group.isBoss() || group.getEnemies() == null || group.getEnemies().isEmpty()) {
+                continue;
+            }
+            return group.getEnemies().stream()
+                    .map(DataLoader.EnemyData::toEnemy)
+                    .toList();
+        }
+        return List.of(EntityFactory.createSimpleEnemy("debug_enemy", "调试敌人", 35));
     }
 
     private void handleDisplayShortcuts() {

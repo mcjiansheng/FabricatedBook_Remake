@@ -32,6 +32,6 @@ public class DesktopLauncher {
         config.setDecorated(true);
 
         // 启动游戏
-        new Lwjgl3Application(new FabricBookGame(), config);
+        new Lwjgl3Application(new FabricBookGame(args), config);
     }
 }

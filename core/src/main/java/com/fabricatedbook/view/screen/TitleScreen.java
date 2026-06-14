@@ -52,7 +52,7 @@ public class TitleScreen implements Screen {
         stage.addActor(table);
 
         // 标题
-        Label titleLabel = new Label("虚妄之书", new Label.LabelStyle(
+        Label titleLabel = new Label("Fabricated Book", new Label.LabelStyle(
                 game.getFontForScale(3.0f), com.badlogic.gdx.graphics.Color.WHITE));
         table.add(titleLabel).padBottom(80);
         table.row();

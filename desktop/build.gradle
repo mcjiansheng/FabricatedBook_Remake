@@ -23,6 +23,9 @@ tasks.register("runGame", JavaExec.class) {
 
     // 设置工作目录为 core 的资源目录，确保 img/ 和字体文件能被 Gdx.files.internal() 找到
     workingDir = project(":core").sourceSets.main.resources.srcDirs.iterator().next()
+    if (project.hasProperty("args")) {
+        args project.property("args").toString().split("\\s+")
+    }
 }
 
 tasks.register("runBackendDebug", JavaExec.class) {
