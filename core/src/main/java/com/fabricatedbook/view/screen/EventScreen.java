@@ -10,13 +10,13 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.view.FabricBookGame;
+import com.fabricatedbook.view.ui.ResponsiveViewport;
 
 import java.util.List;
 
@@ -67,8 +67,7 @@ public class EventScreen implements Screen {
 
     @Override
     public void show() {
-        stage = new Stage(new FitViewport(FabricBookGame.SCREEN_WIDTH,
-                FabricBookGame.SCREEN_HEIGHT));
+        stage = new Stage(ResponsiveViewport.create());
         Gdx.input.setInputProcessor(stage);
         shapeRenderer = new ShapeRenderer();
 

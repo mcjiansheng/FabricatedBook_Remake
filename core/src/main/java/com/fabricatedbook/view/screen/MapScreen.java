@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.fabricatedbook.core.engine.CombatEngine;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.EntityFactory;
@@ -20,6 +22,7 @@ import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.view.FabricBookGame;
+import com.fabricatedbook.view.ui.ResponsiveViewport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,6 +108,7 @@ public class MapScreen implements Screen {
     private int[][] layerNodeCounts; // [layer][col] 每列节点数
     private MapNode currentNode; // 当前所在的节点
     private OrthographicCamera camera;
+    private Viewport viewport;
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
     private BitmapFont font;
@@ -151,8 +155,8 @@ public class MapScreen implements Screen {
         this.random = new Random();
         this.layerIntroTimer = 2.2f;
 
-        camera = new OrthographicCamera();
-        camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
+        viewport = ResponsiveViewport.create();
+        camera = (OrthographicCamera) viewport.getCamera();
 
         loadTextures();
         generateAllLayers();
@@ -361,6 +365,10 @@ public class MapScreen implements Screen {
         Gdx.gl.glClearColor(0.78f, 0.78f, 0.78f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        viewport.apply();
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+
         handleInput(delta);
         if (layerIntroTimer > 0) {
             layerIntroTimer -= delta;
@@ -391,32 +399,31 @@ public class MapScreen implements Screen {
     /** 处理输入（横向拖动） */
     private void handleInput(float delta) {
         if (Gdx.input.isTouched()) {
-            float touchX = Gdx.input.getX();
-            float touchY = Gdx.input.getY();
+            Vector2 touch = toWorld(Gdx.input.getX(), Gdx.input.getY());
 
             // 如果点在顶栏区域内，不处理地图拖动
-            if (touchY < TOP_BAR_HEIGHT) {
+            if (touch.y > FabricBookGame.SCREEN_HEIGHT - TOP_BAR_HEIGHT) {
                 if (Gdx.input.justTouched()) {
-                    handleTopBarClick(touchX);
+                    handleTopBarClick(touch.x);
                 }
                 return;
             }
 
             if (!isDragging) {
-                lastTouchX = touchX;
-                lastTouchY = touchY;
+                lastTouchX = touch.x;
+                lastTouchY = touch.y;
                 dragDistance = 0;
                 isDragging = true;
             } else {
-                float dx = touchX - lastTouchX;
-                float dy = lastTouchY - touchY;
+                float dx = touch.x - lastTouchX;
+                float dy = touch.y - lastTouchY;
                 dragDistance += Math.abs(dx) + Math.abs(dy);
                 if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
                     // 拖动
                     scrollX += dx * SCROLL_SPEED;
                     scrollY += dy * SCROLL_SPEED;
-                    lastTouchX = touchX;
-                    lastTouchY = touchY;
+                    lastTouchX = touch.x;
+                    lastTouchY = touch.y;
                     // 限制滚动范围
                     clampScroll();
                 }
@@ -424,12 +431,15 @@ public class MapScreen implements Screen {
         } else {
             if (isDragging && dragDistance < 12f) {
                 // 检测点击（拖动结束后检测是否点击了节点）
-                float touchX = Gdx.input.getX();
-                float touchY = Gdx.input.getY();
-                checkNodeClick(touchX, touchY);
+                Vector2 touch = toWorld(Gdx.input.getX(), Gdx.input.getY());
+                checkNodeClick(touch.x, touch.y);
             }
             isDragging = false;
         }
+    }
+
+    private Vector2 toWorld(float screenX, float screenY) {
+        return viewport.unproject(new Vector2(screenX, screenY));
     }
 
     private void handleTopBarClick(float touchX) {
@@ -446,7 +456,7 @@ public class MapScreen implements Screen {
     private void checkNodeClick(float screenX, float screenY) {
         MapNode[][] layer = allLayers[currentLayerIdx];
         float worldX = screenX - scrollX;
-        float worldY = (FabricBookGame.SCREEN_HEIGHT - screenY) - scrollY;
+        float worldY = screenY - scrollY;
 
         for (int col = 0; col < layer.length; col++) {
             for (int row = 0; row < layer[col].length; row++) {
@@ -906,7 +916,7 @@ public class MapScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        camera.setToOrtho(false, width, height);
+        viewport.update(width, height, true);
     }
 
     @Override

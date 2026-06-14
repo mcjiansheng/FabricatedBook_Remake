@@ -7,10 +7,10 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.view.FabricBookGame;
+import com.fabricatedbook.view.ui.ResponsiveViewport;
 
 import java.util.List;
 
@@ -58,8 +58,7 @@ public class ShopScreen implements Screen {
 
     @Override
     public void show() {
-        stage = new Stage(new FitViewport(FabricBookGame.SCREEN_WIDTH,
-                FabricBookGame.SCREEN_HEIGHT));
+        stage = new Stage(ResponsiveViewport.create());
         Gdx.input.setInputProcessor(stage);
 
         // 标题

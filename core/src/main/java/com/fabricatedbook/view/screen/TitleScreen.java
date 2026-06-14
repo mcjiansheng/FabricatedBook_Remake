@@ -9,9 +9,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.FabricBookGame;
+import com.fabricatedbook.view.ui.ResponsiveViewport;
 
 /**
  * TitleScreen — 标题画面
@@ -37,8 +37,7 @@ public class TitleScreen implements Screen {
 
     @Override
     public void show() {
-        stage = new Stage(new FitViewport(FabricBookGame.SCREEN_WIDTH,
-                FabricBookGame.SCREEN_HEIGHT));
+        stage = new Stage(ResponsiveViewport.create());
         Gdx.input.setInputProcessor(stage);
         try {
             background = new Texture("img/background.png");
@@ -110,6 +109,8 @@ public class TitleScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         SpriteBatch batch = game.getBatch();
+        stage.getViewport().apply();
+        batch.setProjectionMatrix(stage.getCamera().combined);
         batch.begin();
         if (background != null) {
             batch.setColor(0.34f, 0.34f, 0.38f, 1f);

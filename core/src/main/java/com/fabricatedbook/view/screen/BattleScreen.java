@@ -16,7 +16,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.fabricatedbook.core.action.DamageAction;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
@@ -37,6 +36,7 @@ import com.fabricatedbook.view.actor.EnemyActor;
 import com.fabricatedbook.view.actor.PlayerActor;
 import com.fabricatedbook.view.ui.HandPanel;
 import com.fabricatedbook.view.ui.EnergyBar;
+import com.fabricatedbook.view.ui.ResponsiveViewport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,8 +119,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
     @Override
     public void show() {
-        stage = new Stage(new FitViewport(FabricBookGame.SCREEN_WIDTH,
-                FabricBookGame.SCREEN_HEIGHT));
+        stage = new Stage(ResponsiveViewport.create());
+        camera = (OrthographicCamera) stage.getCamera();
         Gdx.input.setInputProcessor(stage);
 
         font = game.getFont();
@@ -189,6 +189,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.12f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        stage.getViewport().apply();
         drawBackground();
         updateEnemyVisibility();
 

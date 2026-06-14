@@ -2,6 +2,8 @@ package com.fabricatedbook.view;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Graphics.DisplayMode;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
@@ -38,6 +40,23 @@ public class FabricBookGame extends Game {
 
     /** 屏幕高度 */
     public static final int SCREEN_HEIGHT = 720;
+
+    /** 最小窗口宽度。 */
+    public static final int MIN_WINDOW_WIDTH = 960;
+
+    /** 最小窗口高度。 */
+    public static final int MIN_WINDOW_HEIGHT = 540;
+
+    /** 推荐窗口最大宽度。 */
+    public static final int MAX_WINDOW_WIDTH = 3840;
+
+    /** 推荐窗口最大高度。 */
+    public static final int MAX_WINDOW_HEIGHT = 2160;
+
+    private int lastWindowedWidth = SCREEN_WIDTH;
+    private int lastWindowedHeight = SCREEN_HEIGHT;
+    private boolean fullscreen;
+    private boolean borderless;
 
     @Override
     public void create() {
@@ -83,6 +102,7 @@ public class FabricBookGame extends Game {
 
     @Override
     public void render() {
+        handleDisplayShortcuts();
         super.render();
     }
 
@@ -101,6 +121,54 @@ public class FabricBookGame extends Game {
     public BitmapFont getFont() { return font; }
     public DataLoader getDataLoader() { return dataLoader; }
     public SaveManager getSaveManager() { return saveManager; }
+
+    private void handleDisplayShortcuts() {
+        boolean altEnter = Gdx.input.isKeyPressed(Input.Keys.ALT_LEFT)
+                || Gdx.input.isKeyPressed(Input.Keys.ALT_RIGHT);
+        altEnter = altEnter && Gdx.input.isKeyJustPressed(Input.Keys.ENTER);
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F11) || altEnter) {
+            toggleFullscreen();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F10)) {
+            toggleBorderless();
+        }
+    }
+
+    private void toggleFullscreen() {
+        if (fullscreen) {
+            fullscreen = false;
+            Gdx.graphics.setUndecorated(borderless);
+            Gdx.graphics.setWindowedMode(lastWindowedWidth, lastWindowedHeight);
+            return;
+        }
+
+        lastWindowedWidth = Math.max(MIN_WINDOW_WIDTH, Gdx.graphics.getWidth());
+        lastWindowedHeight = Math.max(MIN_WINDOW_HEIGHT, Gdx.graphics.getHeight());
+        fullscreen = true;
+        Gdx.graphics.setUndecorated(false);
+        DisplayMode mode = Gdx.graphics.getDisplayMode();
+        Gdx.graphics.setFullscreenMode(mode);
+    }
+
+    private void toggleBorderless() {
+        if (fullscreen) {
+            toggleFullscreen();
+        }
+        borderless = !borderless;
+        Gdx.graphics.setUndecorated(borderless);
+        Gdx.graphics.setWindowedMode(
+                clampWindowWidth(Gdx.graphics.getWidth()),
+                clampWindowHeight(Gdx.graphics.getHeight()));
+    }
+
+    private int clampWindowWidth(int width) {
+        return Math.max(MIN_WINDOW_WIDTH, Math.min(MAX_WINDOW_WIDTH, width));
+    }
+
+    private int clampWindowHeight(int height) {
+        return Math.max(MIN_WINDOW_HEIGHT, Math.min(MAX_WINDOW_HEIGHT, height));
+    }
 
     private String buildFontCharacters(String baseCharacters) {
         StringBuilder builder = new StringBuilder(baseCharacters);

@@ -11,10 +11,10 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.view.FabricBookGame;
+import com.fabricatedbook.view.ui.ResponsiveViewport;
 
 /**
  * CharacterSelectScreen — 新游戏角色选择。
@@ -34,8 +34,7 @@ public class CharacterSelectScreen implements Screen {
 
     @Override
     public void show() {
-        stage = new Stage(new FitViewport(FabricBookGame.SCREEN_WIDTH,
-                FabricBookGame.SCREEN_HEIGHT));
+        stage = new Stage(ResponsiveViewport.create());
         Gdx.input.setInputProcessor(stage);
 
         background = loadTexture("img/background.png");
@@ -127,6 +126,8 @@ public class CharacterSelectScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         SpriteBatch batch = game.getBatch();
+        stage.getViewport().apply();
+        batch.setProjectionMatrix(stage.getCamera().combined);
         batch.begin();
         if (background != null) {
             batch.setColor(0.26f, 0.26f, 0.30f, 1f);

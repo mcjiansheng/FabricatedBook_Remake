@@ -22,9 +22,14 @@ public class DesktopLauncher {
         config.setTitle("Fabricated Book");
         config.setWindowedMode(FabricBookGame.SCREEN_WIDTH,
                 FabricBookGame.SCREEN_HEIGHT);
+        config.setWindowSizeLimits(FabricBookGame.MIN_WINDOW_WIDTH,
+                FabricBookGame.MIN_WINDOW_HEIGHT,
+                FabricBookGame.MAX_WINDOW_WIDTH,
+                FabricBookGame.MAX_WINDOW_HEIGHT);
         config.setForegroundFPS(60);
         config.useVsync(true);
-        config.setResizable(false);
+        config.setResizable(true);
+        config.setDecorated(true);
 
         // 启动游戏
         new Lwjgl3Application(new FabricBookGame(), config);
