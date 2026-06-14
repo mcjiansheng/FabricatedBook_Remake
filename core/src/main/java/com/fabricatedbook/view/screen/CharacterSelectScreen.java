@@ -11,10 +11,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.fabricatedbook.core.potion.Potion;
+import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+
+import java.util.List;
 
 /**
  * CharacterSelectScreen — 新游戏角色选择。
@@ -104,12 +108,20 @@ public class CharacterSelectScreen implements Screen {
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
                 Player player = new Player("player", name, profession);
+                giveDebugStartingPotions(player);
                 game.setScreen(new MapScreen(game, player));
             }
         });
         card.add(choose).width(150).height(44).padTop(8);
 
         root.add(card).width(300).height(420).pad(18);
+    }
+
+    private void giveDebugStartingPotions(Player player) {
+        List<Potion> potions = new DataLoader().loadPotions();
+        for (int i = 0; i < potions.size() && i < 3; i++) {
+            player.addPotion(potions.get(i).copy());
+        }
     }
 
     private Texture loadTexture(String path) {

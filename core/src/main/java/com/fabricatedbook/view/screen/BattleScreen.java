@@ -151,8 +151,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         // 能量条
         energyBar = new EnergyBar(player, game.getFont());
-        energyBar.setPosition(FabricBookGame.SCREEN_WIDTH - 150,
-                FabricBookGame.SCREEN_HEIGHT - 62);
+        energyBar.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 55, 214);
         stage.addActor(energyBar);
 
         // 状态信息

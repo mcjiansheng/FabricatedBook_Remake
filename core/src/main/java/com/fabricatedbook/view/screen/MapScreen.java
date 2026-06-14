@@ -731,14 +731,14 @@ public class MapScreen implements Screen {
                     MapNode next = node.nxt[i];
                     if (next == null) continue;
 
-                    if (node.accessible || isConnectedToAccessible) {
-                        shapeRenderer.setColor(0.8f, 0.7f, 0.3f, 1f); // 金色
-                    } else {
-                        shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 0.5f); // 灰色
-                    }
+                    shapeRenderer.setColor(0f, 0f, 0f,
+                            node.visited || node.accessible || isConnectedToAccessible
+                                    ? 0.86f : 0.62f);
+                    Vector2 from = connectionPoint(node, next);
+                    Vector2 to = connectionPoint(next, node);
                     shapeRenderer.rectLine(
-                            node.x + scrollX, node.y + scrollY,
-                            next.x + scrollX, next.y + scrollY,
+                            from.x, from.y,
+                            to.x, to.y,
                             CONNECTION_LINE_WIDTH
                     );
                 }
@@ -746,6 +746,23 @@ public class MapScreen implements Screen {
         }
 
         shapeRenderer.end();
+    }
+
+    private Vector2 connectionPoint(MapNode from, MapNode to) {
+        float fromX = from.x + scrollX;
+        float fromY = from.y + scrollY;
+        float dx = to.x - from.x;
+        float dy = to.y - from.y;
+        if (Math.abs(dx) < 0.001f && Math.abs(dy) < 0.001f) {
+            return new Vector2(fromX, fromY);
+        }
+
+        float halfW = nodeDrawWidth(from) / 2f + NODE_FRAME_GAP;
+        float halfH = nodeDrawHeight(from) / 2f + NODE_FRAME_GAP;
+        float tx = Math.abs(dx) < 0.001f ? Float.POSITIVE_INFINITY : halfW / Math.abs(dx);
+        float ty = Math.abs(dy) < 0.001f ? Float.POSITIVE_INFINITY : halfH / Math.abs(dy);
+        float t = Math.min(tx, ty);
+        return new Vector2(fromX + dx * t, fromY + dy * t);
     }
 
     /** 绘制可选/已访问节点边框。 */

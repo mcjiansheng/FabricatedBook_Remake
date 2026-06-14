@@ -32,7 +32,7 @@ public class EnergyBar extends Group {
 
         energyLabel = new Label("", new Label.LabelStyle(
                 font, Color.YELLOW));
-        energyLabel.setFontScale(1.2f);
+        energyLabel.setFontScale(0.9f);
         addActor(energyLabel);
 
         update();
