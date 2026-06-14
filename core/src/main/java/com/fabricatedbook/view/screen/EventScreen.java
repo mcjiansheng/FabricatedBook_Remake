@@ -79,8 +79,8 @@ public class EventScreen implements Screen {
         Table eventText = new Table();
         eventText.top().left();
 
-        Label titleLabel = new Label(eventName, new Label.LabelStyle(game.getFont(), Color.BLACK));
-        titleLabel.setFontScale(1.7f);
+        Label titleLabel = new Label(eventName, new Label.LabelStyle(
+                game.getFontForScale(1.7f), Color.BLACK));
         eventText.add(titleLabel).left().padBottom(34);
         eventText.row();
 

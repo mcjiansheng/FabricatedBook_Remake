@@ -45,8 +45,8 @@ public class InventoryScreen implements Screen {
         root.top().pad(36);
         stage.addActor(root);
 
-        Label title = new Label("卡牌与藏品", new Label.LabelStyle(game.getFont(), Color.BLACK));
-        title.setFontScale(1.8f);
+        Label title = new Label("卡牌与藏品", new Label.LabelStyle(
+                game.getFontForScale(1.8f), Color.BLACK));
         root.add(title).colspan(2).padBottom(22);
         root.row();
 

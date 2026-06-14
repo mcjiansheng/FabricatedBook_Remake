@@ -63,8 +63,7 @@ public class ShopScreen implements Screen {
 
         // 标题
         Label titleLabel = new Label("诡异行商", new Label.LabelStyle(
-                game.getFont(), com.badlogic.gdx.graphics.Color.GOLD));
-        titleLabel.setFontScale(2.0f);
+                game.getFontForScale(2.0f), com.badlogic.gdx.graphics.Color.GOLD));
         titleLabel.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 80,
                 FabricBookGame.SCREEN_HEIGHT - 60);
         stage.addActor(titleLabel);

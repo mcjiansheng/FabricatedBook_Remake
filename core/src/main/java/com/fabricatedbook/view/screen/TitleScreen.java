@@ -52,8 +52,7 @@ public class TitleScreen implements Screen {
 
         // 标题
         Label titleLabel = new Label("Fabricated Book", new Label.LabelStyle(
-                game.getFont(), com.badlogic.gdx.graphics.Color.WHITE));
-        titleLabel.setFontScale(3.0f);
+                game.getFontForScale(3.0f), com.badlogic.gdx.graphics.Color.WHITE));
         table.add(titleLabel).padBottom(80);
         table.row();
 

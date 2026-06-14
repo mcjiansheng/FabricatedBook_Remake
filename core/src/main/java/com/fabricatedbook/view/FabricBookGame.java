@@ -14,6 +14,9 @@ import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.screen.TitleScreen;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * FabricBookGame — LibGDX Game 入口类
  * <p>
@@ -29,6 +32,12 @@ public class FabricBookGame extends Game {
 
     /** 全局字体 */
     private BitmapFont font;
+
+    /** 按逻辑字号缓存的字体贴图。 */
+    private Map<Integer, BitmapFont> fontsBySize;
+
+    private FreeTypeFontGenerator fontGenerator;
+    private String fontCharacters;
 
     /** 数据加载器 */
     private DataLoader dataLoader;
@@ -54,8 +63,8 @@ public class FabricBookGame extends Game {
     /** 推荐窗口最大高度。 */
     public static final int MAX_WINDOW_HEIGHT = 2160;
 
-    /** 字体贴图与 UI 逻辑字号保持一致，避免 Scene2D Label 字号被放大。 */
-    public static final float FONT_ATLAS_SCALE = 1f;
+    /** 全局正文字体字号。 */
+    public static final int BASE_FONT_SIZE = 18;
 
     private int lastWindowedWidth = SCREEN_WIDTH;
     private int lastWindowedHeight = SCREEN_HEIGHT;
@@ -65,17 +74,13 @@ public class FabricBookGame extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch();
+        fontsBySize = new HashMap<>();
 
         // 加载中文字体（从原项目复制的 ys_zt.ttf）
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(
+        fontGenerator = new FreeTypeFontGenerator(
                 Gdx.files.classpath("ys_zt.ttf"));
-        FreeTypeFontParameter parameter = new FreeTypeFontParameter();
-        parameter.size = Math.round(18 * FONT_ATLAS_SCALE);
-        parameter.genMipMaps = false;
-        parameter.minFilter = TextureFilter.Linear;
-        parameter.magFilter = TextureFilter.Linear;
         // 包含中英文全部字符（从字体文件读取所有可用字符）
-        parameter.characters = buildFontCharacters(FreeTypeFontGenerator.DEFAULT_CHARS
+        fontCharacters = buildFontCharacters(FreeTypeFontGenerator.DEFAULT_CHARS
                 + "的一是不了人我在有他这为之大小个中上国到来时出可"
                 + "以发会子得要于对生下也而就年过后作里用道行所"
                 + "然家种事成方多如学日关前回到长又月入进同面都各"
@@ -95,9 +100,7 @@ public class FabricBookGame extends Game {
                 + "意图多段诅咒强化"
                 + "未发现额外物品跳过藏品掉落战斗失败"
                 + "，。、；：！？（）【】《》“”‘’—…·～/=+*#@&%￥①②③④⑤");
-        font = generator.generateFont(parameter);
-        applyFontScale(1f);
-        generator.dispose();
+        font = getFontSize(BASE_FONT_SIZE);
         dataLoader = new DataLoader("data/");
         saveManager = new SaveManager();
 
@@ -117,7 +120,13 @@ public class FabricBookGame extends Game {
     @Override
     public void dispose() {
         batch.dispose();
-        font.dispose();
+        for (BitmapFont cachedFont : fontsBySize.values()) {
+            cachedFont.dispose();
+        }
+        fontsBySize.clear();
+        if (fontGenerator != null) {
+            fontGenerator.dispose();
+        }
         if (getScreen() != null) {
             getScreen().dispose();
         }
@@ -127,15 +136,31 @@ public class FabricBookGame extends Game {
 
     public SpriteBatch getBatch() { return batch; }
     public BitmapFont getFont() { return font; }
+    public BitmapFont getFontForScale(float logicalScale) {
+        return getFontSize(Math.max(1, Math.round(BASE_FONT_SIZE * logicalScale)));
+    }
+    public BitmapFont getFontSize(int size) {
+        return fontsBySize.computeIfAbsent(size, this::generateFont);
+    }
     public DataLoader getDataLoader() { return dataLoader; }
     public SaveManager getSaveManager() { return saveManager; }
 
     public void applyFontScale(float logicalScale) {
-        font.getData().setScale(uiFontScale(logicalScale));
+        font.getData().setScale(logicalScale);
     }
 
     public static float uiFontScale(float logicalScale) {
-        return logicalScale / FONT_ATLAS_SCALE;
+        return logicalScale;
+    }
+
+    private BitmapFont generateFont(int size) {
+        FreeTypeFontParameter parameter = new FreeTypeFontParameter();
+        parameter.size = size;
+        parameter.genMipMaps = false;
+        parameter.minFilter = TextureFilter.Linear;
+        parameter.magFilter = TextureFilter.Linear;
+        parameter.characters = fontCharacters;
+        return fontGenerator.generateFont(parameter);
     }
 
     private void handleDisplayShortcuts() {

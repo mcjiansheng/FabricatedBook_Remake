@@ -163,8 +163,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         // 回合信息
         turnLabel = new Label("回合 1", new Label.LabelStyle(
-                game.getFont(), com.badlogic.gdx.graphics.Color.WHITE));
-        turnLabel.setFontScale(1.5f);
+                game.getFontForScale(1.5f), com.badlogic.gdx.graphics.Color.WHITE));
         turnLabel.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 55,
                 FabricBookGame.SCREEN_HEIGHT - 62);
         stage.addActor(turnLabel);
@@ -416,8 +415,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             if (anchor == null) continue;
 
             Label number = new Label("-" + damage, new Label.LabelStyle(
-                    game.getFont(), Color.SCARLET));
-            number.setFontScale(1.45f);
+                    game.getFontForScale(1.45f), Color.SCARLET));
             number.setPosition(anchor.getX() + anchor.getWidth() / 2f - 18,
                     anchor.getY() + anchor.getHeight() * 0.72f);
             number.addAction(Actions.sequence(
@@ -525,8 +523,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         table.center();
         modal.addActor(table);
 
-        Label title = new Label("战斗失败", new Label.LabelStyle(game.getFont(), Color.GOLD));
-        title.setFontScale(1.8f);
+        Label title = new Label("战斗失败", new Label.LabelStyle(
+                game.getFontForScale(1.8f), Color.GOLD));
         table.add(title).padBottom(42);
         table.row();
 
@@ -582,8 +580,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         modal.addActor(table);
 
         Label title = new Label("胜利", new Label.LabelStyle(
-                game.getFont(), Color.GOLD));
-        title.setFontScale(1.8f);
+                game.getFontForScale(1.8f), Color.GOLD));
         table.add(title).padBottom(70);
         table.row();
 
@@ -653,8 +650,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         modal.addActor(table);
 
         Label title = new Label("请选择想要的卡牌", new Label.LabelStyle(
-                game.getFont(), Color.BLACK));
-        title.setFontScale(1.9f);
+                game.getFontForScale(1.9f), Color.BLACK));
         table.add(title).colspan(3).padBottom(45);
         table.row();
 

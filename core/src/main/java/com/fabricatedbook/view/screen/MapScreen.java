@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
@@ -113,6 +114,7 @@ public class MapScreen implements Screen {
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
     private BitmapFont font;
+    private GlyphLayout glyphLayout;
     private Random random;
 
     // 贴图资源
@@ -333,6 +335,7 @@ public class MapScreen implements Screen {
     public void show() {
         batch = game.getBatch();
         font = game.getFont();
+        glyphLayout = new GlyphLayout();
         shapeRenderer = new ShapeRenderer();
 
         // 设置当前可访问节点
@@ -920,17 +923,21 @@ public class MapScreen implements Screen {
 
         batch.begin();
         batch.setColor(1f, 1f, 1f, alpha);
-        game.applyFontScale(2.2f);
-        font.draw(batch, "第 " + (currentLayerIdx + 1) + " 层",
-                FabricBookGame.SCREEN_WIDTH / 2f - 70, FabricBookGame.SCREEN_HEIGHT / 2f + 40);
-        game.applyFontScale(1.1f);
-        font.draw(batch, LAYER_NAMES[currentLayerIdx],
-                FabricBookGame.SCREEN_WIDTH / 2f - 60, FabricBookGame.SCREEN_HEIGHT / 2f);
-        game.applyFontScale(1f);
-        font.draw(batch, LAYER_EFFECTS[currentLayerIdx],
-                FabricBookGame.SCREEN_WIDTH / 2f - 160, FabricBookGame.SCREEN_HEIGHT / 2f - 42);
+        drawCenteredText(game.getFontForScale(2.2f), "第 " + (currentLayerIdx + 1) + " 层",
+                FabricBookGame.SCREEN_HEIGHT / 2f + 40);
+        drawCenteredText(game.getFontForScale(1.1f), LAYER_NAMES[currentLayerIdx],
+                FabricBookGame.SCREEN_HEIGHT / 2f);
+        drawCenteredText(game.getFont(), LAYER_EFFECTS[currentLayerIdx],
+                FabricBookGame.SCREEN_HEIGHT / 2f - 42);
         batch.setColor(1f, 1f, 1f, 1f);
         batch.end();
+    }
+
+    private void drawCenteredText(BitmapFont drawFont, String text, float y) {
+        glyphLayout.setText(drawFont, text);
+        drawFont.draw(batch, text,
+                FabricBookGame.SCREEN_WIDTH / 2f - glyphLayout.width / 2f,
+                y);
     }
 
     @Override

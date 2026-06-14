@@ -52,8 +52,7 @@ public class CharacterSelectScreen implements Screen {
         stage.addActor(root);
 
         Label title = new Label("角色选择", new Label.LabelStyle(
-                game.getFont(), com.badlogic.gdx.graphics.Color.WHITE));
-        title.setFontScale(2.2f);
+                game.getFontForScale(2.2f), com.badlogic.gdx.graphics.Color.WHITE));
         root.add(title).colspan(3).padBottom(24);
         root.row();
 
@@ -90,8 +89,7 @@ public class CharacterSelectScreen implements Screen {
         }
 
         Label nameLabel = new Label(name, new Label.LabelStyle(
-                game.getFont(), com.badlogic.gdx.graphics.Color.WHITE));
-        nameLabel.setFontScale(1.4f);
+                game.getFontForScale(1.4f), com.badlogic.gdx.graphics.Color.WHITE));
         card.add(nameLabel);
         card.row();
 
