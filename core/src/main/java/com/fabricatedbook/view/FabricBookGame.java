@@ -4,7 +4,9 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Graphics.DisplayMode;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
@@ -67,6 +69,9 @@ public class FabricBookGame extends Game {
                 Gdx.files.classpath("ys_zt.ttf"));
         FreeTypeFontParameter parameter = new FreeTypeFontParameter();
         parameter.size = 18;
+        parameter.genMipMaps = true;
+        parameter.minFilter = TextureFilter.MipMapLinearLinear;
+        parameter.magFilter = TextureFilter.Linear;
         // 包含中英文全部字符（从字体文件读取所有可用字符）
         parameter.characters = buildFontCharacters(FreeTypeFontGenerator.DEFAULT_CHARS
                 + "的一是不了人我在有他这为之大小个中上国到来时出可"
@@ -89,6 +94,10 @@ public class FabricBookGame extends Game {
                 + "未发现额外物品跳过藏品掉落战斗失败"
                 + "，。、；：！？（）【】《》“”‘’—…·～/=+*#@&%￥①②③④⑤");
         font = generator.generateFont(parameter);
+        for (TextureRegion region : font.getRegions()) {
+            region.getTexture().setFilter(TextureFilter.MipMapLinearLinear,
+                    TextureFilter.Linear);
+        }
         generator.dispose();
         dataLoader = new DataLoader("data/");
         saveManager = new SaveManager();

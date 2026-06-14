@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -127,8 +128,8 @@ public class MapScreen implements Screen {
     private boolean isDragging;
     private static final float SCROLL_SPEED = 1.0f;
     private static final float STEP_X = 190f;
-    private static final float NODE_WIDTH = 112f;
-    private static final float NODE_HEIGHT = 66f;
+    private static final float NODE_WIDTH = 150f;
+    private static final float NODE_HEIGHT = 86f;
     private static final float MAP_LEFT_PAD = 120f;
     private static final float TOP_BUTTON_W = 150f;
     private static final float TOP_BUTTON_H = 42f;
@@ -170,6 +171,7 @@ public class MapScreen implements Screen {
         for (int i = 1; i <= 9; i++) {
             try {
                 nodeTextures[i] = new Texture("img/" + files[i]);
+                nodeTextures[i].setFilter(TextureFilter.Linear, TextureFilter.Linear);
             } catch (Exception e) {
                 nodeTextures[i] = null;
             }
@@ -381,15 +383,15 @@ public class MapScreen implements Screen {
         // 绘制地图连接线
         drawConnectionLines();
 
-        // 绘制矩形节点底板
-        drawNodeBackplates();
-
         batch.begin();
 
         // 绘制节点
         drawNodes();
 
         batch.end();
+
+        // 绘制可选/已访问节点边框
+        drawNodeFrames();
 
         // 绘制顶栏（在 batch.end() 后绘制，使用 shapeRenderer + batch）
         drawTopBar();
@@ -462,8 +464,8 @@ public class MapScreen implements Screen {
             for (int row = 0; row < layer[col].length; row++) {
                 MapNode node = layer[col][row];
                 if (node != null && node.accessible) {
-                    if (Math.abs(node.x - worldX) <= NODE_WIDTH / 2f
-                            && Math.abs(node.y - worldY) <= NODE_HEIGHT / 2f) {
+                    if (Math.abs(node.x - worldX) <= nodeDrawWidth(node) / 2f
+                            && Math.abs(node.y - worldY) <= nodeDrawHeight(node) / 2f) {
                         // 进入节点
                         enterNode(node);
                         return;
@@ -742,40 +744,29 @@ public class MapScreen implements Screen {
         shapeRenderer.end();
     }
 
-    /** 绘制矩形节点底板和高亮边框。 */
-    private void drawNodeBackplates() {
+    /** 绘制可选/已访问节点边框。 */
+    private void drawNodeFrames() {
         MapNode[][] layer = allLayers[currentLayerIdx];
         if (layer == null) return;
 
         shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        for (int col = 0; col < layer.length; col++) {
-            for (int row = 0; row < layer[col].length; row++) {
-                MapNode node = layer[col][row];
-                if (node == null) continue;
-                float x = node.x + scrollX - NODE_WIDTH / 2f;
-                float y = node.y + scrollY - NODE_HEIGHT / 2f;
-                shapeRenderer.setColor(0.92f, 0.92f, 0.90f, 1f);
-                shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
-            }
-        }
-        shapeRenderer.end();
-
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         for (int col = 0; col < layer.length; col++) {
             for (int row = 0; row < layer[col].length; row++) {
                 MapNode node = layer[col][row];
                 if (node == null) continue;
-                float x = node.x + scrollX - NODE_WIDTH / 2f;
-                float y = node.y + scrollY - NODE_HEIGHT / 2f;
+                float width = nodeDrawWidth(node);
+                float height = nodeDrawHeight(node);
+                float x = node.x + scrollX - width / 2f;
+                float y = node.y + scrollY - height / 2f;
                 if (node.accessible) {
                     shapeRenderer.setColor(1f, 0.82f, 0f, 1f);
-                    shapeRenderer.rect(x - 3, y - 3, NODE_WIDTH + 6, NODE_HEIGHT + 6);
-                    shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
+                    shapeRenderer.rect(x - 4, y - 4, width + 8, height + 8);
+                    shapeRenderer.rect(x, y, width, height);
                 } else if (node.visited || node == currentNode) {
                     shapeRenderer.setColor(0f, 0f, 0f, 1f);
-                    shapeRenderer.rect(x - 3, y - 3, NODE_WIDTH + 6, NODE_HEIGHT + 6);
-                    shapeRenderer.rect(x, y, NODE_WIDTH, NODE_HEIGHT);
+                    shapeRenderer.rect(x - 4, y - 4, width + 8, height + 8);
+                    shapeRenderer.rect(x, y, width, height);
                 }
             }
         }
@@ -792,34 +783,49 @@ public class MapScreen implements Screen {
                 MapNode node = layer[col][row];
                 if (node == null) continue;
 
-                float drawX = node.x + scrollX - NODE_WIDTH / 2f;
-                float drawY = node.y + scrollY - NODE_HEIGHT / 2f;
-
-                // 获取对应贴图
-                Texture tex = null;
-                int texIdx = NODE_TYPE_TO_TEXTURE[node.type];
-                if (texIdx >= 1 && texIdx <= 9) {
-                    tex = nodeTextures[texIdx];
-                }
+                Texture tex = nodeTexture(node);
 
                 // 根据节点状态设置透明度
                 batch.setColor(node.visited ? 0.85f : 1f,
                         node.visited ? 0.85f : 1f,
                         node.visited ? 0.85f : 1f,
-                        node.accessible || node.visited ? 1f : 0.72f);
+                        node.accessible || node.visited ? 1f : 0.82f);
 
                 if (tex != null) {
-                    batch.draw(tex, drawX + 8, drawY + 14, 34, 34);
+                    float drawWidth = nodeDrawWidth(node);
+                    float drawHeight = nodeDrawHeight(node);
+                    batch.draw(tex,
+                            node.x + scrollX - drawWidth / 2f,
+                            node.y + scrollY - drawHeight / 2f,
+                            drawWidth,
+                            drawHeight);
                 }
-
-                Color old = font.getColor().cpy();
-                font.setColor(Color.BLACK);
-                font.draw(batch, nodeTypeName(node.type), drawX + 48, drawY + 39);
-                font.setColor(old);
 
                 batch.setColor(1, 1, 1, 1);
             }
         }
+    }
+
+    private Texture nodeTexture(MapNode node) {
+        int texIdx = NODE_TYPE_TO_TEXTURE[node.type];
+        if (texIdx >= 1 && texIdx <= 9) {
+            return nodeTextures[texIdx];
+        }
+        return null;
+    }
+
+    private float nodeDrawWidth(MapNode node) {
+        Texture tex = nodeTexture(node);
+        if (tex == null) return NODE_WIDTH;
+        float scale = Math.min(NODE_WIDTH / tex.getWidth(), NODE_HEIGHT / tex.getHeight());
+        return tex.getWidth() * scale;
+    }
+
+    private float nodeDrawHeight(MapNode node) {
+        Texture tex = nodeTexture(node);
+        if (tex == null) return NODE_HEIGHT;
+        float scale = Math.min(NODE_WIDTH / tex.getWidth(), NODE_HEIGHT / tex.getHeight());
+        return tex.getHeight() * scale;
     }
 
     /** 绘制顶部状态栏 */
@@ -897,21 +903,6 @@ public class MapScreen implements Screen {
                 FabricBookGame.SCREEN_WIDTH / 2f - 160, FabricBookGame.SCREEN_HEIGHT / 2f - 42);
         batch.setColor(1f, 1f, 1f, 1f);
         batch.end();
-    }
-
-    private String nodeTypeName(int type) {
-        return switch (type) {
-            case FIGHT -> "战斗";
-            case EMERGENCY -> "精英";
-            case BOSS -> "首领";
-            case UNEXPECTEDLY -> "事件";
-            case REWARD -> "奖励";
-            case SHOP -> "商店";
-            case ANOTHER_PATH -> "岔路";
-            case DECISION -> "抉择";
-            case SAFE_HOUSE -> "安全屋";
-            default -> "未知";
-        };
     }
 
     @Override
