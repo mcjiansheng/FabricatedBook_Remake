@@ -10,6 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.math.Vector2;
 import com.fabricatedbook.core.card.Card;
+import com.fabricatedbook.view.FabricBookGame;
 
 /**
  * CardActor — 卡牌 Actor
@@ -220,7 +221,7 @@ public class CardActor extends Actor {
         float oldScaleX = font.getData().scaleX;
         float oldScaleY = font.getData().scaleY;
         font.setColor(0.12f, 0.10f, 0.08f, 1f);
-        font.getData().setScale(0.78f * scale);
+        font.getData().setScale(FabricBookGame.uiFontScale(0.78f * scale));
 
         // 绘制类型图标
         if (typeIcon != null) {

@@ -6,7 +6,6 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Graphics.DisplayMode;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
@@ -55,6 +54,9 @@ public class FabricBookGame extends Game {
     /** 推荐窗口最大高度。 */
     public static final int MAX_WINDOW_HEIGHT = 2160;
 
+    /** 字体贴图按 2 倍生成，再缩回 UI 逻辑字号，减少放大糊边。 */
+    public static final float FONT_ATLAS_SCALE = 2f;
+
     private int lastWindowedWidth = SCREEN_WIDTH;
     private int lastWindowedHeight = SCREEN_HEIGHT;
     private boolean fullscreen;
@@ -68,9 +70,9 @@ public class FabricBookGame extends Game {
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(
                 Gdx.files.classpath("ys_zt.ttf"));
         FreeTypeFontParameter parameter = new FreeTypeFontParameter();
-        parameter.size = 18;
-        parameter.genMipMaps = true;
-        parameter.minFilter = TextureFilter.MipMapLinearLinear;
+        parameter.size = Math.round(18 * FONT_ATLAS_SCALE);
+        parameter.genMipMaps = false;
+        parameter.minFilter = TextureFilter.Linear;
         parameter.magFilter = TextureFilter.Linear;
         // 包含中英文全部字符（从字体文件读取所有可用字符）
         parameter.characters = buildFontCharacters(FreeTypeFontGenerator.DEFAULT_CHARS
@@ -94,10 +96,7 @@ public class FabricBookGame extends Game {
                 + "未发现额外物品跳过藏品掉落战斗失败"
                 + "，。、；：！？（）【】《》“”‘’—…·～/=+*#@&%￥①②③④⑤");
         font = generator.generateFont(parameter);
-        for (TextureRegion region : font.getRegions()) {
-            region.getTexture().setFilter(TextureFilter.MipMapLinearLinear,
-                    TextureFilter.Linear);
-        }
+        applyFontScale(1f);
         generator.dispose();
         dataLoader = new DataLoader("data/");
         saveManager = new SaveManager();
@@ -130,6 +129,14 @@ public class FabricBookGame extends Game {
     public BitmapFont getFont() { return font; }
     public DataLoader getDataLoader() { return dataLoader; }
     public SaveManager getSaveManager() { return saveManager; }
+
+    public void applyFontScale(float logicalScale) {
+        font.getData().setScale(uiFontScale(logicalScale));
+    }
+
+    public static float uiFontScale(float logicalScale) {
+        return logicalScale / FONT_ATLAS_SCALE;
+    }
 
     private void handleDisplayShortcuts() {
         boolean altEnter = Gdx.input.isKeyPressed(Input.Keys.ALT_LEFT)

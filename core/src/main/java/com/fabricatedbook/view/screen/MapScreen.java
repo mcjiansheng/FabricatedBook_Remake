@@ -127,10 +127,13 @@ public class MapScreen implements Screen {
     private float dragDistance;
     private boolean isDragging;
     private static final float SCROLL_SPEED = 1.0f;
-    private static final float STEP_X = 190f;
+    private static final float STEP_X = 260f;
     private static final float NODE_WIDTH = 150f;
     private static final float NODE_HEIGHT = 86f;
-    private static final float MAP_LEFT_PAD = 120f;
+    private static final float MAP_LEFT_PAD = 150f;
+    private static final float CONNECTION_LINE_WIDTH = 3.5f;
+    private static final float NODE_FRAME_THICKNESS = 4f;
+    private static final float NODE_FRAME_GAP = 6f;
     private static final float TOP_BUTTON_W = 150f;
     private static final float TOP_BUTTON_H = 42f;
 
@@ -291,13 +294,13 @@ public class MapScreen implements Screen {
             float startY;
 
             if (size == 3) {
-                stepY = 150f;
+                stepY = 200f;
                 startY = FabricBookGame.SCREEN_HEIGHT / 2f - stepY;
             } else if (size == 2) {
-                stepY = 170f;
+                stepY = 230f;
                 startY = FabricBookGame.SCREEN_HEIGHT / 2f - stepY / 2;
             } else if (size == 4) {
-                stepY = 125f;
+                stepY = 160f;
                 startY = FabricBookGame.SCREEN_HEIGHT / 2f - stepY * 1.5f;
             } else {
                 stepY = 0;
@@ -708,7 +711,7 @@ public class MapScreen implements Screen {
         if (layer == null) return;
 
         shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         for (int col = 0; col < layer.length; col++) {
             for (int row = 0; row < layer[col].length; row++) {
@@ -733,9 +736,10 @@ public class MapScreen implements Screen {
                     } else {
                         shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 0.5f); // 灰色
                     }
-                    shapeRenderer.line(
+                    shapeRenderer.rectLine(
                             node.x + scrollX, node.y + scrollY,
-                            next.x + scrollX, next.y + scrollY
+                            next.x + scrollX, next.y + scrollY,
+                            CONNECTION_LINE_WIDTH
                     );
                 }
             }
@@ -750,27 +754,34 @@ public class MapScreen implements Screen {
         if (layer == null) return;
 
         shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         for (int col = 0; col < layer.length; col++) {
             for (int row = 0; row < layer[col].length; row++) {
                 MapNode node = layer[col][row];
                 if (node == null) continue;
                 float width = nodeDrawWidth(node);
                 float height = nodeDrawHeight(node);
-                float x = node.x + scrollX - width / 2f;
-                float y = node.y + scrollY - height / 2f;
+                float x = node.x + scrollX - width / 2f - NODE_FRAME_GAP;
+                float y = node.y + scrollY - height / 2f - NODE_FRAME_GAP;
+                float framedWidth = width + NODE_FRAME_GAP * 2f;
+                float framedHeight = height + NODE_FRAME_GAP * 2f;
                 if (node.accessible) {
                     shapeRenderer.setColor(1f, 0.82f, 0f, 1f);
-                    shapeRenderer.rect(x - 4, y - 4, width + 8, height + 8);
-                    shapeRenderer.rect(x, y, width, height);
+                    drawFrame(x, y, framedWidth, framedHeight, NODE_FRAME_THICKNESS);
                 } else if (node.visited || node == currentNode) {
                     shapeRenderer.setColor(0f, 0f, 0f, 1f);
-                    shapeRenderer.rect(x - 4, y - 4, width + 8, height + 8);
-                    shapeRenderer.rect(x, y, width, height);
+                    drawFrame(x, y, framedWidth, framedHeight, NODE_FRAME_THICKNESS);
                 }
             }
         }
         shapeRenderer.end();
+    }
+
+    private void drawFrame(float x, float y, float width, float height, float thickness) {
+        shapeRenderer.rect(x, y, width, thickness);
+        shapeRenderer.rect(x, y + height - thickness, width, thickness);
+        shapeRenderer.rect(x, y, thickness, height);
+        shapeRenderer.rect(x + width - thickness, y, thickness, height);
     }
 
     /** 绘制所有节点 */
@@ -892,13 +903,13 @@ public class MapScreen implements Screen {
 
         batch.begin();
         batch.setColor(1f, 1f, 1f, alpha);
-        font.getData().setScale(2.2f);
+        game.applyFontScale(2.2f);
         font.draw(batch, "第 " + (currentLayerIdx + 1) + " 层",
                 FabricBookGame.SCREEN_WIDTH / 2f - 70, FabricBookGame.SCREEN_HEIGHT / 2f + 40);
-        font.getData().setScale(1.1f);
+        game.applyFontScale(1.1f);
         font.draw(batch, LAYER_NAMES[currentLayerIdx],
                 FabricBookGame.SCREEN_WIDTH / 2f - 60, FabricBookGame.SCREEN_HEIGHT / 2f);
-        font.getData().setScale(1f);
+        game.applyFontScale(1f);
         font.draw(batch, LAYER_EFFECTS[currentLayerIdx],
                 FabricBookGame.SCREEN_WIDTH / 2f - 160, FabricBookGame.SCREEN_HEIGHT / 2f - 42);
         batch.setColor(1f, 1f, 1f, 1f);
