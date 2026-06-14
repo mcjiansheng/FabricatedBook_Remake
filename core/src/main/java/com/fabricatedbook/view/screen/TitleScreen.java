@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.UiStyles;
 
 /**
  * TitleScreen — 标题画面
@@ -51,14 +52,13 @@ public class TitleScreen implements Screen {
         stage.addActor(table);
 
         // 标题
-        Label titleLabel = new Label("Fabricated Book", new Label.LabelStyle(
+        Label titleLabel = new Label("虚妄之书", new Label.LabelStyle(
                 game.getFontForScale(3.0f), com.badlogic.gdx.graphics.Color.WHITE));
         table.add(titleLabel).padBottom(80);
         table.row();
 
         // 按钮样式
-        TextButton.TextButtonStyle btnStyle = new TextButton.TextButtonStyle();
-        btnStyle.font = game.getFont();
+        TextButton.TextButtonStyle btnStyle = UiStyles.buttonStyle(game);
 
         // 开始游戏按钮
         TextButton newGameBtn = new TextButton("开始游戏", btnStyle);

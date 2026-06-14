@@ -15,6 +15,7 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,8 +83,7 @@ public class InventoryScreen implements Screen {
         root.add(new ScrollPane(relics)).width(560).height(520);
         root.row();
 
-        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
-        style.font = game.getFont();
+        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
         TextButton back = new TextButton("返回地图", style);
         back.addListener(new ClickListener() {
             @Override

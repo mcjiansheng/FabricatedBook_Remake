@@ -59,8 +59,7 @@ public class HandPanel extends Group {
         this.lastHandSignature = "";
 
         // 结束回合按钮
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = font;
+        TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(font);
         endTurnBtn = new TextButton("结束回合", buttonStyle);
         endTurnBtn.setPosition(FabricBookGame.SCREEN_WIDTH - 150, 30);
         endTurnBtn.setSize(130, 50);

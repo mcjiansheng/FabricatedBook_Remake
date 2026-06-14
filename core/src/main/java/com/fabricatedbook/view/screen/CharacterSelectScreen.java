@@ -17,6 +17,7 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.List;
 
@@ -64,8 +65,7 @@ public class CharacterSelectScreen implements Screen {
                 "女巫", "生命 60 / 试作职业");
 
         root.row();
-        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
-        style.font = game.getFont();
+        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
         TextButton back = new TextButton("返回", style);
         back.addListener(new ClickListener() {
             @Override
@@ -98,8 +98,7 @@ public class CharacterSelectScreen implements Screen {
         card.add(desc);
         card.row();
 
-        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
-        style.font = game.getFont();
+        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
         TextButton choose = new TextButton("选择" + name, style);
         choose.addListener(new ClickListener() {
             @Override

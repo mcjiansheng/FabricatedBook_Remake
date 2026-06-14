@@ -37,6 +37,7 @@ import com.fabricatedbook.view.actor.PlayerActor;
 import com.fabricatedbook.view.ui.HandPanel;
 import com.fabricatedbook.view.ui.EnergyBar;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -169,7 +170,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         stage.addActor(turnLabel);
 
         potionTable = new Table();
-        potionTable.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 150);
+        potionTable.left();
+        potionTable.setPosition(24, FabricBookGame.SCREEN_HEIGHT - 138);
         stage.addActor(potionTable);
         renderPotionButtons();
 
@@ -321,8 +323,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
     private void renderPotionButtons() {
         potionTable.clear();
-        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
-        style.font = game.getFont();
+        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
         for (int i = 0; i < player.getPotions().size(); i++) {
             final int index = i;
             Potion potion = player.getPotions().get(i);
@@ -339,7 +340,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                     }
                 }
             });
-            potionTable.add(button).width(130).height(34).padRight(6);
+            potionTable.add(button).width(126).height(34).padRight(8);
         }
     }
 
@@ -471,8 +472,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         if (resultShown) return;
         resultShown = true;
 
-        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
-        style.font = game.getFont();
+        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
         TextButton button = new TextButton(victory ? "返回地图" : "重新开始", style);
         button.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 80, 210);
         button.setSize(160, 52);
@@ -528,9 +528,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         table.add(title).padBottom(42);
         table.row();
 
-        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
-        style.font = game.getFont();
-        style.fontColor = Color.WHITE;
+        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
         TextButton restart = new TextButton("重新开始", style);
         restart.addListener(new ClickListener() {
             @Override
@@ -606,9 +604,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             table.row();
         }
 
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.getFont();
-        buttonStyle.fontColor = Color.WHITE;
+        TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
         TextButton continueButton = new TextButton("继续", buttonStyle);
         continueButton.addListener(new ClickListener() {
             @Override
@@ -674,9 +670,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         }
         table.row();
 
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.getFont();
-        buttonStyle.fontColor = Color.WHITE;
+        TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
         TextButton skipCard = new TextButton("跳过", buttonStyle);
         skipCard.addListener(new ClickListener() {
             @Override

@@ -17,6 +17,7 @@ import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.List;
 
@@ -108,9 +109,7 @@ public class EventScreen implements Screen {
             final int index = i;
             EventHandler.EventOption option = options.get(i);
 
-            TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-            buttonStyle.font = game.getFont();
-            buttonStyle.fontColor = Color.WHITE;
+            TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
             TextButton btn = new TextButton(cleanLabel(option.label) + "\n" + option.description,
                     buttonStyle);
             btn.addListener(new ClickListener() {
@@ -169,9 +168,7 @@ public class EventScreen implements Screen {
         optionTable.add(resultLabel).width(540).left().padBottom(34);
         optionTable.row();
 
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.getFont();
-        buttonStyle.fontColor = Color.WHITE;
+        TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
         TextButton backBtn = new TextButton("继续前进", buttonStyle);
         backBtn.addListener(new ClickListener() {
             @Override

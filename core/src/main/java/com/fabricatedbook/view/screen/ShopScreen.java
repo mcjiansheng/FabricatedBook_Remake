@@ -11,6 +11,7 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.List;
 
@@ -83,8 +84,7 @@ public class ShopScreen implements Screen {
         stage.addActor(itemTable);
 
         // 返回按钮
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.getFont();
+        TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
         TextButton backBtn = new TextButton("离开商店", buttonStyle);
         backBtn.setPosition(FabricBookGame.SCREEN_WIDTH - 200, 30);
         backBtn.setSize(180, 50);
@@ -127,8 +127,7 @@ public class ShopScreen implements Screen {
             itemTable.add(descLabel).width(420).pad(5);
 
             if (!item.isPurchased()) {
-                TextButton.TextButtonStyle buyStyle = new TextButton.TextButtonStyle();
-                buyStyle.font = game.getFont();
+                TextButton.TextButtonStyle buyStyle = UiStyles.buttonStyle(game);
                 TextButton buyBtn = new TextButton("购买", buyStyle);
                 buyBtn.addListener(new ClickListener() {
                     @Override

@@ -869,13 +869,9 @@ public class MapScreen implements Screen {
         shapeRenderer.setColor(0.86f, 0.86f, 0.86f, 1f);
         shapeRenderer.rect(0, FabricBookGame.SCREEN_HEIGHT - TOP_BAR_HEIGHT,
                 FabricBookGame.SCREEN_WIDTH, TOP_BAR_HEIGHT);
-        shapeRenderer.setColor(0.38f, 0.38f, 0.38f, 1f);
-        shapeRenderer.rect(FabricBookGame.SCREEN_WIDTH - 330,
-                FabricBookGame.SCREEN_HEIGHT - TOP_BUTTON_H - 5,
-                TOP_BUTTON_W, TOP_BUTTON_H);
-        shapeRenderer.rect(FabricBookGame.SCREEN_WIDTH - 170,
-                FabricBookGame.SCREEN_HEIGHT - TOP_BUTTON_H - 5,
-                TOP_BUTTON_W, TOP_BUTTON_H);
+        Vector2 mouse = toWorld(Gdx.input.getX(), Gdx.input.getY());
+        drawTopButtonBackground(FabricBookGame.SCREEN_WIDTH - 330, mouse);
+        drawTopButtonBackground(FabricBookGame.SCREEN_WIDTH - 170, mouse);
         shapeRenderer.end();
 
         batch.begin();
@@ -894,7 +890,7 @@ public class MapScreen implements Screen {
                 360, FabricBookGame.SCREEN_HEIGHT - 10);
         for (int i = 0; i < player.getPotions().size(); i++) {
             font.draw(batch, player.getPotions().get(i).getName(),
-                    470 + i * 95, FabricBookGame.SCREEN_HEIGHT - 10);
+                    455 + i * 88, FabricBookGame.SCREEN_HEIGHT - 10);
         }
 
         font.setColor(Color.WHITE);
@@ -905,10 +901,24 @@ public class MapScreen implements Screen {
 
         font.setColor(Color.BLACK);
         font.draw(batch, "第 " + (currentLayerIdx + 1) + " 层  " + LAYER_NAMES[currentLayerIdx],
-                FabricBookGame.SCREEN_WIDTH - 570, FabricBookGame.SCREEN_HEIGHT - 10);
+                740, FabricBookGame.SCREEN_HEIGHT - 10);
         font.setColor(old);
 
         batch.end();
+    }
+
+    private void drawTopButtonBackground(float x, Vector2 mouse) {
+        float y = FabricBookGame.SCREEN_HEIGHT - TOP_BUTTON_H - 5;
+        boolean hover = mouse.x >= x && mouse.x <= x + TOP_BUTTON_W
+                && mouse.y >= y && mouse.y <= y + TOP_BUTTON_H;
+        if (hover && Gdx.input.isTouched()) {
+            shapeRenderer.setColor(0.24f, 0.24f, 0.24f, 1f);
+        } else if (hover) {
+            shapeRenderer.setColor(0.46f, 0.46f, 0.46f, 1f);
+        } else {
+            shapeRenderer.setColor(0.38f, 0.38f, 0.38f, 1f);
+        }
+        shapeRenderer.rect(x, y, TOP_BUTTON_W, TOP_BUTTON_H);
     }
 
     private void drawLayerIntro() {
