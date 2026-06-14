@@ -54,8 +54,8 @@ public class FabricBookGame extends Game {
     /** 推荐窗口最大高度。 */
     public static final int MAX_WINDOW_HEIGHT = 2160;
 
-    /** 字体贴图按 4 倍生成，再缩回 UI 逻辑字号，减少大字号放大糊边。 */
-    public static final float FONT_ATLAS_SCALE = 4f;
+    /** 字体贴图与 UI 逻辑字号保持一致，避免 Scene2D Label 字号被放大。 */
+    public static final float FONT_ATLAS_SCALE = 1f;
 
     private int lastWindowedWidth = SCREEN_WIDTH;
     private int lastWindowedHeight = SCREEN_HEIGHT;
