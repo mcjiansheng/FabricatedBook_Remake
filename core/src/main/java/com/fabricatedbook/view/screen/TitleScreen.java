@@ -5,12 +5,11 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Align;
 import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
@@ -30,7 +29,6 @@ public class TitleScreen implements Screen {
     private Stage stage;
     private OrthographicCamera camera;
     private Texture background;
-    private GlyphLayout glyphLayout;
 
     public TitleScreen(FabricBookGame game) {
         this.game = game;
@@ -42,7 +40,6 @@ public class TitleScreen implements Screen {
     @Override
     public void show() {
         stage = new Stage(ResponsiveViewport.create());
-        glyphLayout = new GlyphLayout();
         Gdx.input.setInputProcessor(stage);
         try {
             background = new Texture("img/background.png");
@@ -50,9 +47,17 @@ public class TitleScreen implements Screen {
             background = null;
         }
 
+        Label titleLabel = new Label("Fabricated Book",
+                new Label.LabelStyle(game.getFontForScale(3.0f), com.badlogic.gdx.graphics.Color.WHITE));
+        titleLabel.setAlignment(Align.center);
+        titleLabel.setBounds(0, FabricBookGame.SCREEN_HEIGHT - 190,
+                FabricBookGame.SCREEN_WIDTH, 100);
+        stage.addActor(titleLabel);
+
         // 创建UI
         Table table = new Table();
         table.setFillParent(true);
+        table.center().padTop(120);
         stage.addActor(table);
 
         // 按钮样式
@@ -115,7 +120,6 @@ public class TitleScreen implements Screen {
                     FabricBookGame.SCREEN_HEIGHT);
             batch.setColor(1f, 1f, 1f, 1f);
         }
-        drawTitle(batch);
         batch.end();
 
         stage.act(delta);
@@ -133,15 +137,5 @@ public class TitleScreen implements Screen {
     @Override public void dispose() {
         stage.dispose();
         if (background != null) background.dispose();
-    }
-
-    private void drawTitle(SpriteBatch batch) {
-        BitmapFont titleFont = game.getFontForScale(3.0f);
-        String title = "Fabricated Book";
-        glyphLayout.setText(titleFont, title);
-        titleFont.setColor(com.badlogic.gdx.graphics.Color.WHITE);
-        titleFont.draw(batch, title,
-                FabricBookGame.SCREEN_WIDTH / 2f - glyphLayout.width / 2f,
-                FabricBookGame.SCREEN_HEIGHT - 145);
     }
 }
