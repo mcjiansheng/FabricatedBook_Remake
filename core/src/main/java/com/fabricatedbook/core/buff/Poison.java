@@ -30,13 +30,8 @@ public class Poison extends AbstractBuff {
         if (stack <= 0) return;
         if (owner == null || !owner.isAlive()) return;
 
-        // 对拥有者造成中毒层数的伤害
+        // Poison is direct HP loss and must not consume block.
         int damage = stack;
-        owner.takeDamage(damage);
-
-        // 实际扣除生命值（忽略格挡）
-        // 注意：takeDamage 会先扣格挡再扣血，中毒应该穿透格挡
-        // 直接扣生命值
         owner.setHp(owner.getHp() - damage);
 
         // 层数减 1

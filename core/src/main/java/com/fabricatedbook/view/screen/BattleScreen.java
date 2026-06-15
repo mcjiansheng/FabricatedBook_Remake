@@ -398,11 +398,10 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         }
     }
 
-    private String previewEnemyIntentDetail(Enemy enemy) {
+    private EnemyIntentPreview previewEnemyIntentDetail(Enemy enemy) {
         String actionId = combatEngine.getPreviewActionId(enemy);
-        EnemyIntentPreview preview = CombatPreviewCalculator.previewEnemyIntent(enemy, player,
+        return CombatPreviewCalculator.previewEnemyIntent(enemy, player,
                 enemies, relicManager, actionId);
-        return preview.getDetail();
     }
 
     private boolean targetsSelf(Card card) {

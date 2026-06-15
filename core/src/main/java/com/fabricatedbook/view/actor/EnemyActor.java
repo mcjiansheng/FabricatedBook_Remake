@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.fabricatedbook.core.buff.BuffHook;
+import com.fabricatedbook.core.engine.EnemyIntentPreview;
 import com.fabricatedbook.core.engine.EnemyActionResolver;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.IntentType;
@@ -136,7 +137,7 @@ public class EnemyActor extends Actor {
     }
 
     public interface IntentPreviewProvider {
-        String getIntentDetail(Enemy enemy);
+        EnemyIntentPreview getIntentPreview(Enemy enemy);
     }
 
     /** 根据敌人名称加载对应立绘 */
@@ -237,11 +238,26 @@ public class EnemyActor extends Actor {
         if (icon != null) {
             batch.draw(icon, iconX, iconY, 32, 32);
         }
-        String detail = intentPreviewProvider != null
-                ? intentPreviewProvider.getIntentDetail(enemy)
-                : intentDetail(EnemyActionResolver.describeIntent(enemy.peekCurrentAction()));
+        EnemyIntentPreview preview = intentPreviewProvider != null
+                ? intentPreviewProvider.getIntentPreview(enemy)
+                : new EnemyIntentPreview(intentDetail(
+                        EnemyActionResolver.describeIntent(enemy.peekCurrentAction())));
+        float detailX = iconX + 38;
+        if (preview.hasDebuff()) {
+            Texture debuffIcon = intentIcons.get(IntentType.DEBUFF);
+            if (debuffIcon != null) {
+                batch.draw(debuffIcon, iconX + 34, iconY, 32, 32);
+                detailX = iconX + 72;
+            }
+        }
+        String detail = preview.getDetail();
+        if (preview.hasDebuff()) {
+            detail = detail.isBlank()
+                    ? preview.getDebuffDetail()
+                    : detail + " / " + preview.getDebuffDetail();
+        }
         if (!detail.isBlank()) {
-            font.draw(batch, detail, iconX + 38, iconY + 23);
+            font.draw(batch, detail, detailX, iconY + 23);
         }
     }
 

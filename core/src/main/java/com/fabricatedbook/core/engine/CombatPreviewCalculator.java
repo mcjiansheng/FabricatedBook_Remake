@@ -166,7 +166,8 @@ public final class CombatPreviewCalculator {
             blocks.add(DamageCalculator.calculateBlock(baseBlock, enemy));
         }
 
-        return new EnemyIntentPreview(formatIntentDetail(damages, blocks));
+        return new EnemyIntentPreview(formatIntentDetail(damages, blocks),
+                formatDebuffDetail(amounts.debuffs));
     }
 
     private static void addDamage(PreviewTotals totals, int baseDamage, int repeat,
@@ -294,6 +295,17 @@ public final class CombatPreviewCalculator {
         return String.join(" / ", parts);
     }
 
+    private static String formatDebuffDetail(List<String> debuffs) {
+        if (debuffs.isEmpty()) return "";
+        List<String> unique = new ArrayList<>();
+        for (String debuff : debuffs) {
+            if (!unique.contains(debuff)) {
+                unique.add(debuff);
+            }
+        }
+        return String.join("/", unique);
+    }
+
     private static String formatDamage(List<Integer> damageHits) {
         if (damageHits.isEmpty()) return "";
         boolean same = true;
@@ -343,43 +355,98 @@ public final class CombatPreviewCalculator {
 
         switch (actionId) {
             case "atk_double_3" -> addRepeatedDamage(amounts, 3, 2);
-            case "atk_debuff_blockred", "atk_debuff_fragile" -> addRepeatedDamage(amounts, 5, 1);
+            case "atk_debuff_blockred" -> {
+                addRepeatedDamage(amounts, 5, 1);
+                amounts.debuffs.add("易碎");
+            }
+            case "atk_debuff_fragile" -> {
+                addRepeatedDamage(amounts, 5, 1);
+                amounts.debuffs.add("脆弱");
+            }
             case "def_fly" -> amounts.selfBlocks.add(3);
             case "atk_peck" -> addRepeatedDamage(amounts, 3, 1);
             case "atk_dive" -> addRepeatedDamage(amounts, 7, 1);
-            case "atk_poison_3" -> addRepeatedDamage(amounts, 2, 1);
+            case "atk_poison_3" -> {
+                addRepeatedDamage(amounts, 2, 1);
+                amounts.debuffs.add("中毒3");
+            }
             case "def_block_5" -> amounts.selfBlocks.add(5);
-            case "atk_double_wither" -> addRepeatedDamage(amounts, 8, 2);
-            case "atk_trigger_wither", "atk_combo_goblin", "atk_combo_chief" ->
-                    addRepeatedDamage(amounts, 8, 1);
+            case "atk_double_wither" -> {
+                addRepeatedDamage(amounts, 8, 2);
+                amounts.debuffs.add("凋零");
+            }
+            case "atk_trigger_wither" -> {
+                addRepeatedDamage(amounts, 8, 1);
+                amounts.debuffs.add("凋零");
+            }
+            case "atk_combo_goblin", "atk_combo_chief" -> addRepeatedDamage(amounts, 8, 1);
             case "def_block_10", "def_root", "def_assemble" -> amounts.selfBlocks.add(10);
             case "inc_strength_block" -> amounts.selfBlocks.add(10);
             case "atk_barrage" -> addRepeatedDamage(amounts, 2, 5);
-            case "atk_heavy", "atk_poison_9" -> addRepeatedDamage(amounts, 9, 1);
+            case "atk_heavy" -> addRepeatedDamage(amounts, 9, 1);
+            case "atk_poison_9" -> {
+                addRepeatedDamage(amounts, 9, 1);
+                amounts.debuffs.add("中毒3");
+            }
             case "atk_precise" -> addRepeatedDamage(amounts, 10 + (player.getBlock() > 0 ? 5 : 0), 1);
-            case "atk_vine" -> addRepeatedDamage(amounts, 8, 1);
-            case "atk_thorn" -> addRepeatedDamage(amounts, 4, 4);
+            case "atk_vine" -> {
+                addRepeatedDamage(amounts, 8, 1);
+                amounts.debuffs.add("中毒");
+            }
+            case "atk_thorn" -> {
+                addRepeatedDamage(amounts, 4, 4);
+                amounts.debuffs.add("易碎");
+            }
             case "def_harden" -> amounts.selfBlocks.add(8);
             case "def_sticky_wall" -> amounts.selfBlocks.add(3);
             case "atk_bounce" -> addRepeatedDamage(amounts, 2 + enemy.getBlock() / 2, 1);
-            case "curse_mark" -> addRepeatedDamage(amounts, 3, 5);
+            case "curse_mark" -> {
+                addRepeatedDamage(amounts, 3, 5);
+                amounts.debuffs.add("脆弱/易碎");
+            }
             case "inc_strength_block_4" -> amounts.selfBlocks.add(20);
-            case "atk_dual_blade", "atk_tear" -> addRepeatedDamage(amounts, 7, 2);
+            case "atk_dual_blade" -> {
+                addRepeatedDamage(amounts, 7, 2);
+                amounts.debuffs.add("虚弱");
+            }
+            case "atk_tear" -> addRepeatedDamage(amounts, 7, 2);
             case "atk_finisher" -> addRepeatedDamage(amounts, 12, 1);
-            case "atk_spray" -> addRepeatedDamage(amounts, 5, 3);
-            case "atk_rot" -> addRepeatedDamage(amounts, 6, 1);
+            case "atk_spray" -> {
+                addRepeatedDamage(amounts, 5, 3);
+                amounts.debuffs.add("虚弱");
+            }
+            case "atk_rot" -> {
+                addRepeatedDamage(amounts, 6, 1);
+                amounts.debuffs.add("中毒2");
+            }
             case "atk_thorn_storm" -> addRepeatedDamage(amounts, 4, 7);
-            case "atk_wither_strike", "atk_wither_combo" -> addRepeatedDamage(amounts, 15, 1);
-            case "atk_filament" -> addRepeatedDamage(amounts, 7, 1);
-            case "atk_spore_storm" -> addRepeatedDamage(amounts, 5, 4);
+            case "atk_wither_strike", "atk_wither_combo" -> {
+                addRepeatedDamage(amounts, 15, 1);
+                amounts.debuffs.add("凋零");
+            }
+            case "atk_filament" -> {
+                addRepeatedDamage(amounts, 7, 1);
+                amounts.debuffs.add("中毒2");
+            }
+            case "atk_spore_storm" -> {
+                addRepeatedDamage(amounts, 5, 4);
+                amounts.debuffs.add("中毒");
+            }
             case "atk_symbiosis" -> addRepeatedDamage(amounts, 10, 1);
             case "atk_horizontal_slash", "atk_sentinel_spear" -> addRepeatedDamage(amounts, 18, 1);
             case "atk_wild_dance" -> addRepeatedDamage(amounts, 6, 3);
             case "def_block_8", "def_chaos_8" -> amounts.selfBlocks.add(8);
             case "atk_fog_blade" -> addRepeatedDamage(amounts, 2, 10);
-            case "atk_yin_wind", "atk_peck_12", "atk_overload_shot" -> addRepeatedDamage(amounts, 12, 1);
+            case "atk_yin_wind" -> {
+                addRepeatedDamage(amounts, 12, 1);
+                amounts.debuffs.add("脆弱");
+            }
+            case "atk_peck_12", "atk_overload_shot" -> addRepeatedDamage(amounts, 12, 1);
             case "atk_phantom_strike" -> addRepeatedDamage(amounts, 3, 4);
-            case "atk_phantom_dance" -> addRepeatedDamage(amounts, 5, 2);
+            case "atk_phantom_dance" -> {
+                addRepeatedDamage(amounts, 5, 2);
+                amounts.debuffs.add("凋零");
+            }
             case "buff_dance", "def_block_12", "def_sword_shield", "def_magic_shield" ->
                     amounts.selfBlocks.add(12);
             case "atk_wing_slap" -> addRepeatedDamage(amounts, 4, 2);
@@ -402,12 +469,21 @@ public final class CombatPreviewCalculator {
                 addRepeatedDamage(amounts, 10 + enemy.getBlock() / 10, 1);
                 amounts.selfBlocks.add(10);
             }
-            case "atk_spread_shot" -> addRepeatedDamage(amounts, 4, 5);
-            case "atk_point_shot" -> addRepeatedDamage(amounts, 3, 7);
+            case "atk_spread_shot" -> {
+                addRepeatedDamage(amounts, 4, 5);
+                amounts.debuffs.add("脆弱");
+            }
+            case "atk_point_shot" -> {
+                addRepeatedDamage(amounts, 3, 7);
+                amounts.debuffs.add("易碎");
+            }
             case "atk_magic_missile" -> addRepeatedDamage(amounts, 2, 5);
             case "atk_arcane_blast" -> addRepeatedDamage(amounts, 3, 8);
             case "def_stone_skin" -> amounts.selfBlocks.add(20);
-            case "atk_claw" -> addRepeatedDamage(amounts, 8, 3);
+            case "atk_claw" -> {
+                addRepeatedDamage(amounts, 8, 3);
+                amounts.debuffs.add("易碎");
+            }
             case "atk_command" -> addRepeatedDamage(amounts, 5, 3);
             case "def_team_shield" -> amounts.selfBlocks.add(5);
             case "def_stand_firm" -> amounts.selfBlocks.add(15);
@@ -422,17 +498,29 @@ public final class CombatPreviewCalculator {
             case "charge_attack" -> {
                 if (hasBuff(enemy, "Strength")) {
                     addRepeatedDamage(amounts, 30, 1);
+                    amounts.debuffs.add("凋零");
                 }
             }
-            case "atk_demon_dance" -> addRepeatedDamage(amounts, 8, 4);
+            case "atk_demon_dance" -> {
+                addRepeatedDamage(amounts, 8, 4);
+                amounts.debuffs.add("凋零");
+            }
             case "def_puppet_repair" -> amounts.selfBlocks.add(20);
             case "atk_dark_energy" -> addRepeatedDamage(amounts, 14, 3);
             case "steal_block" -> {
                 if (player.getBlock() > 0) amounts.selfBlocks.add(player.getBlock());
             }
-            case "multi_curse", "def_shield_puppet" -> amounts.selfBlocks.add(10);
-            case "shadow_assault" -> addRepeatedDamage(amounts, 5, 1);
+            case "multi_curse" -> {
+                amounts.selfBlocks.add(10);
+                amounts.debuffs.add("虚弱/凋零/脆弱");
+            }
+            case "def_shield_puppet" -> amounts.selfBlocks.add(10);
+            case "shadow_assault" -> {
+                addRepeatedDamage(amounts, 5, 1);
+                amounts.debuffs.add("眩晕");
+            }
             default -> {
+                addDebuffsFromActionName(amounts, actionId);
             }
         }
         return amounts;
@@ -500,6 +588,19 @@ public final class CombatPreviewCalculator {
         return false;
     }
 
+    private static void addDebuffsFromActionName(EnemyIntentAmounts amounts, String actionId) {
+        String normalized = actionId.toLowerCase();
+        if (normalized.contains("poison")) amounts.debuffs.add("中毒");
+        if (normalized.contains("weak")) amounts.debuffs.add("虚弱");
+        if (normalized.contains("fragile")) amounts.debuffs.add("脆弱");
+        if (normalized.contains("blockred")) amounts.debuffs.add("易碎");
+        if (normalized.contains("wither")) amounts.debuffs.add("凋零");
+        if (normalized.contains("stun")) amounts.debuffs.add("眩晕");
+        if (normalized.startsWith("curse") || normalized.startsWith("debuff")) {
+            amounts.debuffs.add("负面");
+        }
+    }
+
     private static int parseInt(String raw, int fallback) {
         try {
             return Integer.parseInt(raw);
@@ -540,6 +641,7 @@ public final class CombatPreviewCalculator {
     private static class EnemyIntentAmounts {
         private final List<Integer> damageHits = new ArrayList<>();
         private final List<Integer> selfBlocks = new ArrayList<>();
+        private final List<String> debuffs = new ArrayList<>();
     }
 
     private static class PreviewEntity extends AbstractEntity {
