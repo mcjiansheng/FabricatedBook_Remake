@@ -100,6 +100,7 @@ public class InventoryScreen implements Screen {
         cards.addAll(player.getDrawPile());
         cards.addAll(player.getHand());
         cards.addAll(player.getDiscardPile());
+        cards.addAll(player.getExhaustPile());
         return cards;
     }
 

@@ -117,11 +117,12 @@ public class SaveManager {
                 data.potionIds.add(potion.getId());
             }
 
-            // 保存卡牌组（从drawPile+hand+discardPile）
+            // 保存卡牌组（从 drawPile + hand + discardPile + exhaustPile）
             List<Card> allCards = new ArrayList<>();
             allCards.addAll(player.getDrawPile());
             allCards.addAll(player.getHand());
             allCards.addAll(player.getDiscardPile());
+            allCards.addAll(player.getExhaustPile());
             for (Card card : allCards) {
                 data.deck.add(new SerializableCard(card));
             }

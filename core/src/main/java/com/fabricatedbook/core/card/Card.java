@@ -87,7 +87,7 @@ public class Card {
     /** 效果列表 — 字符串标识，由 CombatEngine 解析 */
     private List<String> effects;
 
-    /** 是否消耗（使用后消失，不进入弃牌堆） */
+    /** 是否消耗（使用后进入消耗牌堆，不进入弃牌堆） */
     private boolean exhaust;
 
     /** 所属职业（"warrior"/"mage"/"witch"/null=通用） */

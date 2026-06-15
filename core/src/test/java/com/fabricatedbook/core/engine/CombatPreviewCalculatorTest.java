@@ -150,6 +150,8 @@ class CombatPreviewCalculatorTest {
                 "damage:1"));
         player.getDiscardPile().add(attackCard("discard", Card.TargetType.SINGLE_ENEMY,
                 "damage:1"));
+        player.getExhaustPile().add(attackCard("exhaust", Card.TargetType.SINGLE_ENEMY,
+                "damage:1"));
 
         player.resetForCombatStart();
 
@@ -158,7 +160,23 @@ class CombatPreviewCalculatorTest {
         assertTrue(player.getBuffs().isEmpty());
         assertTrue(player.getHand().isEmpty());
         assertTrue(player.getDiscardPile().isEmpty());
-        assertEquals(3, player.getDrawPile().size());
+        assertTrue(player.getExhaustPile().isEmpty());
+        assertEquals(4, player.getDrawPile().size());
+    }
+
+    @Test
+    void shuffleDiscardToDrawDoesNotReturnExhaustedCards() {
+        Player player = player();
+        player.getDiscardPile().add(attackCard("discard", Card.TargetType.SINGLE_ENEMY,
+                "damage:1"));
+        player.getExhaustPile().add(attackCard("exhaust", Card.TargetType.SINGLE_ENEMY,
+                "damage:1"));
+
+        player.shuffleDiscardToDraw();
+
+        assertEquals(1, player.getDrawPile().size());
+        assertTrue(player.getDiscardPile().isEmpty());
+        assertEquals(1, player.getExhaustPile().size());
     }
 
     private static Player player() {

@@ -289,7 +289,7 @@ public class CombatEngine {
 
         // 处理消耗
         if (card.isExhaust()) {
-            // 消耗牌：从游戏中移除，不进入弃牌堆
+            player.getExhaustPile().add(card);
             System.out.println("[CombatEngine] 消耗牌: " + card.getName());
         } else {
             player.getDiscardPile().add(card);

@@ -209,7 +209,8 @@ public class DataRelic implements Relic {
     }
 
     private int deckSize() {
-        return owner.getDrawPile().size() + owner.getHand().size() + owner.getDiscardPile().size();
+        return owner.getDrawPile().size() + owner.getHand().size()
+                + owner.getDiscardPile().size() + owner.getExhaustPile().size();
     }
 
     private int cursedRelicCount() {

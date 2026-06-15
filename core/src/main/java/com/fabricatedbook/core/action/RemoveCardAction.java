@@ -89,6 +89,8 @@ public class RemoveCardAction implements CombatAction {
                 removedCard = specificCard;
             } else if (target.getDiscardPile().remove(specificCard)) {
                 removedCard = specificCard;
+            } else if (target.getExhaustPile().remove(specificCard)) {
+                removedCard = specificCard;
             }
         } else {
             // 按索引移除
@@ -108,6 +110,12 @@ public class RemoveCardAction implements CombatAction {
                     case "discard":
                         if (idx < target.getDiscardPile().size()) {
                             card = target.getDiscardPile().remove(idx);
+                            removedCard = card;
+                        }
+                        break;
+                    case "exhaust":
+                        if (idx < target.getExhaustPile().size()) {
+                            card = target.getExhaustPile().remove(idx);
                             removedCard = card;
                         }
                         break;

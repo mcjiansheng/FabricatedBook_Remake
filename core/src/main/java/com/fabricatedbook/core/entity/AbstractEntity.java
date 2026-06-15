@@ -52,6 +52,9 @@ public abstract class AbstractEntity {
     /** 弃牌堆 */
     protected List<Card> discardPile;
 
+    /** 消耗牌堆：本场战斗中被消耗的牌，不参与洗牌。 */
+    protected List<Card> exhaustPile;
+
     /** 是否存活 */
     protected boolean alive;
 
@@ -77,6 +80,7 @@ public abstract class AbstractEntity {
         this.hand = new ArrayList<>();
         this.drawPile = new ArrayList<>();
         this.discardPile = new ArrayList<>();
+        this.exhaustPile = new ArrayList<>();
         this.alive = true;
         this.dizzy = false;
     }
@@ -264,13 +268,15 @@ public abstract class AbstractEntity {
         alive = hp > 0;
 
         List<Card> fullDeck = new ArrayList<>(drawPile.size() + hand.size()
-                + discardPile.size());
+                + discardPile.size() + exhaustPile.size());
         fullDeck.addAll(drawPile);
         fullDeck.addAll(hand);
         fullDeck.addAll(discardPile);
+        fullDeck.addAll(exhaustPile);
         drawPile.clear();
         hand.clear();
         discardPile.clear();
+        exhaustPile.clear();
         drawPile.addAll(fullDeck);
     }
 
@@ -284,6 +290,9 @@ public abstract class AbstractEntity {
 
     public List<Card> getDiscardPile() { return discardPile; }
     public void setDiscardPile(List<Card> discardPile) { this.discardPile = discardPile; }
+
+    public List<Card> getExhaustPile() { return exhaustPile; }
+    public void setExhaustPile(List<Card> exhaustPile) { this.exhaustPile = exhaustPile; }
 
     /**
      * 从抽牌堆抽指定数量的牌到手牌。
