@@ -54,6 +54,9 @@ FabricatedBookDebug
 如果同时保留了 `desktop/build/computerUseApp/image/FabricatedBookDebug.app`，
 bundle id `com.fabricatedbook.debug` 可能有歧义；优先使用应用名或用户应用目录的完整路径。
 
+面向后续 Codex 或其它屏幕控制 agent 的完整抓取流程见：
+`doc/computer_use_app_capture.md`。
+
 ## 可用入口
 
 - 标题界面：
