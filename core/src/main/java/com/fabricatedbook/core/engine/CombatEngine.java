@@ -113,6 +113,8 @@ public class CombatEngine {
         this.inBattle = true;
         this.victory = false;
 
+        player.resetForCombatStart();
+
         // 初始化玩家手牌：抽牌堆放入基础卡牌，抽初始手牌
         initPlayerDeck();
 

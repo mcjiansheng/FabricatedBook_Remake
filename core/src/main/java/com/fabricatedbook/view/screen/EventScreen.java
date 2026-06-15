@@ -5,11 +5,15 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Align;
 import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.relic.Relic;
@@ -17,6 +21,7 @@ import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.TopStatusBar;
 import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.List;
@@ -39,8 +44,19 @@ public class EventScreen implements Screen {
     private Stage stage;
     private OrthographicCamera camera;
     private ShapeRenderer shapeRenderer;
+    private SpriteBatch batch;
+    private BitmapFont font;
+    private TopStatusBar topStatusBar;
     private Table optionTable;
     private boolean resolved;
+
+    private static final float CONTENT_TOP_PAD = 138f;
+    private static final float CONTENT_LEFT_PAD = 118f;
+    private static final float CONTENT_RIGHT_PAD = 118f;
+    private static final float EVENT_TEXT_WIDTH = 520f;
+    private static final float COLUMN_GAP = 108f;
+    private static final float OPTION_WIDTH = 560f;
+    private static final float OPTION_HEIGHT = 96f;
 
     /**
      * 构造事件画面。
@@ -69,12 +85,17 @@ public class EventScreen implements Screen {
     @Override
     public void show() {
         stage = new Stage(ResponsiveViewport.create());
+        camera = (OrthographicCamera) stage.getCamera();
         Gdx.input.setInputProcessor(stage);
         shapeRenderer = new ShapeRenderer();
+        batch = game.getBatch();
+        font = game.getFont();
+        topStatusBar = new TopStatusBar(player, font);
 
         Table root = new Table();
         root.setFillParent(true);
-        root.pad(94, 118, 70, 118);
+        root.top().left();
+        root.pad(CONTENT_TOP_PAD, CONTENT_LEFT_PAD, 70, CONTENT_RIGHT_PAD);
         stage.addActor(root);
 
         Table eventText = new Table();
@@ -88,14 +109,15 @@ public class EventScreen implements Screen {
         Label description = new Label(eventHandler.getEventDescription(eventName),
                 new Label.LabelStyle(game.getFont(), Color.BLACK));
         description.setWrap(true);
-        eventText.add(description).width(480).left();
+        description.setAlignment(Align.left);
+        eventText.add(description).width(500).left();
 
         optionTable = new Table();
         optionTable.top().left();
         renderOptions();
 
-        root.add(eventText).width(520).expandY().top().left().padRight(108);
-        root.add(optionTable).width(560).expandY().top().left();
+        root.add(eventText).width(EVENT_TEXT_WIDTH).top().left().padRight(COLUMN_GAP);
+        root.add(optionTable).width(OPTION_WIDTH).top().left();
     }
 
     /**
@@ -112,6 +134,8 @@ public class EventScreen implements Screen {
             TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
             TextButton btn = new TextButton(cleanLabel(option.label) + "\n" + option.description,
                     buttonStyle);
+            btn.getLabel().setAlignment(Align.left);
+            btn.getLabelCell().padLeft(28).padRight(24);
             btn.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
@@ -149,7 +173,8 @@ public class EventScreen implements Screen {
                     showResult(result.description);
                 }
             });
-            optionTable.add(btn).width(540).height(96).left().padBottom(28);
+            optionTable.add(btn).width(OPTION_WIDTH).height(OPTION_HEIGHT)
+                    .left().padBottom(28);
             optionTable.row();
         }
     }
@@ -165,7 +190,8 @@ public class EventScreen implements Screen {
         Label resultLabel = new Label(resultDescription, new Label.LabelStyle(
                 game.getFont(), Color.WHITE));
         resultLabel.setWrap(true);
-        optionTable.add(resultLabel).width(540).left().padBottom(34);
+        resultLabel.setAlignment(Align.left);
+        optionTable.add(resultLabel).width(OPTION_WIDTH).left().padBottom(34);
         optionTable.row();
 
         TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
@@ -180,7 +206,7 @@ public class EventScreen implements Screen {
                 }
             }
         });
-        optionTable.add(backBtn).width(220).height(56).left();
+        optionTable.add(backBtn).width(260).height(56).left();
     }
 
     private String cleanLabel(String label) {
@@ -193,9 +219,16 @@ public class EventScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         drawOptionBackplates();
+        drawTopBar();
 
         stage.act(delta);
         stage.draw();
+    }
+
+    private void drawTopBar() {
+        String layerText = returnMap != null ? returnMap.currentLayerStatusText() : "";
+        topStatusBar.draw(batch, shapeRenderer, camera, layerText,
+                false, new Vector2());
     }
 
     private void drawOptionBackplates() {
@@ -205,16 +238,16 @@ public class EventScreen implements Screen {
         shapeRenderer.setProjectionMatrix(stage.getCamera().combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.BLACK);
-        float x = 118f + 520f + 108f;
-        float top = FabricBookGame.SCREEN_HEIGHT - 94f;
+        float x = CONTENT_LEFT_PAD + EVENT_TEXT_WIDTH + COLUMN_GAP;
+        float top = FabricBookGame.SCREEN_HEIGHT - CONTENT_TOP_PAD;
         int rows = resolved ? 1 : eventHandler.getOptions(eventName).size();
         for (int i = 0; i < rows; i++) {
-            float cardY = top - 96 - i * 124;
-            shapeRenderer.rect(x, cardY, 540, resolved ? 150 : 96);
+            float cardY = top - OPTION_HEIGHT - i * 124;
+            shapeRenderer.rect(x, cardY, OPTION_WIDTH, resolved ? 150 : OPTION_HEIGHT);
         }
         if (resolved) {
             shapeRenderer.setColor(0.38f, 0.38f, 0.38f, 1f);
-            shapeRenderer.rect(x, top - 240, 220, 56);
+            shapeRenderer.rect(x, top - 240, 260, 56);
         }
         shapeRenderer.end();
     }

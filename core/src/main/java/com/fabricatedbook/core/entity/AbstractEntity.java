@@ -252,6 +252,28 @@ public abstract class AbstractEntity {
         }
     }
 
+    /**
+     * 重置跨战斗不应保留的临时状态。
+     * 当前生命、最大生命、金币/藏品等长期状态由子类持有，不在这里清理。
+     */
+    public void resetForCombatStart() {
+        block = 0;
+        energy = 0;
+        buffs.clear();
+        dizzy = false;
+        alive = hp > 0;
+
+        List<Card> fullDeck = new ArrayList<>(drawPile.size() + hand.size()
+                + discardPile.size());
+        fullDeck.addAll(drawPile);
+        fullDeck.addAll(hand);
+        fullDeck.addAll(discardPile);
+        drawPile.clear();
+        hand.clear();
+        discardPile.clear();
+        drawPile.addAll(fullDeck);
+    }
+
     // ====== 手牌 / 牌堆相关 ======
 
     public List<Card> getHand() { return hand; }

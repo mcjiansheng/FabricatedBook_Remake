@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CombatPreviewCalculatorTest {
 
@@ -135,6 +136,29 @@ class CombatPreviewCalculatorTest {
 
         assertEquals("获得 15 点格挡", preview.getDescription());
         assertEquals(0, player.getBuffs().size());
+    }
+
+    @Test
+    void combatStartResetClearsTemporaryStateAndRebuildsDrawPile() {
+        Player player = player();
+        player.setBlock(12);
+        player.setEnergy(2);
+        player.addBuff(new Weak(1));
+        player.getDrawPile().add(attackCard("draw", Card.TargetType.SINGLE_ENEMY,
+                "damage:1"));
+        player.getHand().add(attackCard("hand", Card.TargetType.SINGLE_ENEMY,
+                "damage:1"));
+        player.getDiscardPile().add(attackCard("discard", Card.TargetType.SINGLE_ENEMY,
+                "damage:1"));
+
+        player.resetForCombatStart();
+
+        assertEquals(0, player.getBlock());
+        assertEquals(0, player.getEnergy());
+        assertTrue(player.getBuffs().isEmpty());
+        assertTrue(player.getHand().isEmpty());
+        assertTrue(player.getDiscardPile().isEmpty());
+        assertEquals(3, player.getDrawPile().size());
     }
 
     private static Player player() {
