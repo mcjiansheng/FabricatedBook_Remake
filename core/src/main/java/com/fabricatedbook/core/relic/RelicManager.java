@@ -78,6 +78,25 @@ public class RelicManager {
         return Math.max(0, modified);
     }
 
+    public int previewModifyDamage(int damage, AbstractEntity source, AbstractEntity target) {
+        int modified = damage;
+        if (source == player) {
+            for (Relic relic : player.getRelics()) {
+                if (relic instanceof DataRelic dataRelic) {
+                    modified = dataRelic.previewOutgoingDamage(modified, target);
+                }
+            }
+        }
+        if (target == player) {
+            for (Relic relic : player.getRelics()) {
+                if (relic instanceof DataRelic dataRelic) {
+                    modified = dataRelic.previewIncomingDamage(modified);
+                }
+            }
+        }
+        return Math.max(0, modified);
+    }
+
     public int modifyGoldReward(int gold) {
         int modified = gold;
         for (Relic relic : player.getRelics()) {

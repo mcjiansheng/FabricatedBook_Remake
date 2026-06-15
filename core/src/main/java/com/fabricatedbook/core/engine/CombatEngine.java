@@ -17,7 +17,9 @@ import com.fabricatedbook.core.relic.RelicManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -66,6 +68,9 @@ public class CombatEngine {
     /** 当前战斗来源节点类型，用于结算正式奖励区间。 */
     private NodeType battleNodeType;
 
+    /** Enemy intent values that must be shown and later executed identically. */
+    private final Map<Enemy, PlannedEnemyAction> plannedEnemyActions;
+
     /**
      * 构造战斗引擎。
      */
@@ -77,6 +82,7 @@ public class CombatEngine {
         this.victory = false;
         this.eventBus = EventBus.getInstance();
         this.battleNodeType = NodeType.FIGHT;
+        this.plannedEnemyActions = new HashMap<>();
     }
 
     /**
@@ -102,6 +108,7 @@ public class CombatEngine {
         this.player = player;
         this.enemies = new ArrayList<>(enemies);
         this.actionManager.clear();
+        this.plannedEnemyActions.clear();
         this.turn = 0;
         this.inBattle = true;
         this.victory = false;
@@ -222,10 +229,16 @@ public class CombatEngine {
         }
 
         // 8. 检查敌人意图
+        plannedEnemyActions.clear();
         for (Enemy enemy : enemies) {
             if (enemy.isAlive()) {
                 String actionId = enemy.peekCurrentAction();
-                enemy.deduceIntent(actionId);
+                String materializedActionId = materializeIntentAction(actionId);
+                if (!materializedActionId.equals(actionId)) {
+                    plannedEnemyActions.put(enemy,
+                            new PlannedEnemyAction(actionId, materializedActionId));
+                }
+                enemy.deduceIntent(materializedActionId);
             }
         }
 
@@ -684,7 +697,8 @@ public class CombatEngine {
         for (Enemy enemy : enemies) {
             if (!enemy.isAlive()) continue;
 
-            String actionId = enemy.getCurrentAction();
+            String originalActionId = enemy.getCurrentAction();
+            String actionId = consumePlannedAction(enemy, originalActionId);
             System.out.println("[CombatEngine] " + enemy.getName() + " 行动: " + actionId);
 
             // 解析敌人动作
@@ -902,6 +916,15 @@ public class CombatEngine {
     public boolean isVictory() { return victory; }
     public ActionManager getActionManager() { return actionManager; }
 
+    public String getPreviewActionId(Enemy enemy) {
+        if (enemy == null) return null;
+        PlannedEnemyAction planned = plannedEnemyActions.get(enemy);
+        if (planned != null) {
+            return planned.materializedActionId;
+        }
+        return enemy.peekCurrentAction();
+    }
+
     public void setBattleNodeType(NodeType battleNodeType) {
         this.battleNodeType = battleNodeType != null ? battleNodeType : NodeType.FIGHT;
     }
@@ -944,5 +967,35 @@ public class CombatEngine {
             }
         }
         return hand.remove(card);
+    }
+
+    private String materializeIntentAction(String actionId) {
+        if (actionId == null) return null;
+        return switch (actionId) {
+            case "atk_berserk" -> "atk" + randomBetween(12, 20);
+            case "atk_chaos" -> "atk" + randomBetween(13, 20);
+            case "def_chaos" -> "def" + randomBetween(8, 20);
+            default -> actionId;
+        };
+    }
+
+    private String consumePlannedAction(Enemy enemy, String originalActionId) {
+        PlannedEnemyAction planned = plannedEnemyActions.remove(enemy);
+        if (planned == null) {
+            return originalActionId;
+        }
+        return planned.originalActionId.equals(originalActionId)
+                ? planned.materializedActionId
+                : originalActionId;
+    }
+
+    private static class PlannedEnemyAction {
+        private final String originalActionId;
+        private final String materializedActionId;
+
+        private PlannedEnemyAction(String originalActionId, String materializedActionId) {
+            this.originalActionId = originalActionId;
+            this.materializedActionId = materializedActionId;
+        }
     }
 }

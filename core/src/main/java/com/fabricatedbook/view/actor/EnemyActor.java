@@ -29,6 +29,7 @@ public class EnemyActor extends Actor {
     private final ShapeRenderer shapeRenderer;
     private Texture sprite;
     private boolean highlighted;
+    private IntentPreviewProvider intentPreviewProvider;
     private final Map<String, Texture> buffIcons = new HashMap<>();
     private final Map<IntentType, Texture> intentIcons = new HashMap<>();
 
@@ -130,6 +131,14 @@ public class EnemyActor extends Actor {
         this.highlighted = highlighted;
     }
 
+    public void setIntentPreviewProvider(IntentPreviewProvider intentPreviewProvider) {
+        this.intentPreviewProvider = intentPreviewProvider;
+    }
+
+    public interface IntentPreviewProvider {
+        String getIntentDetail(Enemy enemy);
+    }
+
     /** 根据敌人名称加载对应立绘 */
     private void loadSprite() {
         String fileName = NAME_TO_FILE.get(enemy.getName());
@@ -228,7 +237,9 @@ public class EnemyActor extends Actor {
         if (icon != null) {
             batch.draw(icon, iconX, iconY, 32, 32);
         }
-        String detail = intentDetail(EnemyActionResolver.describeIntent(enemy.peekCurrentAction()));
+        String detail = intentPreviewProvider != null
+                ? intentPreviewProvider.getIntentDetail(enemy)
+                : intentDetail(EnemyActionResolver.describeIntent(enemy.peekCurrentAction()));
         if (!detail.isBlank()) {
             font.draw(batch, detail, iconX + 38, iconY + 23);
         }

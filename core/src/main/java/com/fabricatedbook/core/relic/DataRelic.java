@@ -96,6 +96,42 @@ public class DataRelic implements Relic {
         return Math.max(0, (int) Math.round(damage * multiplier));
     }
 
+    /**
+     * Predictable outgoing damage modifier used by UI previews.
+     * Probabilistic relics are intentionally excluded so previews never roll
+     * random outcomes ahead of card play.
+     */
+    public int previewOutgoingDamage(int damage, AbstractEntity target) {
+        double multiplier = 1.0;
+        switch (getId()) {
+            case "relic_a_combo" -> multiplier += 0.05;
+            case "relic_5a_combo" -> multiplier += 0.25;
+            case "relic_rosemary_squad" -> multiplier += 0.30;
+            case "relic_coin_toy" ->
+                    multiplier += (owner.getGold() / 10) * getEffectValue() / 100.0;
+            case "relic_golden_cup" ->
+                    multiplier += (owner.getGold() / 10) * getEffectValue() / 100.0;
+            case "relic_old_fan" ->
+                    multiplier += deckSize() * getEffectValue() / 100.0;
+            case "relic_king_spear" -> {
+                if (owner.getHp() * 10 <= owner.getMaxHp()) {
+                    multiplier += getEffectValue() / 100.0;
+                }
+            }
+            case "relic_betrayal" -> {
+                if (owner.getCurrentFloor() < 5) multiplier += getEffectValue() / 100.0;
+            }
+            case "relic_hatred" -> {
+                if (owner.getCurrentFloor() < 5) multiplier -= getEffectValue() / 100.0;
+            }
+            case "relic_centralization", "relic_frostmourne" ->
+                    multiplier += getEffectValue() / 100.0;
+            default -> {
+            }
+        }
+        return Math.max(0, (int) Math.round(damage * multiplier));
+    }
+
     public int modifyIncomingDamage(int damage) {
         double multiplier = 1.0;
         switch (getId()) {
@@ -107,6 +143,10 @@ public class DataRelic implements Relic {
             }
         }
         return Math.max(0, (int) Math.round(damage * Math.max(0.1, multiplier)));
+    }
+
+    public int previewIncomingDamage(int damage) {
+        return modifyIncomingDamage(damage);
     }
 
     public int modifyGoldReward(int gold) {

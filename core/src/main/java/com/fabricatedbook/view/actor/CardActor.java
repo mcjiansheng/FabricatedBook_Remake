@@ -31,6 +31,7 @@ public class CardActor extends Actor {
     private boolean hovered;
     private boolean dragging;
     private boolean draggingEnabled;
+    private String previewDescription;
     private float homeX;
     private float homeY;
     private CardInteractionHandler interactionHandler;
@@ -59,6 +60,7 @@ public class CardActor extends Actor {
         this.shapeRenderer = renderer;
         setSize(CARD_WIDTH, CARD_HEIGHT);
         draggingEnabled = true;
+        previewDescription = null;
 
         // 根据卡牌类型加载图标
         String iconFile = "img/ukn.png";
@@ -162,8 +164,17 @@ public class CardActor extends Actor {
 
     public boolean isDragging() { return dragging; }
 
+    public void setPreviewDescription(String previewDescription) {
+        this.previewDescription = previewDescription;
+    }
+
+    public void clearPreviewDescription() {
+        this.previewDescription = null;
+    }
+
     public void returnHome() {
         dragging = false;
+        clearPreviewDescription();
         setScale(hovered ? HOVER_SCALE : 1f);
         setPosition(homeX, homeY);
         if (interactionHandler != null) {
@@ -173,6 +184,7 @@ public class CardActor extends Actor {
 
     public void finishDragAsPlayed() {
         dragging = false;
+        clearPreviewDescription();
         setScale(1f);
     }
 
@@ -237,7 +249,7 @@ public class CardActor extends Actor {
                 drawY + visualHeight - 42 * scale);
 
         // 绘制描述
-        String desc = card.getDescription();
+        String desc = previewDescription != null ? previewDescription : card.getDescription();
         if (desc != null) {
             float lineY = drawY + visualHeight - 70 * scale;
             for (String line : wrapLines(desc, 8, 5)) {

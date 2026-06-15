@@ -21,6 +21,9 @@ import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.engine.CombatEngine;
+import com.fabricatedbook.core.engine.CombatPreviewCalculator;
+import com.fabricatedbook.core.engine.CardPreview;
+import com.fabricatedbook.core.engine.EnemyIntentPreview;
 import com.fabricatedbook.core.engine.ViewNotifier;
 import com.fabricatedbook.core.action.CombatAction;
 import com.fabricatedbook.core.entity.AbstractEntity;
@@ -140,6 +143,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         float enemyX = Math.max(620, FabricBookGame.SCREEN_WIDTH - totalEnemyWidth - 90);
         for (int i = 0; i < enemies.size(); i++) {
             EnemyActor actor = new EnemyActor(enemies.get(i), font, shapeRenderer);
+            actor.setIntentPreviewProvider(this::previewEnemyIntentDetail);
             actor.setPosition(enemyX + i * enemyGap, enemyY);
             stage.addActor(actor);
             enemyActors.add(actor);
@@ -349,6 +353,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         Card card = actor.getCard();
         if (targetsSelf(card)) {
             playerActor.setHighlighted(true);
+            applyCardPreview(actor, null);
             statusLabel.setText("");
         } else if (targetsAllEnemies(card)) {
             for (EnemyActor enemyActor : enemyActors) {
@@ -356,14 +361,17 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                     enemyActor.setHighlighted(true);
                 }
             }
+            applyCardPreview(actor, null);
             statusLabel.setText("");
         } else {
             EnemyActor targetActor = enemyActorAt(stageX, stageY);
             if (targetActor != null) {
                 targetActor.setHighlighted(true);
                 highlightedEnemyActor = targetActor;
+                applyCardPreview(actor, targetActor.getEnemy());
                 statusLabel.setText("目标：" + targetActor.getEnemy().getName());
             } else {
+                actor.clearPreviewDescription();
                 statusLabel.setText("拖到敌人身上后松手打出");
             }
         }
@@ -374,7 +382,27 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         for (EnemyActor enemyActor : enemyActors) {
             enemyActor.setHighlighted(false);
         }
+        if (activeDraggedCard != null) {
+            activeDraggedCard.clearPreviewDescription();
+        }
         highlightedEnemyActor = null;
+    }
+
+    private void applyCardPreview(CardActor actor, Enemy target) {
+        CardPreview preview = CombatPreviewCalculator.previewCard(actor.getCard(), player,
+                enemies, target, relicManager);
+        if (preview.hasPreview()) {
+            actor.setPreviewDescription(preview.getDescription());
+        } else {
+            actor.clearPreviewDescription();
+        }
+    }
+
+    private String previewEnemyIntentDetail(Enemy enemy) {
+        String actionId = combatEngine.getPreviewActionId(enemy);
+        EnemyIntentPreview preview = CombatPreviewCalculator.previewEnemyIntent(enemy, player,
+                enemies, relicManager, actionId);
+        return preview.getDetail();
     }
 
     private boolean targetsSelf(Card card) {
