@@ -18,7 +18,10 @@ tasks.register("runGame", JavaExec.class) {
     mainClass = "com.fabricatedbook.desktop.DesktopLauncher"
     classpath = sourceSets.main.runtimeClasspath
     if (System.getProperty("os.name").toLowerCase().contains("mac")) {
-        jvmArgs "-XstartOnFirstThread"
+        jvmArgs "-XstartOnFirstThread",
+                "-Xdock:name=Fabricated Book",
+                "-Dapple.awt.application.name=Fabricated Book",
+                "-Dcom.apple.mrj.application.apple.menu.about.name=Fabricated Book"
     }
 
     // 设置工作目录为 core 的资源目录，确保 img/ 和字体文件能被 Gdx.files.internal() 找到
@@ -35,4 +38,68 @@ tasks.register("runBackendDebug", JavaExec.class) {
     mainClass = "com.fabricatedbook.desktop.BackendDebugLauncher"
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
+}
+
+def computerUseAppInput = layout.buildDirectory.dir("computerUseApp/input")
+def computerUseAppImage = layout.buildDirectory.dir("computerUseApp/image")
+def computerUseInstalledApp = file("${System.getProperty("user.home")}/Applications/FabricatedBookDebug.app")
+
+tasks.register("prepareComputerUseAppInput", Copy) {
+    group = "application"
+    description = "收集 Computer Use 调试 app 所需的 jar 和运行时依赖"
+
+    dependsOn tasks.named("jar")
+    into computerUseAppInput
+    from tasks.named("jar")
+    from configurations.runtimeClasspath
+}
+
+tasks.register("cleanComputerUseApp", Delete) {
+    delete computerUseAppImage
+}
+
+tasks.register("packageComputerUseApp", Exec) {
+    group = "application"
+    description = "生成可被 macOS/Computer Use 识别的 FabricatedBookDebug.app"
+
+    dependsOn tasks.named("cleanComputerUseApp")
+    dependsOn tasks.named("prepareComputerUseAppInput")
+    doFirst {
+        computerUseAppImage.get().asFile.mkdirs()
+        commandLine "jpackage",
+                "--type", "app-image",
+                "--name", "FabricatedBookDebug",
+                "--dest", computerUseAppImage.get().asFile.absolutePath,
+                "--input", computerUseAppInput.get().asFile.absolutePath,
+                "--main-jar", tasks.named("jar").get().archiveFileName.get(),
+                "--main-class", "com.fabricatedbook.desktop.DesktopLauncher",
+                "--mac-package-identifier", "com.fabricatedbook.debug",
+                "--java-options", "-XstartOnFirstThread",
+                "--java-options", "-Dapple.awt.application.name=FabricatedBookDebug",
+                "--java-options", "-Dcom.apple.mrj.application.apple.menu.about.name=FabricatedBookDebug"
+    }
+}
+
+tasks.register("installComputerUseApp", Copy) {
+    group = "application"
+    description = "安装 FabricatedBookDebug.app 到用户 Applications 目录，供 Computer Use 识别"
+
+    dependsOn tasks.named("packageComputerUseApp")
+    from computerUseAppImage.map { it.dir("FabricatedBookDebug.app") }
+    into computerUseInstalledApp
+}
+
+tasks.register("openComputerUseApp", Exec) {
+    group = "application"
+    description = "启动已安装的 FabricatedBookDebug.app，可通过 -Pargs 选择调试界面"
+
+    dependsOn tasks.named("installComputerUseApp")
+    doFirst {
+        def command = ["open", "-n", computerUseInstalledApp.absolutePath]
+        if (project.hasProperty("args")) {
+            command.add("--args")
+            command.addAll(project.property("args").toString().split("\\s+").findAll { !it.isBlank() })
+        }
+        commandLine command
+    }
 }

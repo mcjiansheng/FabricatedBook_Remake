@@ -16,6 +16,44 @@
 ./gradlew desktop:runGame --args="font"
 ```
 
+## Computer Use 调试 app
+
+macOS 上直接用 `desktop:runGame` 启动时，LWJGL 窗口会作为裸 `java`
+进程暴露，Computer Use 可能无法按应用名识别。需要屏幕控制调试时，先生成并安装
+用户级调试 app：
+
+```bash
+./gradlew desktop:installComputerUseApp
+```
+
+安装位置：
+
+```text
+~/Applications/FabricatedBookDebug.app
+```
+
+启动标题界面：
+
+```bash
+./gradlew desktop:openComputerUseApp -Pargs="title"
+```
+
+启动字体调试界面：
+
+```bash
+./gradlew desktop:openComputerUseApp -Pargs="font"
+```
+
+启动后，Computer Use 使用下面任一目标抓取窗口：
+
+```text
+FabricatedBookDebug
+/Users/mcjiansheng/Applications/FabricatedBookDebug.app
+```
+
+如果同时保留了 `desktop/build/computerUseApp/image/FabricatedBookDebug.app`，
+bundle id `com.fabricatedbook.debug` 可能有歧义；优先使用应用名或用户应用目录的完整路径。
+
 ## 可用入口
 
 - 标题界面：
