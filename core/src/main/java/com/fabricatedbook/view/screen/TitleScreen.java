@@ -47,18 +47,18 @@ public class TitleScreen implements Screen {
             background = null;
         }
 
+        // 创建UI — 所有元素放入同一个 Table，由 scene2d 管理布局避免重叠
+        Table table = new Table();
+        table.setFillParent(true);
+        table.center().padTop(90);
+        stage.addActor(table);
+
+        // 标题大字
         Label titleLabel = new Label("Fabricated Book",
                 new Label.LabelStyle(game.getFontForScale(3.0f), com.badlogic.gdx.graphics.Color.WHITE));
         titleLabel.setAlignment(Align.center);
-        titleLabel.setBounds(0, FabricBookGame.SCREEN_HEIGHT - 190,
-                FabricBookGame.SCREEN_WIDTH, 100);
-        stage.addActor(titleLabel);
-
-        // 创建UI
-        Table table = new Table();
-        table.setFillParent(true);
-        table.center().padTop(120);
-        stage.addActor(table);
+        table.add(titleLabel).width(FabricBookGame.SCREEN_WIDTH).padBottom(50);
+        table.row();
 
         // 按钮样式
         TextButton.TextButtonStyle btnStyle = UiStyles.buttonStyle(game);

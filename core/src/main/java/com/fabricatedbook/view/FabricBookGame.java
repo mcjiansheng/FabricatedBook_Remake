@@ -51,7 +51,6 @@ public class FabricBookGame extends Game {
     private Map<Integer, BitmapFont> fontsBySize;
 
     private FreeTypeFontGenerator fontGenerator;
-    private String fontCharacters;
 
     /** 数据加载器 */
     private DataLoader dataLoader;
@@ -106,31 +105,6 @@ public class FabricBookGame extends Game {
         // 加载中文字体（从原项目复制的 ys_zt.ttf）
         fontGenerator = new FreeTypeFontGenerator(
                 Gdx.files.classpath("ys_zt.ttf"));
-        // 包含中英文全部字符（从字体文件读取所有可用字符）
-        fontCharacters = buildFontCharacters(FreeTypeFontGenerator.DEFAULT_CHARS
-                + "的一是不了人我在有他这为之大小个中上国到来时出可"
-                + "以发会子得要于对生下也而就年过后作里用道行所"
-                + "然家种事成方多如学日关前回到长又月入进同面都各"
-                + "当使因点只从其主没理心全问开业重物体两新军力外"
-                + "者政自分经正名部民组场相与能天法品公高地已安"
-                + "路线让图解始命通据车量受很建设声文更东"
-                + "单击开始游戏继续退出当前总第层剩余击败获得"
-                + "使用掷骰回合结束选择战斗胜利失败死亡回复"
-                + "生命值伤害格挡能量金币力量抗性坚强脆弱易碎"
-                + "虚弱中毒凋零眩晕装甲不死卡牌效果敌人怪物"
-                + "攻击防御技能装备稀有史诗传说神话普通基础"
-                + "角色选择战士法师女巫确认返回生命金币药水"
-                + "荒野森林诡异秘林迷雾高塔探索者安全屋商店"
-                + "事件奖励不期而遇命运抉择精英首领训练假人"
-                + "点击可进入拖动地图第层开始当前层效果无"
-                + "继续前进离开商店胜利返回地图失败重新开始"
-                + "意图多段诅咒强化"
-                + "未发现额外物品跳过藏品掉落战斗失败"
-                + "虚妄之书Fabricated Book"
-                + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-                + "字体调试前端调试命令行标题商店事件不同层地图"
-                + "红绿蓝黄白黑灰紫青橙粉符号图片ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                + "，。、；：！？（）【】《》“”‘’—…·～/=+*#@&%￥①②③④⑤");
         font = getFontSize(BASE_FONT_SIZE);
         dataLoader = new DataLoader("data/");
         saveManager = new SaveManager();
@@ -189,7 +163,8 @@ public class FabricBookGame extends Game {
         parameter.genMipMaps = false;
         parameter.minFilter = TextureFilter.Linear;
         parameter.magFilter = TextureFilter.Linear;
-        parameter.characters = fontCharacters;
+        parameter.incremental = true;
+        parameter.characters = FreeTypeFontGenerator.DEFAULT_CHARS;
         return fontGenerator.generateFont(parameter);
     }
 
@@ -297,33 +272,4 @@ public class FabricBookGame extends Game {
         return Math.max(MIN_WINDOW_HEIGHT, Math.min(MAX_WINDOW_HEIGHT, height));
     }
 
-    private String buildFontCharacters(String baseCharacters) {
-        StringBuilder builder = new StringBuilder(baseCharacters);
-        appendResourceText(builder, "data/cards/warrior.json");
-        appendResourceText(builder, "data/relics.json");
-        appendResourceText(builder, "data/potions.json");
-        appendResourceText(builder, "data/events.json");
-        appendResourceText(builder, "data/maps/levels.json");
-        for (int i = 1; i <= 5; i++) {
-            appendResourceText(builder, "data/monsters/level" + i + ".json");
-        }
-        String raw = builder.toString();
-        StringBuilder unique = new StringBuilder();
-        java.util.HashSet<Character> seen = new java.util.HashSet<>();
-        for (int i = 0; i < raw.length(); i++) {
-            char ch = raw.charAt(i);
-            if (seen.add(ch)) {
-                unique.append(ch);
-            }
-        }
-        return unique.toString();
-    }
-
-    private void appendResourceText(StringBuilder builder, String path) {
-        try {
-            builder.append(Gdx.files.classpath(path).readString("UTF-8"));
-        } catch (Exception ignored) {
-            // Font generation should not fail just because an optional data file is absent.
-        }
-    }
 }
