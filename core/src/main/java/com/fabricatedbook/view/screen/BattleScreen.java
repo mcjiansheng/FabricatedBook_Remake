@@ -16,6 +16,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Align;
 import com.fabricatedbook.core.action.DamageAction;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
@@ -85,7 +86,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private EnemyActor highlightedEnemyActor;
     private boolean rewardCardChosen;
     private RelicManager relicManager;
-    private String pendingExtraRewardsText;
+    private Group rewardModal;
+    private List<RewardEntry> pendingRewards;
 
     /**
      * 构造战斗画面。
@@ -114,7 +116,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         this.goldAtBattleStart = player.getGold();
         this.rewardCardChosen = false;
         this.relicManager = null;
-        this.pendingExtraRewardsText = "";
+        this.rewardModal = null;
+        this.pendingRewards = new ArrayList<>();
 
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
@@ -573,7 +576,49 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         resultShown = true;
         clearTargetHighlight();
 
+        prepareRewardEntries();
+        showRewardClaimModal();
+    }
+
+    private void prepareRewardEntries() {
+        pendingRewards.clear();
+        rewardCardChosen = false;
+
+        int gainedGold = Math.max(0, player.getGold() - goldAtBattleStart);
+        if (gainedGold > 0) {
+            player.setGold(player.getGold() - gainedGold);
+            pendingRewards.add(new RewardEntry("金币：" + gainedGold, Color.GOLD,
+                    () -> player.gainGold(gainedGold)));
+        }
+
+        pendingRewards.add(new RewardEntry("卡牌奖励", Color.BLACK,
+                this::showCardRewardSelection, true));
+
+        if (random.nextFloat() < 0.35f) {
+            Relic relic = RelicFactory.randomRelic(player, false);
+            if (relic != null) {
+                pendingRewards.add(new RewardEntry("藏品：" + relic.getName(), Color.GOLD,
+                        () -> new RelicManager(player).addRelic(relic)));
+            }
+        }
+
+        if (random.nextFloat() < 0.45f) {
+            List<Potion> potions = new com.fabricatedbook.data.DataLoader().loadPotions();
+            if (!potions.isEmpty() && player.canAddPotion()) {
+                Potion potion = potions.get(random.nextInt(potions.size())).copy();
+                pendingRewards.add(new RewardEntry("药水：" + potion.getName(), Color.BLACK,
+                        () -> player.addPotion(potion)));
+            }
+        }
+    }
+
+    private void showRewardClaimModal() {
+        if (rewardModal != null) {
+            rewardModal.remove();
+        }
+
         Group modal = new Group();
+        rewardModal = modal;
         modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
         stage.addActor(modal);
 
@@ -589,9 +634,6 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                         FabricBookGame.SCREEN_HEIGHT);
                 shapeRenderer.setColor(0.78f, 0.78f, 0.78f, 1f);
                 shapeRenderer.rect(170, 80, 940, 560);
-                shapeRenderer.setColor(Color.WHITE);
-                shapeRenderer.rect(510, 330, 260, 58);
-                shapeRenderer.rect(510, 258, 260, 58);
                 shapeRenderer.end();
                 batch.begin();
             }
@@ -601,51 +643,76 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         Table table = new Table();
         table.setFillParent(true);
-        table.top().padTop(150);
+        table.top().padTop(125);
         modal.addActor(table);
 
         Label title = new Label("胜利", new Label.LabelStyle(
                 game.getFontForScale(1.8f), Color.GOLD));
-        table.add(title).padBottom(70);
+        title.setAlignment(Align.center);
+        table.add(title).width(520).height(70).padBottom(34);
         table.row();
 
-        int gainedGold = Math.max(0, player.getGold() - goldAtBattleStart);
-        Label goldLabel = new Label("金币：" + gainedGold,
-                new Label.LabelStyle(game.getFont(), Color.GOLD));
-        table.add(goldLabel).width(260).height(58).padBottom(14);
-        table.row();
-
-        Label cardLabel = new Label("一张卡牌",
-                new Label.LabelStyle(game.getFont(), Color.BLACK));
-        table.add(cardLabel).width(260).height(58).padBottom(14);
-        table.row();
-
-        pendingExtraRewardsText = applyExtraRewards();
-        for (String extra : pendingExtraRewardsText.split("\\n")) {
-            if (extra.isBlank()) {
-                continue;
-            }
-            Label extraLabel = new Label(extra, new Label.LabelStyle(
-                    game.getFont(), extra.startsWith("药水") ? Color.BLACK : Color.GOLD));
-            table.add(extraLabel).width(300).height(34).padBottom(4);
+        for (RewardEntry entry : pendingRewards) {
+            TextButton rewardButton = rewardButton(entry);
+            table.add(rewardButton).width(520).height(62).padBottom(14);
             table.row();
         }
 
         TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
-        TextButton continueButton = new TextButton("继续", buttonStyle);
+        boolean allClaimed = allRewardsClaimed();
+        TextButton continueButton = new TextButton(allClaimed ? "继续" : "领取所有奖励后继续",
+                buttonStyle);
+        continueButton.setDisabled(!allClaimed);
         continueButton.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
+                if (!allRewardsClaimed()) {
+                    statusLabel.setText("请先领取所有奖励");
+                    return;
+                }
+                rewardModal = null;
                 modal.remove();
-                showCardRewardSelection();
+                returnToMapAfterReward();
             }
         });
-        table.add(continueButton).width(220).height(52).padTop(42);
+        table.add(continueButton).width(300).height(54).padTop(30);
         modal.toFront();
     }
 
+    private TextButton rewardButton(RewardEntry entry) {
+        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
+        String text = (entry.claimed ? "已领取  " : "领取  ") + entry.label;
+        TextButton button = new TextButton(text, style);
+        button.getLabel().setAlignment(Align.left);
+        button.getLabel().setColor(entry.claimed ? Color.LIGHT_GRAY : entry.color);
+        button.getLabelCell().padLeft(24);
+        button.addListener(new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
+                                float x, float y) {
+                if (entry.claimed) {
+                    return;
+                }
+                if (entry.opensCardSelection) {
+                    entry.claimAction.run();
+                    return;
+                }
+                entry.claimAction.run();
+                entry.claimed = true;
+                statusLabel.setText("获得：" + entry.label);
+                showRewardClaimModal();
+            }
+        });
+        return button;
+    }
+
     private void showCardRewardSelection() {
+        if (rewardModal != null) {
+            rewardModal.remove();
+            rewardModal = null;
+        }
+
         Group modal = new Group();
         modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
         stage.addActor(modal);
@@ -689,7 +756,9 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                     rewardCardChosen = true;
                     player.getDrawPile().add(CardFactory.createFromTemplate(card));
                     statusLabel.setText("获得卡牌：" + card.getName());
-                    returnToMapAfterReward();
+                    markCardRewardClaimed();
+                    modal.remove();
+                    showRewardClaimModal();
                 }
             });
             table.add(cardActor).width(CardActor.CARD_WIDTH)
@@ -704,11 +773,29 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
                 rewardCardChosen = true;
-                returnToMapAfterReward();
+                markCardRewardClaimed();
+                modal.remove();
+                showRewardClaimModal();
             }
         });
         table.add(skipCard).colspan(3).width(150).height(48).padTop(36);
         modal.toFront();
+    }
+
+    private void markCardRewardClaimed() {
+        for (RewardEntry entry : pendingRewards) {
+            if (entry.opensCardSelection) {
+                entry.claimed = true;
+                return;
+            }
+        }
+    }
+
+    private boolean allRewardsClaimed() {
+        for (RewardEntry entry : pendingRewards) {
+            if (!entry.claimed) return false;
+        }
+        return true;
     }
 
     private void returnToMapAfterReward() {
@@ -730,26 +817,24 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         return CardPool.randomSelect(pool, Math.min(3, pool.size()));
     }
 
-    private String applyExtraRewards() {
-        StringBuilder sb = new StringBuilder();
-        if (random.nextFloat() < 0.35f) {
-            Relic relic = RelicFactory.randomRelic(player, false);
-            if (relic != null) {
-                new RelicManager(player).addRelic(relic);
-                sb.append("藏品：").append(relic.getName());
-            }
+    private static class RewardEntry {
+        private final String label;
+        private final Color color;
+        private final Runnable claimAction;
+        private final boolean opensCardSelection;
+        private boolean claimed;
+
+        private RewardEntry(String label, Color color, Runnable claimAction) {
+            this(label, color, claimAction, false);
         }
-        if (random.nextFloat() < 0.45f) {
-            List<Potion> potions = new com.fabricatedbook.data.DataLoader().loadPotions();
-            if (!potions.isEmpty() && player.canAddPotion()) {
-                Potion potion = potions.get(random.nextInt(potions.size())).copy();
-                player.addPotion(potion);
-                if (!sb.isEmpty()) {
-                    sb.append("\n");
-                }
-                sb.append("药水：").append(potion.getName());
-            }
+
+        private RewardEntry(String label, Color color, Runnable claimAction,
+                            boolean opensCardSelection) {
+            this.label = label;
+            this.color = color;
+            this.claimAction = claimAction;
+            this.opensCardSelection = opensCardSelection;
+            this.claimed = false;
         }
-        return sb.toString();
     }
 }
