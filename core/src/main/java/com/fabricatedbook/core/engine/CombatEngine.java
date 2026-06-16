@@ -117,6 +117,7 @@ public class CombatEngine {
         this.victory = false;
 
         player.resetForCombatStart();
+        installStatusDamageModifiers();
 
         // 初始化玩家手牌：抽牌堆放入基础卡牌，抽初始手牌
         initPlayerDeck();
@@ -124,7 +125,10 @@ public class CombatEngine {
         // 藏品管理器事件订阅
         if (relicManager != null) {
             relicManager.onCombatStart();
+            relicManager.modifyEnemiesAtCombatStart(this.enemies);
         }
+
+        applyEnemyCombatStartPassives();
 
         // 通知视图
         if (viewNotifier != null) {
@@ -195,11 +199,11 @@ public class CombatEngine {
             System.out.println("[CombatEngine] 玩家眩晕，跳过回合");
         }
 
-        // 4. 调用 BuffHook.onTurnStart
+        // 4. 调用已有 BuffHook.onTurnStart
         for (BuffHook buff : player.getBuffs()) {
             buff.onTurnStart(player);
         }
-        for (Enemy enemy : enemies) {
+        for (Enemy enemy : new ArrayList<>(enemies)) {
             for (BuffHook buff : enemy.getBuffs()) {
                 buff.onTurnStart(enemy);
             }
@@ -210,6 +214,13 @@ public class CombatEngine {
         for (Enemy enemy : enemies) {
             enemy.cleanExpiredBuffs();
         }
+
+        // 回合开始型藏品和怪物被动在已有 Buff 结算后触发，
+        // 避免本回合新施加的中毒/凋零立刻被同一轮 Buff tick 消耗。
+        if (relicManager != null) {
+            relicManager.onTurnStart(getAliveEnemyList());
+        }
+        applyEnemyTurnStartPassives();
 
         // 6. 抽牌
         player.drawCards(drawCount);
@@ -634,6 +645,10 @@ public class CombatEngine {
     private void executeActionQueue() {
         while (!actionManager.isAllFinished()) {
             CombatAction action = actionManager.executeNext();
+            if (action instanceof DamageAction damageAction) {
+                processEnemyAttackPassives(damageAction);
+                applyEnemyDeathPassives();
+            }
             if (viewNotifier != null && action != null) {
                 viewNotifier.onActionExecuted(action);
             }
@@ -828,6 +843,7 @@ public class CombatEngine {
 
             if (relicManager != null) {
                 relicManager.onCombatEnd();
+                relicManager.onCombatVictory();
             }
 
             if (viewNotifier != null) {
@@ -945,8 +961,13 @@ public class CombatEngine {
     }
 
     private void queueAction(CombatAction action) {
-        if (action instanceof DamageAction damageAction && relicManager != null) {
-            damageAction.setDamageModifier(relicManager::modifyDamage);
+        if (action instanceof DamageAction damageAction) {
+            damageAction.setDamageModifier((damage, source, target) -> {
+                int modified = relicManager != null
+                        ? relicManager.modifyDamage(damage, source, target)
+                        : damage;
+                return modifyEnemyPassiveDamage(modified, source, target);
+            });
         }
         if (action instanceof HealAction healAction && relicManager != null) {
             healAction.setHealModifier(relicManager::modifyHeal);
@@ -978,6 +999,180 @@ public class CombatEngine {
             }
         }
         return hand.remove(card);
+    }
+
+    private void installStatusDamageModifiers() {
+        if (relicManager == null) return;
+        player.setStatusDamageModifier(relicManager::modifyStatusDamage);
+        for (Enemy enemy : enemies) {
+            enemy.setStatusDamageModifier(relicManager::modifyStatusDamage);
+        }
+    }
+
+    private void applyEnemyCombatStartPassives() {
+        for (Enemy enemy : enemies) {
+            if (enemy == null || !enemy.isAlive()) continue;
+            switch (enemy.getPassive()) {
+                case "self_fragile_passive" ->
+                        queueAction(new ApplyBuffAction(enemy, "Fragile", 99));
+                case "start_block_35" ->
+                        queueAction(new GainBlockAction(enemy, 35));
+                case "spawn_puppet" -> ensurePuppetExists();
+                case "summon_turrets" -> ensureSentinelTurretsExist();
+                default -> {
+                }
+            }
+        }
+        executeActionQueue();
+    }
+
+    private void applyEnemyTurnStartPassives() {
+        for (Enemy enemy : new ArrayList<>(enemies)) {
+            if (enemy == null || !enemy.isAlive()) continue;
+            switch (enemy.getPassive()) {
+                case "def_bark_3" -> queueAction(new GainBlockAction(enemy, 3));
+                case "buff_strength_turns" -> {
+                    if (turn <= 3) {
+                        queueAction(new ApplyBuffAction(enemy, "Strength", 1));
+                    } else {
+                        queueAction(new ApplyBuffAction(enemy, "Weak", 1));
+                    }
+                }
+                case "buff_strength_5_turns" -> {
+                    if (turn <= 5) {
+                        queueAction(new ApplyBuffAction(enemy, "Strength", 1));
+                    } else {
+                        queueAction(new ApplyBuffAction(enemy, "Weak", 1));
+                    }
+                }
+                case "regen_5", "regen_on_attack" -> queueAction(new HealAction(enemy, 5));
+                case "poison_player_turn_start" ->
+                        queueAction(new ApplyBuffAction(player, "Poison", 1));
+                case "block_reduction_player" ->
+                        queueAction(new ApplyBuffAction(player, "BlockReduction", 1));
+                case "self_damage_passive" ->
+                        enemy.setHp(enemy.getHp() - randomBetween(20, 40));
+                case "strength_after_5_turns" -> {
+                    if (turn >= 5 && enemy.markPassiveTriggered("strength_after_5_turns")) {
+                        queueAction(new ApplyBuffAction(enemy, "Strength", 3));
+                    }
+                }
+                case "summon_turrets" -> {
+                    if (enemy.getHp() * 2 < enemy.getMaxHp()
+                            && enemy.markPassiveTriggered("sentinel_half_hp_strength")) {
+                        for (Enemy ally : getAliveEnemyList()) {
+                            queueAction(new ApplyBuffAction(ally, "Strength", 2));
+                        }
+                    }
+                }
+                case "buff_master_random" -> buffPuppetMaster();
+                default -> {
+                }
+            }
+        }
+        executeActionQueue();
+        applyEnemyDeathPassives();
+    }
+
+    private int modifyEnemyPassiveDamage(int damage, AbstractEntity source,
+                                         AbstractEntity target) {
+        if (source instanceof Enemy enemy
+                && "boost_damage_passive".equals(enemy.getPassive())
+                && random.nextInt(100) < 20) {
+            return damage + Math.max(1, damage / 5);
+        }
+        return damage;
+    }
+
+    private void processEnemyAttackPassives(DamageAction action) {
+        if (!(action.getSource() instanceof Enemy enemy) || !enemy.isAlive()) {
+            return;
+        }
+        if (action.getFinalDamageByTarget().isEmpty()) {
+            return;
+        }
+        for (AbstractEntity target : action.getFinalDamageByTarget().keySet()) {
+            switch (enemy.getPassive()) {
+                case "wither_passive" -> {
+                    if (random.nextInt(100) < 25) {
+                        if (random.nextBoolean()) {
+                            queueAction(new TriggerWitheringAction(target, 1));
+                        } else {
+                            queueAction(new ApplyBuffAction(target, "Withering", 1));
+                        }
+                    }
+                }
+                case "poison_on_attack" ->
+                        queueAction(new ApplyBuffAction(target, "Poison", 1));
+                case "self_damage_passive" ->
+                        queueAction(new ApplyBuffAction(target, "Withering", 1));
+                case "regen_on_attack" ->
+                        queueAction(new HealAction(enemy, 3));
+                case "bonus_damage_passive" -> {
+                    if (random.nextInt(100) < 25) {
+                        target.takeDamage(3);
+                    }
+                }
+                case "wither_on_attack" ->
+                        queueAction(new TriggerWitheringAction(target, 1));
+                case "wither_poison_on_attack" -> {
+                    queueAction(new TriggerWitheringAction(target, 1));
+                    queueAction(new ApplyBuffAction(target, "Poison", 2));
+                }
+                default -> {
+                }
+            }
+        }
+    }
+
+    private void applyEnemyDeathPassives() {
+        boolean sentinelAlive = enemies.stream()
+                .anyMatch(e -> e != null && e.isAlive()
+                        && "summon_turrets".equals(e.getPassive()));
+        if (sentinelAlive) return;
+        for (Enemy enemy : enemies) {
+            if (enemy != null && enemy.isAlive()
+                    && "self_destruct".equals(enemy.getPassive())) {
+                enemy.setHp(0);
+                enemy.setAlive(false);
+            }
+        }
+    }
+
+    private void buffPuppetMaster() {
+        for (Enemy ally : enemies) {
+            if (ally != null && ally.isAlive() && "spawn_puppet".equals(ally.getPassive())) {
+                String[] buffs = {"Strength", "Resistance", "BlockIncrease"};
+                queueAction(new ApplyBuffAction(ally, buffs[random.nextInt(buffs.length)], 3));
+                return;
+            }
+        }
+    }
+
+    private void ensurePuppetExists() {
+        boolean hasPuppet = enemies.stream().anyMatch(e -> e != null
+                && "buff_master_random".equals(e.getPassive()));
+        if (!hasPuppet) {
+            Enemy puppet = new Enemy("puppet", "傀儡", 50,
+                    List.of("sacrifice", "trigger_wither_puppet", "def_shield_puppet"),
+                    "buff_master_random");
+            puppet.setStatusDamageModifier(relicManager != null
+                    ? relicManager::modifyStatusDamage : null);
+            enemies.add(puppet);
+        }
+    }
+
+    private void ensureSentinelTurretsExist() {
+        long turretCount = enemies.stream()
+                .filter(e -> e != null && "self_destruct".equals(e.getPassive()))
+                .count();
+        for (long i = turretCount; i < 2; i++) {
+            Enemy turret = new Enemy("sentinel_turret_" + (i + 1), "炮塔", 20,
+                    List.of("atk_shot", "atk_overload_shot"), "self_destruct");
+            turret.setStatusDamageModifier(relicManager != null
+                    ? relicManager::modifyStatusDamage : null);
+            enemies.add(turret);
+        }
     }
 
     private String materializeIntentAction(String actionId) {

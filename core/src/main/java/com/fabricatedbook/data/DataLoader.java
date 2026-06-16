@@ -249,7 +249,7 @@ public class DataLoader {
         public String getPassive() { return passive; }
 
         public Enemy toEnemy() {
-            return new Enemy(id, name, maxHp, actionScript);
+            return new Enemy(id, name, maxHp, actionScript, passive);
         }
     }
 }

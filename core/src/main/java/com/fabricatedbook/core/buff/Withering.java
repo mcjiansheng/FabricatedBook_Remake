@@ -58,7 +58,7 @@ public class Withering extends AbstractBuff {
         }
 
         // 引爆伤害 = 当前层数 + 引爆次数（逐次递增）
-        int damage = stack + detonationCount;
+        int damage = owner.modifyStatusDamage(stack + detonationCount, BUFF_NAME);
 
         // 直接对生命值造成伤害（穿透格挡）
         owner.setHp(owner.getHp() - damage);

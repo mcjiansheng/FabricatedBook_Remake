@@ -117,6 +117,50 @@ public class RelicManager {
         return Math.max(0, modified);
     }
 
+    public int modifyStatusDamage(int damage, AbstractEntity target, String statusType) {
+        int modified = damage;
+        for (Relic relic : player.getRelics()) {
+            if (relic instanceof DataRelic dataRelic) {
+                modified = dataRelic.modifyStatusDamage(modified, target, statusType);
+            }
+        }
+        return Math.max(0, modified);
+    }
+
+    public void onTurnStart(List<Enemy> enemies) {
+        for (Relic relic : player.getRelics()) {
+            if (relic instanceof DataRelic dataRelic) {
+                dataRelic.onTurnStart(enemies);
+            }
+        }
+    }
+
+    public void onCombatVictory() {
+        for (Relic relic : player.getRelics()) {
+            if (relic instanceof DataRelic dataRelic) {
+                dataRelic.onCombatVictory();
+            }
+        }
+    }
+
+    public int modifyRelicRewardChance(int chancePercent) {
+        int modified = chancePercent;
+        for (Relic relic : player.getRelics()) {
+            if (relic instanceof DataRelic dataRelic) {
+                modified = dataRelic.modifyRelicRewardChance(modified);
+            }
+        }
+        return Math.max(0, modified);
+    }
+
+    public void modifyEnemiesAtCombatStart(List<Enemy> enemies) {
+        for (Relic relic : player.getRelics()) {
+            if (relic instanceof DataRelic dataRelic) {
+                dataRelic.modifyEnemyAtCombatStart(enemies);
+            }
+        }
+    }
+
     public void onEnterShop() {
         if (player.hasRelic("relic_bankbook")) {
             player.gainGold(25);

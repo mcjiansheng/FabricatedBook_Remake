@@ -31,7 +31,7 @@ public class Poison extends AbstractBuff {
         if (owner == null || !owner.isAlive()) return;
 
         // Poison is direct HP loss and must not consume block.
-        int damage = stack;
+        int damage = owner.modifyStatusDamage(stack, BUFF_NAME);
         owner.setHp(owner.getHp() - damage);
 
         // 层数减 1

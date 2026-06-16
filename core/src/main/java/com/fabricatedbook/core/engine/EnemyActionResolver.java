@@ -177,7 +177,7 @@ public final class EnemyActionResolver {
                     break;
                 case "atk_debuff_blockred": // attack 5 + BlockReduction
                     actions.add(new DamageAction(enemy, List.of(player), 5));
-                    actions.add(new ApplyBuffAction(player, "BlockReduction", 2));
+                    actions.add(new ApplyBuffAction(player, "BlockReduction", 1));
                     break;
 
                 // ===== 秃鹫 (Vulture) =====
@@ -396,9 +396,7 @@ public final class EnemyActionResolver {
                     triggerWithering(actions, player, 1);
                     break;
                 case "life_drain": // trigger withering + heal by damage dealt
-                    // Simplified: trigger withering + heal 10
-                    triggerWithering(actions, player, 1);
-                    actions.add(new HealAction(enemy, 10));
+                    actions.add(new WitheringDrainAction(enemy, player));
                     break;
 
                 // ===== Boss: 人中菌 (Human Fungus) =====
@@ -757,11 +755,10 @@ public final class EnemyActionResolver {
                     break;
                 case "wither_drain": // Withering 5 + trigger + heal
                     actions.add(new ApplyBuffAction(player, "Withering", 5));
-                    triggerWithering(actions, player, 1);
-                    actions.add(new HealAction(enemy, 15));
+                    actions.add(new WitheringDrainAction(enemy, player));
                     break;
                 case "transfer_curse": // transfer debuffs to puppet + attack 20
-                    // Simplified: just attack 20
+                    transferPlayerDebuffsToPuppet(actions, player, allies);
                     actions.add(new DamageAction(enemy, List.of(player), 20));
                     break;
                 case "multi_curse": // Weak 3 + Withering 3 + Fragile 3 + block 10
@@ -840,5 +837,34 @@ public final class EnemyActionResolver {
                 enemy.removeBuff(bName);
             }
         }
+    }
+
+    private static void transferPlayerDebuffsToPuppet(List<CombatAction> actions,
+                                                       Player player,
+                                                       List<Enemy> allies) {
+        Enemy puppet = null;
+        for (Enemy ally : allies) {
+            if (ally != null && ally.isAlive()
+                    && "buff_master_random".equals(ally.getPassive())) {
+                puppet = ally;
+                break;
+            }
+        }
+        if (puppet == null) return;
+
+        for (com.fabricatedbook.core.buff.BuffHook buff :
+                new ArrayList<>(player.getBuffs())) {
+            String name = buff.getBuffName();
+            if (isNegativeBuff(name) && buff.getStack() > 0) {
+                actions.add(new ApplyBuffAction(puppet, name, buff.getStack()));
+                player.removeBuff(name);
+            }
+        }
+    }
+
+    private static boolean isNegativeBuff(String buffName) {
+        return buffName.equals("Fragile") || buffName.equals("BlockReduction")
+                || buffName.equals("Weak") || buffName.equals("Poison")
+                || buffName.equals("Withering") || buffName.equals("Dizziness");
     }
 }

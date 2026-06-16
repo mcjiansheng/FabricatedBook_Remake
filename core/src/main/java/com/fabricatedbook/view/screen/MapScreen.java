@@ -492,6 +492,7 @@ public class MapScreen implements Screen {
         currentNode = node;
         node.visited = true;
         updateAccessibleNodes();
+        applyNodeEntryRelics(node.type);
 
         // 根据节点类型切换到对应场景
         switch (node.type) {
@@ -627,6 +628,7 @@ public class MapScreen implements Screen {
                     enemies.add(data.toEnemy());
                 }
             }
+            addBabelTowerEnemy(enemies, groups, selected, nodeType);
             if (!enemies.isEmpty()) return enemies;
         }
 
@@ -707,6 +709,35 @@ public class MapScreen implements Screen {
         String id = group.getId() == null ? "" : group.getId().toLowerCase();
         String name = group.getName() == null ? "" : group.getName();
         return id.contains("emergency") || name.contains("紧急");
+    }
+
+    private void applyNodeEntryRelics(int nodeType) {
+        if (nodeType != FIGHT && nodeType != EMERGENCY && nodeType != BOSS
+                && player.hasRelic("relic_oligarch")) {
+            player.gainGold(20);
+        }
+    }
+
+    private void addBabelTowerEnemy(List<Enemy> enemies,
+                                    List<DataLoader.EnemyGroup> groups,
+                                    DataLoader.EnemyGroup selected,
+                                    int nodeType) {
+        if (nodeType != EMERGENCY || !player.hasRelic("relic_babel_tower")
+                || groups == null) {
+            return;
+        }
+        List<DataLoader.EnemyData> candidates = new ArrayList<>();
+        for (DataLoader.EnemyGroup group : groups) {
+            if (group == selected || group.isBoss() || group.getEnemies() == null) {
+                continue;
+            }
+            for (DataLoader.EnemyData data : group.getEnemies()) {
+                if (data != null) candidates.add(data);
+            }
+        }
+        if (!candidates.isEmpty()) {
+            enemies.add(candidates.get(random.nextInt(candidates.size())).toEnemy());
+        }
     }
 
     private String randomEventName() {

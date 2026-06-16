@@ -60,6 +60,7 @@ InputHandler (玩家操作)
     → CombatEngine (解析指令)
     → ActionManager (排队执行)
     → DamageCalculator (数值修正)
+    → 敌人被动 / 藏品修正 / 药水结算
     → ViewNotifier (通知前端播动画)
 ```
 
@@ -160,7 +161,8 @@ RelicManager (藏品管理器)
     └── 每个藏品注册到对应事件
         ├── 主动藏品 → 监听 OnCombatStart
         ├── 触发藏品 → 监听 OnDamageDealt
-        └── 回合藏品 → 监听 OnTurnEnd
+        ├── 回合藏品 → 监听 OnTurnEnd 或 CombatEngine 回合开始钩子
+        └── 数值藏品 → 通过伤害/治疗/状态伤害/奖励概率修正接口结算
 ```
 
 **地图环境效果映射：**

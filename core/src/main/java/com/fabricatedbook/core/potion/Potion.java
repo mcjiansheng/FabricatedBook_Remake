@@ -1,7 +1,9 @@
 package com.fabricatedbook.core.potion;
 
 import com.fabricatedbook.core.action.ApplyBuffAction;
+import com.fabricatedbook.core.action.GainBlockAction;
 import com.fabricatedbook.core.action.TriggerWitheringAction;
+import com.fabricatedbook.core.engine.DamageCalculator;
 import com.fabricatedbook.core.entity.AbstractEntity;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.Player;
@@ -69,13 +71,14 @@ public class Potion {
             case "damage_all" -> {
                 int damage = Integer.parseInt(parts[1]);
                 for (AbstractEntity enemy : aliveEnemies) {
-                    int finalDamage = relicManager != null
-                            ? relicManager.modifyDamage(damage, player, enemy)
-                            : damage;
+                    int finalDamage = DamageCalculator.calculateDamage(damage, player, enemy);
+                    if (relicManager != null) {
+                        finalDamage = relicManager.modifyDamage(finalDamage, player, enemy);
+                    }
                     enemy.takeDamage(finalDamage);
                 }
             }
-            case "block" -> player.gainBlock(Integer.parseInt(parts[1]));
+            case "block" -> new GainBlockAction(player, Integer.parseInt(parts[1])).execute();
             case "energy" -> player.gainEnergy(Integer.parseInt(parts[1]));
             case "draw" -> player.drawCards(Integer.parseInt(parts[1]));
             case "buff" -> {

@@ -14,6 +14,7 @@ public class TriggerWitheringAction implements CombatAction {
     private final List<AbstractEntity> targets;
     private final int times;
     private boolean finished;
+    private int totalDamage;
 
     public TriggerWitheringAction(AbstractEntity target, int times) {
         this(List.of(target), times);
@@ -23,6 +24,7 @@ public class TriggerWitheringAction implements CombatAction {
         this.targets = targets;
         this.times = Math.max(1, times);
         this.finished = false;
+        this.totalDamage = 0;
     }
 
     @Override
@@ -34,7 +36,7 @@ public class TriggerWitheringAction implements CombatAction {
                 if (withering == null || withering.getStack() <= 0) {
                     break;
                 }
-                withering.detonate(target);
+                totalDamage += withering.detonate(target);
             }
         }
         finished = true;
@@ -57,5 +59,9 @@ public class TriggerWitheringAction implements CombatAction {
             }
         }
         return null;
+    }
+
+    public int getTotalDamage() {
+        return totalDamage;
     }
 }

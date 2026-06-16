@@ -62,6 +62,13 @@ public abstract class AbstractEntity {
     /** 是否眩晕 */
     protected boolean dizzy;
 
+    private StatusDamageModifier statusDamageModifier;
+
+    @FunctionalInterface
+    public interface StatusDamageModifier {
+        int modify(int damage, AbstractEntity target, String statusType);
+    }
+
     /**
      * 构造实体基类。
      *
@@ -369,6 +376,15 @@ public abstract class AbstractEntity {
 
     public boolean isDizzy() { return dizzy; }
     public void setDizzy(boolean dizzy) { this.dizzy = dizzy; }
+
+    public void setStatusDamageModifier(StatusDamageModifier statusDamageModifier) {
+        this.statusDamageModifier = statusDamageModifier;
+    }
+
+    public int modifyStatusDamage(int damage, String statusType) {
+        if (statusDamageModifier == null) return Math.max(0, damage);
+        return Math.max(0, statusDamageModifier.modify(damage, this, statusType));
+    }
 
     @Override
     public String toString() {

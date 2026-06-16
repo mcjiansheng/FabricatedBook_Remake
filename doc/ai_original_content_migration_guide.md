@@ -265,7 +265,7 @@ ExtraEnergy / ExtraEnergyBuff / extra_energy / extraenergy / 额外能量
 迁移时需要确认效果名和 `CombatEngine` 支持的 DSL 匹配：
 
 - `damage_per_attack:10:3` 当前不支持。应改为 `damage:10` + `bonus_per_attack:3`，或扩展 `CombatEngine` 支持 `damage_per_attack`。
-- `damage_scaling:7` 当前不支持。可改为 `damage:7` + `escalating:1`，但 `escalating` 目前也没有实现，只在注释里出现。更稳妥是先实现 `escalating`。
+- `damage_scaling:7` 当前不支持。可改为 `damage:7` + `escalating:1`；`escalating` 已由卡牌效果解析器支持。
 - 装甲、不死、额外能量已由 `BuffResolver` 支持，可使用 `Armor`/`ArmorBuff`、`Undead`/`UndeadBuff`、`ExtraEnergy`/`ExtraEnergyBuff` 等别名。
 - 持续额外能量使用 `buff:self:extra_energy:持续回合:每回合能量`，例如搏命挣扎为 `buff:self:extra_energy:3:2`。
 - `trigger_withering_all`、`remove_all_enemy_block` 等药水效果在药水解析中支持；卡牌侧如需全体版本，应同步扩展 `CombatEngine.parseCardEffects` 并写测试。
@@ -317,6 +317,7 @@ ExtraEnergy / ExtraEnergyBuff / extra_energy / extraenergy / 额外能量
 ```
 
 一个 `EnemyGroup` 表示一场战斗，`enemies` 内可有多个敌人。
+`passive` 字段会保留到 `Enemy` 实体，并由 `CombatEngine` 在战斗开始、回合开始、敌人攻击后和死亡检查阶段结算。
 
 ### 6.2 当前支持的敌人 actionScript DSL
 

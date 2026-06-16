@@ -594,7 +594,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         pendingRewards.add(new RewardEntry("卡牌奖励", Color.BLACK,
                 this::showCardRewardSelection, true));
 
-        if (random.nextFloat() < 0.35f) {
+        int relicChance = new RelicManager(player).modifyRelicRewardChance(35);
+        if (random.nextInt(100) < relicChance) {
             Relic relic = RelicFactory.randomRelic(player, false);
             if (relic != null) {
                 pendingRewards.add(new RewardEntry("藏品：" + relic.getName(), Color.GOLD,

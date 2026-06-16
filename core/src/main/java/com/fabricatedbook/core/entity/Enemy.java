@@ -1,6 +1,8 @@
 package com.fabricatedbook.core.entity;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Enemy — 怪物实体
@@ -23,6 +25,12 @@ public class Enemy extends AbstractEntity {
     /** 当前行动索引 */
     private int actionIndex;
 
+    /** 数据配置中的被动效果标识。 */
+    private String passive;
+
+    /** 已触发的一次性被动标记。 */
+    private final Set<String> passiveFlags;
+
     /**
      * 构造怪物实体。
      *
@@ -32,10 +40,17 @@ public class Enemy extends AbstractEntity {
      * @param actionScript 行动脚本列表
      */
     public Enemy(String id, String name, int maxHp, List<String> actionScript) {
+        this(id, name, maxHp, actionScript, "");
+    }
+
+    public Enemy(String id, String name, int maxHp, List<String> actionScript,
+                 String passive) {
         super(id, name, maxHp);
         this.intent = IntentType.UNKNOWN;
         this.actionScript = actionScript;
         this.actionIndex = 0;
+        this.passive = passive != null ? passive : "";
+        this.passiveFlags = new HashSet<>();
     }
 
     // ====== 意图相关 ======
@@ -112,7 +127,20 @@ public class Enemy extends AbstractEntity {
      * @return true 如果有该被动
      */
     public boolean hasPassive(String passiveName) {
-        return id != null && id.contains(passiveName);
+        return passiveName != null && passive.equalsIgnoreCase(passiveName);
+    }
+
+    public String getPassive() { return passive; }
+    public void setPassive(String passive) {
+        this.passive = passive != null ? passive : "";
+    }
+
+    public boolean hasAnyPassive() {
+        return passive != null && !passive.isBlank();
+    }
+
+    public boolean markPassiveTriggered(String flag) {
+        return passiveFlags.add(flag);
     }
 
     @Override

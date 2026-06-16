@@ -18,6 +18,8 @@ import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.potion.Potion;
+import com.fabricatedbook.data.DataLoader;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -318,6 +320,70 @@ class CombatPreviewCalculatorTest {
                 .findFirst()
                 .orElseThrow()
                 .getStack());
+    }
+
+    @Test
+    void dataLoaderPreservesEnemyPassiveFromJson() {
+        DataLoader.EnemyData data = new DataLoader().loadMonsters(2).stream()
+                .flatMap(group -> group.getEnemies().stream())
+                .filter(enemyData -> "treeman".equals(enemyData.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals("def_bark_3", data.toEnemy().getPassive());
+    }
+
+    @Test
+    void enemyTurnStartPassiveAppliesDuringCombatStartRound() {
+        Player player = player();
+        Enemy treeman = new Enemy("treeman", "树人", 40, List.of("idle"),
+                "def_bark_3");
+        CombatEngine engine = new CombatEngine();
+
+        engine.initBattle(player, List.of(treeman));
+
+        assertEquals(3, treeman.getBlock());
+    }
+
+    @Test
+    void potionDamageAndBlockUseCombatCalculators() {
+        Player player = player();
+        player.addBuff(new com.fabricatedbook.core.buff.Strength(1));
+        player.addBuff(new com.fabricatedbook.core.buff.BlockIncrease(1));
+        Enemy enemy = enemy("e1");
+        enemy.addBuff(new Fragile(1));
+        Potion attackPotion = new Potion("atk", "攻击药水", "",
+                List.of("damage_all:10"));
+        Potion shieldPotion = new Potion("block", "护盾药水", "",
+                List.of("block:10"));
+
+        attackPotion.use(player, List.of(enemy), null);
+        shieldPotion.use(player, List.of(enemy), null);
+
+        assertEquals(23, enemy.getHp());
+        assertEquals(15, player.getBlock());
+    }
+
+    @Test
+    void relicsModifyStatusDamageAndCumulativeCombatWins() {
+        Player player = player();
+        Relic marionette = RelicFactory.createById("relic_marionette", player);
+        Relic witherStorm = RelicFactory.createById("relic_wither_storm", player);
+        Relic frostmourne = RelicFactory.createById("relic_frostmourne", player);
+        player.addRelic(marionette);
+        player.addRelic(witherStorm);
+        player.addRelic(frostmourne);
+        RelicManager relicManager = new RelicManager(player);
+        Enemy enemy = enemy("e1");
+        enemy.setStatusDamageModifier(relicManager::modifyStatusDamage);
+        enemy.addBuff(new Withering(10));
+
+        new TriggerWitheringAction(enemy, 1).execute();
+        relicManager.onCombatVictory();
+        int damage = relicManager.modifyDamage(100, player, enemy);
+
+        assertEquals(23, enemy.getHp());
+        assertEquals(108, damage);
     }
 
     private static Player player() {

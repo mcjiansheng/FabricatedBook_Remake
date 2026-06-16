@@ -3,7 +3,13 @@ package com.fabricatedbook.core.relic;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
+import com.fabricatedbook.core.action.ApplyBuffAction;
+import com.fabricatedbook.core.action.DamageAction;
+import com.fabricatedbook.core.action.GainBlockAction;
+import com.fabricatedbook.core.action.TriggerWitheringAction;
+import com.fabricatedbook.core.buff.BuffHook;
 import com.fabricatedbook.core.entity.AbstractEntity;
+import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.event.OnCardUsed;
 import com.fabricatedbook.core.event.OnCombatStart;
@@ -22,11 +28,13 @@ public class DataRelic implements Relic {
     private final Random random;
     private Consumer<OnCombatStart> combatStartHandler;
     private Consumer<OnCardUsed> cardUsedHandler;
+    private int combatWins;
 
     public DataRelic(RelicData data, Player owner) {
         this.data = data;
         this.owner = owner;
         this.random = new Random();
+        this.combatWins = 0;
     }
 
     public int getEffectValue() {
@@ -77,6 +85,9 @@ public class DataRelic implements Relic {
                     multiplier += (owner.getGold() / 10) * getEffectValue() / 100.0;
             case "relic_old_fan" ->
                     multiplier += deckSize() * getEffectValue() / 100.0;
+            case "relic_blade_light" ->
+                    multiplier += negativeBuffCount(owner) * getEffectValue() / 100.0;
+            case "relic_peeping_eye" -> multiplier += getEffectValue() / 100.0;
             case "relic_king_spear" -> {
                 if (owner.getHp() * 10 <= owner.getMaxHp()) {
                     multiplier += getEffectValue() / 100.0;
@@ -88,7 +99,9 @@ public class DataRelic implements Relic {
             case "relic_hatred" -> {
                 if (owner.getCurrentFloor() < 5) multiplier -= getEffectValue() / 100.0;
             }
-            case "relic_centralization", "relic_frostmourne" ->
+            case "relic_frostmourne" ->
+                    multiplier += combatWins * getEffectValue() / 100.0;
+            case "relic_centralization" ->
                     multiplier += getEffectValue() / 100.0;
             default -> {
             }
@@ -113,6 +126,9 @@ public class DataRelic implements Relic {
                     multiplier += (owner.getGold() / 10) * getEffectValue() / 100.0;
             case "relic_old_fan" ->
                     multiplier += deckSize() * getEffectValue() / 100.0;
+            case "relic_blade_light" ->
+                    multiplier += negativeBuffCount(owner) * getEffectValue() / 100.0;
+            case "relic_peeping_eye" -> multiplier += getEffectValue() / 100.0;
             case "relic_king_spear" -> {
                 if (owner.getHp() * 10 <= owner.getMaxHp()) {
                     multiplier += getEffectValue() / 100.0;
@@ -124,7 +140,9 @@ public class DataRelic implements Relic {
             case "relic_hatred" -> {
                 if (owner.getCurrentFloor() < 5) multiplier -= getEffectValue() / 100.0;
             }
-            case "relic_centralization", "relic_frostmourne" ->
+            case "relic_frostmourne" ->
+                    multiplier += combatWins * getEffectValue() / 100.0;
+            case "relic_centralization" ->
                     multiplier += getEffectValue() / 100.0;
             default -> {
             }
@@ -165,6 +183,69 @@ public class DataRelic implements Relic {
             return heal + heal * getEffectValue() / 100;
         }
         return heal;
+    }
+
+    public int modifyStatusDamage(int damage, AbstractEntity target, String statusType) {
+        double multiplier = 1.0;
+        if (target instanceof Enemy) {
+            if ("Poison".equals(statusType) && "relic_marionette".equals(getId())) {
+                multiplier += getEffectValue() / 100.0;
+            }
+            if ("Withering".equals(statusType)) {
+                if ("relic_marionette".equals(getId())) {
+                    multiplier += getEffectValue() / 100.0;
+                }
+                if ("relic_wither_storm".equals(getId())) {
+                    multiplier += getEffectValue() / 100.0;
+                }
+            }
+        }
+        return Math.max(0, (int) Math.round(damage * multiplier));
+    }
+
+    public void onTurnStart(List<Enemy> enemies) {
+        if ("relic_king_armor".equals(getId())
+                && owner.getHp() * 10 <= owner.getMaxHp()) {
+            new ApplyBuffAction(owner, "BlockIncrease", 1).execute();
+            new GainBlockAction(owner, getEffectValue()).execute();
+        } else if ("relic_i_help_you".equals(getId()) && enemies != null) {
+            for (Enemy enemy : enemies) {
+                if (enemy != null && enemy.isAlive()) {
+                    new DamageAction(owner, List.of(enemy), getEffectValue()).execute();
+                }
+            }
+        } else if ("relic_wither_storm".equals(getId()) && enemies != null) {
+            for (Enemy enemy : enemies) {
+                if (enemy != null && enemy.isAlive() && hasBuff(enemy, "Withering")) {
+                    new TriggerWitheringAction(enemy, 1).execute();
+                }
+            }
+        }
+    }
+
+    public void onCombatVictory() {
+        if ("relic_frostmourne".equals(getId())) {
+            combatWins++;
+        }
+    }
+
+    public int modifyRelicRewardChance(int chancePercent) {
+        if ("relic_vampire_count".equals(getId())) {
+            return chancePercent + 15;
+        }
+        return chancePercent;
+    }
+
+    public void modifyEnemyAtCombatStart(List<Enemy> enemies) {
+        if (!"relic_sea_metabolism".equals(getId()) || enemies == null) {
+            return;
+        }
+        for (Enemy enemy : enemies) {
+            if (enemy == null) continue;
+            int increase = Math.max(1, enemy.getMaxHp() * getEffectValue() / 100);
+            enemy.setMaxHp(enemy.getMaxHp() + increase);
+            enemy.setHp(enemy.getHp() + increase);
+        }
     }
 
     @Override
@@ -219,6 +300,31 @@ public class DataRelic implements Relic {
             if (relic.getRarity() == Rarity.CURSED) count++;
         }
         return count;
+    }
+
+    private int negativeBuffCount(AbstractEntity entity) {
+        int count = 0;
+        for (BuffHook buff : entity.getBuffs()) {
+            if (isNegativeBuff(buff.getBuffName()) && buff.getStack() > 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private boolean hasBuff(AbstractEntity entity, String buffName) {
+        for (BuffHook buff : entity.getBuffs()) {
+            if (buff.getBuffName().equals(buffName) && buff.getStack() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isNegativeBuff(String buffName) {
+        return "Fragile".equals(buffName) || "BlockReduction".equals(buffName)
+                || "Weak".equals(buffName) || "Poison".equals(buffName)
+                || "Withering".equals(buffName) || "Dizziness".equals(buffName);
     }
 
     @Override public String getName() { return data.getName(); }
