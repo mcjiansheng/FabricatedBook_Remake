@@ -90,6 +90,12 @@ public class Card {
     /** 是否消耗（使用后进入消耗牌堆，不进入弃牌堆） */
     private boolean exhaust;
 
+    /** 是否保留（回合结束留在手牌中）。 */
+    private boolean retain;
+
+    /** 是否虚无（回合结束仍在手牌中则进入消耗牌堆）。 */
+    private boolean ethereal;
+
     /** 所属职业（"warrior"/"mage"/"witch"/null=通用） */
     private String profession;
 
@@ -105,6 +111,8 @@ public class Card {
     public Card() {
         this.effects = new ArrayList<>();
         this.exhaust = false;
+        this.retain = false;
+        this.ethereal = false;
         this.targetCount = 1;
         this.rarity = Rarity.COMMON;
     }
@@ -128,6 +136,17 @@ public class Card {
         this.effects = effects != null ? effects : new ArrayList<>();
         this.exhaust = exhaust;
         this.profession = profession;
+    }
+
+    public Card(String id, String name, int cost, String description,
+                CardType type, Rarity rarity, int value,
+                TargetType targetType, int targetCount,
+                List<String> effects, boolean exhaust, boolean retain,
+                boolean ethereal, String profession) {
+        this(id, name, cost, description, type, rarity, value, targetType,
+                targetCount, effects, exhaust, profession);
+        this.retain = retain;
+        this.ethereal = ethereal;
     }
 
     // ====== Getter / Setter ======
@@ -164,6 +183,12 @@ public class Card {
 
     public boolean isExhaust() { return exhaust; }
     public void setExhaust(boolean exhaust) { this.exhaust = exhaust; }
+
+    public boolean isRetain() { return retain; }
+    public void setRetain(boolean retain) { this.retain = retain; }
+
+    public boolean isEthereal() { return ethereal; }
+    public void setEthereal(boolean ethereal) { this.ethereal = ethereal; }
 
     public String getProfession() { return profession; }
     public void setProfession(String profession) { this.profession = profession; }

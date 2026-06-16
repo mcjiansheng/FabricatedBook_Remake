@@ -74,6 +74,8 @@ public class SaveManager {
         public int value;
         public String targetType;
         public boolean exhaust;
+        public boolean retain;
+        public boolean ethereal;
 
         public SerializableCard() {}
 
@@ -87,6 +89,8 @@ public class SaveManager {
             this.value = card.getValue();
             this.targetType = card.getTargetType().name();
             this.exhaust = card.isExhaust();
+            this.retain = card.isRetain();
+            this.ethereal = card.isEthereal();
         }
     }
 
@@ -197,7 +201,8 @@ public class SaveManager {
                     Card.TargetType targetType = Card.TargetType.valueOf(sc.targetType);
                     Card card = new Card(sc.id, sc.name, sc.cost, sc.description,
                             type, rarity, sc.value, targetType, 1,
-                            new ArrayList<>(), sc.exhaust, data.profession.toLowerCase());
+                            new ArrayList<>(), sc.exhaust, sc.retain, sc.ethereal,
+                            data.profession.toLowerCase());
                     player.getDrawPile().add(card);
                 }
             }

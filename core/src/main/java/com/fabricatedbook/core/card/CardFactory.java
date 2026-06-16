@@ -35,6 +35,7 @@ public class CardFactory {
                 template.getDescription(), template.getType(), template.getRarity(),
                 template.getValue(), template.getTargetType(), template.getTargetCount(),
                 new ArrayList<>(template.getEffects()), template.isExhaust(),
+                template.isRetain(), template.isEthereal(),
                 template.getProfession()
         );
     }
@@ -76,6 +77,8 @@ public class CardFactory {
                         getJsonString(obj, "targetType", "SINGLE_ENEMY")));
                 card.setTargetCount(getJsonInt(obj, "targetCount", 1));
                 card.setExhaust(getJsonBool(obj, "exhaust", false));
+                card.setRetain(getJsonBool(obj, "retain", false));
+                card.setEthereal(getJsonBool(obj, "ethereal", false));
                 card.setProfession(getJsonString(obj, "profession", null));
 
                 if (obj.has("effects")) {

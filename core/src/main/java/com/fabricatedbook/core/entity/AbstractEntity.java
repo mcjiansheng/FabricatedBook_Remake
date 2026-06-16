@@ -332,6 +332,24 @@ public abstract class AbstractEntity {
         hand.clear();
     }
 
+    /**
+     * 处理回合结束时的手牌去向。
+     * 虚无牌进入消耗牌堆，保留牌留在手牌中，其他牌进入弃牌堆。
+     */
+    public void resolveEndOfTurnHand() {
+        List<Card> endingHand = new ArrayList<>(hand);
+        hand.clear();
+        for (Card card : endingHand) {
+            if (card.isEthereal()) {
+                exhaustPile.add(card);
+            } else if (card.isRetain()) {
+                hand.add(card);
+            } else {
+                discardPile.add(card);
+            }
+        }
+    }
+
     // ====== 状态相关 ======
 
     public boolean isAlive() { return alive; }

@@ -51,6 +51,15 @@ public final class CombatPreviewCalculator {
                     addDamage(totals, baseDamage, repeat, previewPlayer, player, damageTarget,
                             relicManager);
                 }
+                case "damage_x" -> {
+                    if (damageTarget == null || parts.length < 2) break;
+                    int baseDamage = parseInt(parts[1], 0);
+                    int repeat = Math.max(0, player.getEnergy());
+                    if (repeat > 0) {
+                        addDamage(totals, baseDamage, repeat, previewPlayer, player,
+                                damageTarget, relicManager);
+                    }
+                }
                 case "damage_all" -> {
                     if (aliveEnemies.isEmpty() || parts.length < 2) break;
                     int baseDamage = parseInt(parts[1], 0);

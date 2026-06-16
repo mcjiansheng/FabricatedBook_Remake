@@ -3,6 +3,7 @@ package com.fabricatedbook.core.engine;
 import com.fabricatedbook.core.action.*;
 import com.fabricatedbook.core.buff.BuffHook;
 import com.fabricatedbook.core.card.Card;
+import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.entity.AbstractEntity;
 import com.fabricatedbook.core.entity.Enemy;
@@ -143,20 +144,12 @@ public class CombatEngine {
             // 基础攻击牌 ×5
             for (int i = 0; i < 5; i++) {
                 Card atk = CardPool.findById("war_atk1");
-                if (atk != null) starterDeck.add(new Card(atk.getId(), atk.getName(),
-                        atk.getCost(), atk.getDescription(), atk.getType(),
-                        atk.getRarity(), atk.getValue(), atk.getTargetType(),
-                        atk.getTargetCount(), new ArrayList<>(atk.getEffects()),
-                        atk.isExhaust(), atk.getProfession()));
+                if (atk != null) starterDeck.add(CardFactory.createFromTemplate(atk));
             }
             // 基础防御牌 ×5
             for (int i = 0; i < 5; i++) {
                 Card def = CardPool.findById("war_def1");
-                if (def != null) starterDeck.add(new Card(def.getId(), def.getName(),
-                        def.getCost(), def.getDescription(), def.getType(),
-                        def.getRarity(), def.getValue(), def.getTargetType(),
-                        def.getTargetCount(), new ArrayList<>(def.getEffects()),
-                        def.isExhaust(), def.getProfession()));
+                if (def != null) starterDeck.add(CardFactory.createFromTemplate(def));
             }
             player.getDrawPile().addAll(starterDeck);
         }
@@ -264,8 +257,10 @@ public class CombatEngine {
     public boolean playCard(Card card, Enemy target) {
         if (!inBattle || card == null) return false;
 
+        int energyCost = energyCostFor(card);
+
         // 检查能量
-        if (player.getEnergy() < card.getCost()) {
+        if (player.getEnergy() < energyCost) {
             System.out.println("[CombatEngine] 能量不足，需要 " + card.getCost()
                     + "，当前 " + player.getEnergy());
             return false;
@@ -277,10 +272,10 @@ public class CombatEngine {
         }
 
         // 消耗能量
-        player.spendEnergy(card.getCost());
+        player.spendEnergy(energyCost);
 
         // 解析卡牌效果
-        List<CombatAction> actions = parseCardEffects(card, target);
+        List<CombatAction> actions = parseCardEffects(card, target, energyCost);
 
         // 将动作加入队列
         for (CombatAction action : actions) {
@@ -299,7 +294,7 @@ public class CombatEngine {
         executeActionQueue();
 
         if (relicManager != null) {
-            relicManager.fireCardUsed(card, card.getCost());
+            relicManager.fireCardUsed(card, energyCost);
         }
 
         // 通知视图
@@ -313,12 +308,17 @@ public class CombatEngine {
         return true;
     }
 
+    private int energyCostFor(Card card) {
+        return card.getCost() < 0 ? player.getEnergy() : card.getCost();
+    }
+
     /**
      * 解析卡牌效果生成 CombatAction 列表。
      * <p>
      * 效果字符串格式说明：
      * - "damage:N" -> 对单目标造成 N 点伤害
      * - "damage_all:N" -> 对所有敌人造成 N 点伤害
+     * - "damage_x:N" -> 对单目标造成 X 段 N 点伤害
      * - "damage:N:M" -> 对单目标造成 N 点伤害，重复 M 次
      * - "damage_all:N:M" -> 对所有敌人造成 N 点伤害，重复 M 次
      * - "block:N" -> 获得 N 格挡
@@ -345,7 +345,7 @@ public class CombatEngine {
      * @param target 目标敌人（可为 null）
      * @return CombatAction 列表
      */
-    private List<CombatAction> parseCardEffects(Card card, Enemy target) {
+    private List<CombatAction> parseCardEffects(Card card, Enemy target, int energySpent) {
         List<CombatAction> actions = new ArrayList<>();
         List<AbstractEntity> aliveEnemies = getAliveEnemies();
 
@@ -367,6 +367,21 @@ public class CombatEngine {
                         }
                         if (!singleTarget.isEmpty()) {
                             actions.add(new DamageAction(player, singleTarget, dmg, repeat > 1));
+                        }
+                    }
+                    break;
+                }
+                case "damage_x": {
+                    int dmg = Integer.parseInt(parts[1]);
+                    for (int i = 0; i < energySpent; i++) {
+                        List<AbstractEntity> singleTarget = new ArrayList<>();
+                        if (target != null && target.isAlive()) {
+                            singleTarget.add(target);
+                        } else if (!aliveEnemies.isEmpty()) {
+                            singleTarget.add(aliveEnemies.get(0));
+                        }
+                        if (!singleTarget.isEmpty()) {
+                            actions.add(new DamageAction(player, singleTarget, dmg, true));
                         }
                     }
                     break;
@@ -544,13 +559,7 @@ public class CombatEngine {
                     if (!attackCards.isEmpty()) {
                         Card randomCard = attackCards.get(random.nextInt(attackCards.size()));
                         if (randomCard != null) {
-                            player.getHand().add(new Card(randomCard.getId(), randomCard.getName(),
-                                    randomCard.getCost(), randomCard.getDescription(),
-                                    randomCard.getType(), randomCard.getRarity(),
-                                    randomCard.getValue(), randomCard.getTargetType(),
-                                    randomCard.getTargetCount(),
-                                    new ArrayList<>(randomCard.getEffects()),
-                                    randomCard.isExhaust(), randomCard.getProfession()));
+                            player.getHand().add(CardFactory.createFromTemplate(randomCard));
                         }
                     }
                     break;
@@ -659,8 +668,8 @@ public class CombatEngine {
             }
         }
 
-        // 2. 弃手牌
-        player.discardHand();
+        // 2. 处理回合结束手牌：虚无进消耗堆，保留留手，其他弃牌。
+        player.resolveEndOfTurnHand();
 
         // 3. 清理过期 Buff
         player.cleanExpiredBuffs();

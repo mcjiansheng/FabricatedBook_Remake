@@ -12,7 +12,7 @@ import java.util.Random;
  * CardPool — 卡牌池
  * <p>
  * 按职业分组的卡牌池，提供按职业和稀有度的卡牌检索。
- * 战士全 30 张卡牌在此硬编码。
+ * 战士卡牌在此硬编码。
  * 法师和女巫的卡牌池当前留空，由 JSON 配置补充。
  * <p>
  * 引用方：CardFactory（注册卡牌）、ShopManager（生成商店卡牌）、
@@ -35,7 +35,7 @@ public class CardPool {
     }
 
     /**
-     * 注册战士的 30 张卡牌。
+     * 注册战士卡牌。
      * <p>
      * 数据来源：game_encyclopedia.md "四、卡牌系统 - 战士卡牌池"
      */
@@ -229,6 +229,19 @@ public class CardPool {
                 Card.TargetType.SELF, 1,
                 List.of("block:10", "buff:self:block_increase:3"), false, profession));
 
+        // 31. 根除 — 攻击 | X | 造成 X 段 11 点伤害，保留 | 价值 2
+        warriorCards.add(createCard("war_eradicate", "根除", -1,
+                "造成 X 段 11 点伤害，保留", Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
+                Card.TargetType.SINGLE_ENEMY, 1,
+                List.of("damage_x:11"), false, true, false, profession));
+
+        // 32. 违逆 — 技能 | 1 | 获得 7 格挡，施加 2 层虚弱，虚无 | 价值 1
+        warriorCards.add(createCard("war_defy", "违逆", 1,
+                "获得 7 格挡，对一名敌人造成 2 层虚弱，虚无",
+                Card.CardType.SKILL, Card.Rarity.COMMON, 1,
+                Card.TargetType.SINGLE_ENEMY, 1,
+                List.of("block:7", "debuff:weak:2"), false, false, true, profession));
+
         poolByProfession.put(profession, warriorCards);
         allCards.addAll(warriorCards);
     }
@@ -244,6 +257,17 @@ public class CardPool {
                                    String profession) {
         return new Card(id, name, cost, description, type, rarity, value,
                 targetType, targetCount, effects, exhaust, profession);
+    }
+
+    private static Card createCard(String id, String name, int cost,
+                                   String description, Card.CardType type,
+                                   Card.Rarity rarity, int value,
+                                   Card.TargetType targetType, int targetCount,
+                                   List<String> effects, boolean exhaust,
+                                   boolean retain, boolean ethereal,
+                                   String profession) {
+        return new Card(id, name, cost, description, type, rarity, value,
+                targetType, targetCount, effects, exhaust, retain, ethereal, profession);
     }
 
     /**

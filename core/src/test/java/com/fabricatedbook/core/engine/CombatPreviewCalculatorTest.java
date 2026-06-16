@@ -179,6 +179,60 @@ class CombatPreviewCalculatorTest {
         assertEquals(1, player.getExhaustPile().size());
     }
 
+    @Test
+    void endOfTurnRetainsRetainCardsAndExhaustsEtherealCards() {
+        Player player = player();
+        Card retain = attackCard("retain", Card.TargetType.SINGLE_ENEMY, "damage:1");
+        retain.setRetain(true);
+        Card ethereal = attackCard("ethereal", Card.TargetType.SINGLE_ENEMY, "damage:1");
+        ethereal.setEthereal(true);
+        Card normal = attackCard("normal", Card.TargetType.SINGLE_ENEMY, "damage:1");
+        player.getHand().add(retain);
+        player.getHand().add(ethereal);
+        player.getHand().add(normal);
+
+        player.resolveEndOfTurnHand();
+
+        assertEquals(List.of(retain), player.getHand());
+        assertEquals(List.of(normal), player.getDiscardPile());
+        assertEquals(List.of(ethereal), player.getExhaustPile());
+    }
+
+    @Test
+    void xCostCardSpendsAllCurrentEnergyAndRepeatsDamage() {
+        Player player = player();
+        Card eradicate = new Card("x", "根除", -1, "测试描述",
+                Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
+                Card.TargetType.SINGLE_ENEMY, 1, List.of("damage_x:11"),
+                false, true, false, "warrior");
+        player.getDrawPile().add(eradicate);
+        Enemy enemy = enemy("e1");
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+
+        engine.playCard(eradicate, enemy);
+
+        assertEquals(0, player.getEnergy());
+        assertEquals(7, enemy.getHp());
+        assertEquals(List.of(eradicate), player.getDiscardPile());
+    }
+
+    @Test
+    void xCostCardPreviewUsesCurrentEnergyAsRepeatCount() {
+        Player player = player();
+        player.setEnergy(2);
+        Enemy enemy = enemy("e1");
+        Card card = new Card("x", "根除", -1, "测试描述",
+                Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
+                Card.TargetType.SINGLE_ENEMY, 1, List.of("damage_x:11"),
+                false, true, false, "warrior");
+
+        CardPreview preview = CombatPreviewCalculator.previewCard(card, player,
+                List.of(enemy), enemy, null);
+
+        assertEquals("造成 11 x 2 点伤害", preview.getDescription());
+    }
+
     private static Player player() {
         return new Player("p1", "战士", Profession.WARRIOR);
     }

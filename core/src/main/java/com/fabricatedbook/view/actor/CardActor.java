@@ -245,7 +245,7 @@ public class CardActor extends Actor {
         font.draw(batch, card.getName(), drawX + 32 * scale, drawY + visualHeight - 10 * scale);
 
         // 绘制消耗
-        font.draw(batch, "用 " + card.getCost(), drawX + 8 * scale,
+        font.draw(batch, "用 " + (card.getCost() < 0 ? "X" : card.getCost()), drawX + 8 * scale,
                 drawY + visualHeight - 42 * scale);
 
         // 绘制描述
