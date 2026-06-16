@@ -1,9 +1,16 @@
 package com.fabricatedbook.core.engine;
 
 import com.fabricatedbook.core.buff.Fragile;
+import com.fabricatedbook.core.buff.ArmorBuff;
+import com.fabricatedbook.core.buff.ExtraEnergyBuff;
+import com.fabricatedbook.core.buff.UndeadBuff;
+import com.fabricatedbook.core.buff.Withering;
 import com.fabricatedbook.core.buff.Poison;
 import com.fabricatedbook.core.buff.Weak;
+import com.fabricatedbook.core.action.ApplyBuffAction;
 import com.fabricatedbook.core.action.DamageAction;
+import com.fabricatedbook.core.action.DoublePoisonAction;
+import com.fabricatedbook.core.action.TriggerWitheringAction;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.Player;
@@ -231,6 +238,86 @@ class CombatPreviewCalculatorTest {
                 List.of(enemy), enemy, null);
 
         assertEquals("造成 11 x 2 点伤害", preview.getDescription());
+    }
+
+    @Test
+    void armorBuffPreservesBlockAcrossRoundStart() {
+        Player player = player();
+        Enemy enemy = new Enemy("idle", "测试敌人", 40, List.of("idle"));
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+        player.addBuff(new ArmorBuff(1));
+        player.setBlock(12);
+
+        engine.endRound();
+
+        assertEquals(12, player.getBlock());
+    }
+
+    @Test
+    void undeadKeepsEntityAliveAtZeroHpUntilTickExpires() {
+        Player player = player();
+        UndeadBuff undead = new UndeadBuff(1);
+        player.addBuff(undead);
+
+        player.setHp(0);
+
+        assertTrue(player.isAlive());
+
+        undead.tick(player);
+
+        assertEquals(0, player.getHp());
+        assertTrue(!player.isAlive());
+    }
+
+    @Test
+    void extraEnergyBuffAddsEnergyForLimitedTurns() {
+        Player player = player();
+        Enemy enemy = new Enemy("idle", "测试敌人", 40, List.of("idle"));
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+        player.addBuff(new ExtraEnergyBuff(3, 2));
+
+        engine.endRound();
+
+        assertEquals(5, player.getEnergy());
+        assertEquals(2, player.getBuffs().stream()
+                .filter(buff -> "ExtraEnergyBuff".equals(buff.getBuffName()))
+                .findFirst()
+                .orElseThrow()
+                .getStack());
+    }
+
+    @Test
+    void queuedWitheringTriggerUsesBuffAppliedEarlierInSameCard() {
+        Enemy enemy = enemy("e1");
+        enemy.setBlock(10);
+        new ApplyBuffAction(enemy, "Withering", 4).execute();
+
+        new TriggerWitheringAction(enemy, 1).execute();
+
+        assertEquals(36, enemy.getHp());
+        assertEquals(10, enemy.getBlock());
+        Withering withering = (Withering) enemy.getBuffs().stream()
+                .filter(buff -> buff instanceof Withering)
+                .findFirst()
+                .orElseThrow();
+        assertEquals(0, withering.getStack());
+    }
+
+    @Test
+    void queuedDoublePoisonIncludesPoisonAppliedEarlierInSameCard() {
+        Enemy enemy = enemy("e1");
+        enemy.addBuff(new Poison(3));
+        new ApplyBuffAction(enemy, "Poison", 6).execute();
+
+        new DoublePoisonAction(List.of(enemy)).execute();
+
+        assertEquals(18, enemy.getBuffs().stream()
+                .filter(buff -> "Poison".equals(buff.getBuffName()))
+                .findFirst()
+                .orElseThrow()
+                .getStack());
     }
 
     private static Player player() {

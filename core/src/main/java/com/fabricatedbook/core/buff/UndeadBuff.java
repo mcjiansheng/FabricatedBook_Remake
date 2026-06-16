@@ -65,9 +65,10 @@ public class UndeadBuff extends AbstractBuff {
         stack = turnsRemaining;
 
         if (turnsRemaining <= 0) {
-            // 不死结束，实体死亡
-            owner.setAlive(false);
+            // 不死结束，先让 Buff 失效，再设置生命，避免 setHp 被不死状态拦截。
+            stack = 0;
             owner.setHp(0);
+            owner.setAlive(false);
         }
     }
 }

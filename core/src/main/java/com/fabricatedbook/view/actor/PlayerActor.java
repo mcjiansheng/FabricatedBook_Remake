@@ -50,8 +50,8 @@ public class PlayerActor extends Actor {
 
     private void loadBuffIcons() {
         String[] names = {"Poison", "Fragile", "Weak", "Withering", "Strength",
-                "Resistance", "Armor", "BlockIncrease", "BlockReduction",
-                "Dizziness", "ExtraEnergy", "Undead"};
+                "Resistance", "ArmorBuff", "BlockIncrease", "BlockReduction",
+                "Dizziness", "ExtraEnergyBuff", "UndeadBuff"};
         for (String name : names) {
             try {
                 buffIcons.put(name, new Texture("img/" + buffIconFile(name) + ".png"));
@@ -167,12 +167,12 @@ public class PlayerActor extends Actor {
             case "Withering" -> "withering";
             case "Strength" -> "strength";
             case "Resistance" -> "resistance";
-            case "Armor" -> "armor";
+            case "ArmorBuff" -> "armor";
             case "BlockIncrease" -> "block_increase";
             case "BlockReduction" -> "block_reduction";
             case "Dizziness" -> "dizziness";
-            case "ExtraEnergy" -> "extra_energy";
-            case "Undead" -> "undead";
+            case "ExtraEnergyBuff" -> "extra_energy";
+            case "UndeadBuff" -> "undead";
             default -> "ukn";
         };
     }
@@ -184,6 +184,9 @@ public class PlayerActor extends Actor {
             case "Weak" -> "弱";
             case "Withering" -> "凋";
             case "Strength" -> "力";
+            case "ArmorBuff" -> "甲";
+            case "ExtraEnergyBuff" -> "能";
+            case "UndeadBuff" -> "死";
             default -> "?";
         };
     }

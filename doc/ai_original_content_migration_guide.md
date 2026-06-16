@@ -255,21 +255,20 @@ Withering / 凋零
 Strength / 力量
 Resistance / 抗性
 BlockIncrease / block_increase / blockincrease / 坚强
-Armor / armor / 装甲
-Undead / undead / 不死
-ExtraEnergy / extra_energy / extraenergy / 额外能量
+Armor / ArmorBuff / armor / 装甲
+Undead / UndeadBuff / undead / 不死
+ExtraEnergy / ExtraEnergyBuff / extra_energy / extraenergy / 额外能量
 ```
 
 ### 5.5 必须修正的现有不兼容 effect
 
-当前 `warrior.json` 中存在一些效果名和 `CombatEngine` 不匹配：
+迁移时需要确认效果名和 `CombatEngine` 支持的 DSL 匹配：
 
 - `damage_per_attack:10:3` 当前不支持。应改为 `damage:10` + `bonus_per_attack:3`，或扩展 `CombatEngine` 支持 `damage_per_attack`。
 - `damage_scaling:7` 当前不支持。可改为 `damage:7` + `escalating:1`，但 `escalating` 目前也没有实现，只在注释里出现。更稳妥是先实现 `escalating`。
-- `buff:self:ArmorBuff:1` 当前会解析成未知 Buff，默认变成 Strength。应改为 `buff:self:Armor:1`。
-- `buff:self:UndeadBuff:3` 应改为 `buff:self:Undead:3`。
-- `energy_per_turn:2` 当前不支持。应改为 `buff:self:ExtraEnergy:2`，或实现新的持续能量效果。
-- `trigger_withering_all`、`remove_all_enemy_block` 等药水效果当前不支持。
+- 装甲、不死、额外能量已由 `BuffResolver` 支持，可使用 `Armor`/`ArmorBuff`、`Undead`/`UndeadBuff`、`ExtraEnergy`/`ExtraEnergyBuff` 等别名。
+- 持续额外能量使用 `buff:self:extra_energy:持续回合:每回合能量`，例如搏命挣扎为 `buff:self:extra_energy:3:2`。
+- `trigger_withering_all`、`remove_all_enemy_block` 等药水效果在药水解析中支持；卡牌侧如需全体版本，应同步扩展 `CombatEngine.parseCardEffects` 并写测试。
 
 迁移时不要新增没有解析器支持的 effect；如果必须新增，要同步改 `CombatEngine.parseCardEffects` 并写测试。
 

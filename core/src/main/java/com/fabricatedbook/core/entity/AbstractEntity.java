@@ -1,6 +1,7 @@
 package com.fabricatedbook.core.entity;
 
 import com.fabricatedbook.core.buff.BuffHook;
+import com.fabricatedbook.core.buff.UndeadBuff;
 import com.fabricatedbook.core.card.Card;
 
 import java.util.ArrayList;
@@ -103,7 +104,9 @@ public abstract class AbstractEntity {
     public void setHp(int hp) {
         this.hp = Math.max(0, Math.min(hp, maxHp));
         if (this.hp <= 0) {
-            this.alive = false;
+            this.alive = hasActiveUndeadBuff();
+        } else {
+            this.alive = true;
         }
     }
 
@@ -242,6 +245,15 @@ public abstract class AbstractEntity {
      */
     public boolean hasBuff(String buffName) {
         return buffs.stream().anyMatch(b -> b.getBuffName().equals(buffName));
+    }
+
+    private boolean hasActiveUndeadBuff() {
+        for (BuffHook buff : buffs) {
+            if (buff instanceof UndeadBuff undeadBuff && undeadBuff.isUndeadActive()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

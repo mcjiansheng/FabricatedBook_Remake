@@ -815,17 +815,7 @@ public final class EnemyActionResolver {
     private static void triggerWithering(List<CombatAction> actions,
                                           com.fabricatedbook.core.entity.AbstractEntity target,
                                           int times) {
-        for (int i = 0; i < times; i++) {
-            for (com.fabricatedbook.core.buff.BuffHook buff :
-                    new ArrayList<>(target.getBuffs())) {
-                if (buff.getBuffName().equals("Withering") && buff.getStack() > 0) {
-                    int witherDmg = buff.getStack() * 2;
-                    target.takeDamage(witherDmg);
-                    target.removeBuff("Withering");
-                    break;
-                }
-            }
-        }
+        actions.add(new TriggerWitheringAction(target, times));
     }
 
     /** 获取目标的指定 Buff 层数 */

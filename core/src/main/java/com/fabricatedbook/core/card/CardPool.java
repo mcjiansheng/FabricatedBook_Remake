@@ -53,11 +53,11 @@ public class CardPool {
                 "获得 6 点格挡", Card.CardType.DEFENSE, Card.Rarity.BASIC, 0,
                 Card.TargetType.SELF, 1, List.of("block:6"), false, profession));
 
-        // 3. 痛击 (Painful Blow) — 攻击 | 2 | 造成 8 点伤害，提供 2 回合易伤和脆弱 | 价值 1
+        // 3. 痛击 (Painful Blow) — 攻击 | 2 | 造成 8 点伤害，提供 2 回合脆弱 | 价值 1
         warriorCards.add(createCard("war_painful_blow", "痛击", 2,
-                "造成 8 伤害，2 回合脆弱和易碎", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
+                "造成 8 伤害，2 回合脆弱", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
                 Card.TargetType.SINGLE_ENEMY, 1,
-                List.of("damage:8", "debuff:fragile:2", "debuff:block_reduction:2"),
+                List.of("damage:8", "debuff:fragile:2"),
                 false, profession));
 
         // 4. 横扫 (Sweep) — 攻击 | 1 | 对所有单位造成 5 点伤害 | 价值 1
@@ -107,7 +107,7 @@ public class CardPool {
                 "3 回合内不死，每回合 +2 能量，3 回合后死亡，消耗",
                 Card.CardType.SKILL, Card.Rarity.UNCOMMON, 2,
                 Card.TargetType.SELF, 1,
-                List.of("buff:self:undead:3", "buff:self:extra_energy:2"), true, profession));
+                List.of("buff:self:undead:3", "buff:self:extra_energy:3:2"), true, profession));
 
         // 12. 兴奋 (Excited) — 技能 | 1 | 清除所有负面效果，消耗 | 价值 2
         warriorCards.add(createCard("war_excited", "兴奋", 1,
@@ -145,11 +145,11 @@ public class CardPool {
                 Card.TargetType.ALL_ENEMIES, 0,
                 List.of("damage_all:3:3"), false, profession));
 
-        // 18. 哈撒给 (Hasaki) — 攻击 | 0 | 造成 4 伤害，3 回合脆弱 | 价值 1
+        // 18. 哈撒给 (Hasaki) — 攻击 | 0 | 造成 4 伤害，3 回合易碎 | 价值 1
         warriorCards.add(createCard("war_hasaki", "哈撒给", 0,
-                "造成 4 点伤害，3 回合脆弱", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
+                "造成 4 点伤害，3 回合易碎", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
                 Card.TargetType.SINGLE_ENEMY, 1,
-                List.of("damage:4", "debuff:fragile:3"), false, profession));
+                List.of("damage:4", "debuff:block_reduction:3"), false, profession));
 
         // 19. 龙牙 (Dragon Fang) — 攻击 | 1 | 造成 9 伤害，敌方 <30 生命则 +5 | 价值 1
         warriorCards.add(createCard("war_dragon_fang", "龙牙", 1,
@@ -176,7 +176,7 @@ public class CardPool {
         warriorCards.add(createCard("war_corrupt", "腐化", 1,
                 "造成 4 层凋零并引爆 1 次", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
                 Card.TargetType.SINGLE_ENEMY, 1,
-                List.of("debuff:withering:4", "detonate_withering:1"), false, profession));
+                List.of("debuff:withering:4", "trigger_withering"), false, profession));
 
         // 23. 瘟疫 (Plague) — 技能 | 2 | 对全体 6 中毒，中毒层数翻倍，消耗 | 价值 2
         warriorCards.add(createCard("war_plague", "瘟疫", 2,
@@ -190,7 +190,7 @@ public class CardPool {
         warriorCards.add(createCard("war_poisoned", "淬毒", 1,
                 "造成 5×2 点伤害，每次 50% 概率附加中毒", Card.CardType.ATTACK,
                 Card.Rarity.UNCOMMON, 2, Card.TargetType.SINGLE_ENEMY, 1,
-                List.of("damage:5:2", "poison_chance:50:3"), false, profession));
+                List.of("damage:5:2", "chance_debuff:Poison:1:50"), false, profession));
 
         // 25. 弱点 (Weakness) — 技能 | 0 | 1 回合脆弱和易碎 | 价值 1
         warriorCards.add(createCard("war_weakness", "弱点", 0,

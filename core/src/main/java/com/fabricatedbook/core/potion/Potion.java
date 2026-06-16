@@ -1,7 +1,7 @@
 package com.fabricatedbook.core.potion;
 
 import com.fabricatedbook.core.action.ApplyBuffAction;
-import com.fabricatedbook.core.buff.BuffHook;
+import com.fabricatedbook.core.action.TriggerWitheringAction;
 import com.fabricatedbook.core.entity.AbstractEntity;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.Player;
@@ -105,13 +105,7 @@ public class Potion {
     }
 
     private void triggerWithering(AbstractEntity target) {
-        for (BuffHook buff : new ArrayList<>(target.getBuffs())) {
-            if (buff.getBuffName().equals("Withering") && buff.getStack() > 0) {
-                target.takeDamage(buff.getStack() * 2);
-                target.removeBuff("Withering");
-                return;
-            }
-        }
+        new TriggerWitheringAction(target, 1).execute();
     }
 
     public String getId() { return id; }

@@ -1,7 +1,9 @@
 package com.fabricatedbook.core.engine;
 
 import com.fabricatedbook.core.action.*;
+import com.fabricatedbook.core.buff.ExtraEnergyBuff;
 import com.fabricatedbook.core.buff.BuffHook;
+import com.fabricatedbook.core.buff.UndeadBuff;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
@@ -173,19 +175,13 @@ public class CombatEngine {
         turn++;
         System.out.println("[CombatEngine] === 第 " + turn + " 回合 ===");
 
-        // 1. 计算可用能量（基础 + ExtraEnergyBuff）
-        int energyAmount = player.getMaxEnergy();
-        for (BuffHook buff : player.getBuffs()) {
-            if (buff.getBuffName().equals("ExtraEnergy")) {
-                energyAmount += buff.getStack();
-            }
-        }
-        player.setEnergy(energyAmount);
+        // 1. 重置基础能量。ExtraEnergyBuff 在 onTurnStart 中补充额外能量。
+        player.setEnergy(player.getMaxEnergy());
 
         // 2. 清理非装甲格挡（只有装甲Buff的保留格挡）
         // 简化：掉线时不清除格挡并交由 ArmorBuff.onTurnEnd 控制
         // 默认清除所有格挡，装甲Buff会阻止
-        boolean hasArmor = player.hasBuff("Armor");
+        boolean hasArmor = player.hasBuff("ArmorBuff");
         if (!hasArmor) {
             player.clearBlock();
         }
@@ -443,7 +439,13 @@ public class CombatEngine {
                     // buff:self:name:stack
                     String buffName = parts[2];
                     int stack = parts.length > 3 ? Integer.parseInt(parts[3]) : 1;
-                    actions.add(new ApplyBuffAction(player, buffName, stack));
+                    if (isExtraEnergyBuff(buffName) && parts.length > 4) {
+                        int extraEnergyPerTurn = Integer.parseInt(parts[4]);
+                        actions.add(new ApplyBuffAction(player,
+                                s -> new ExtraEnergyBuff(s, extraEnergyPerTurn), stack));
+                    } else {
+                        actions.add(new ApplyBuffAction(player, buffName, stack));
+                    }
                     break;
                 }
                 case "purify": {
@@ -505,31 +507,12 @@ public class CombatEngine {
                 case "detonate_withering": {
                     int times = Integer.parseInt(parts[1]);
                     if (target != null && target.isAlive()) {
-                        for (int i = 0; i < times; i++) {
-                            // 查找目标身上的凋零Buff并引爆
-                            for (BuffHook buff : new ArrayList<>(target.getBuffs())) {
-                                if (buff.getBuffName().equals("Withering") && buff.getStack() > 0) {
-                                    int witherDmg = buff.getStack() * 2; // 凋零伤害公式
-                                    target.takeDamage(witherDmg);
-                                    target.removeBuff("Withering");
-                                    break;
-                                }
-                            }
-                        }
+                        actions.add(new TriggerWitheringAction(target, times));
                     }
                     break;
                 }
                 case "double_poison": {
-                    for (AbstractEntity enemy : aliveEnemies) {
-                        for (BuffHook buff : new ArrayList<>(enemy.getBuffs())) {
-                            if (buff.getBuffName().equals("Poison")) {
-                                int newStack = buff.getStack() * 2;
-                                enemy.removeBuff("Poison");
-                                actions.add(new ApplyBuffAction(enemy, "Poison", newStack));
-                                break;
-                            }
-                        }
-                    }
+                    actions.add(new DoublePoisonAction(new ArrayList<>(aliveEnemies)));
                     break;
                 }
                 case "block_per_target": {
@@ -605,20 +588,28 @@ public class CombatEngine {
                     }
                     break;
                 }
+                case "poison_chance": {
+                    // poison_chance:Chance:Stack
+                    int chance = Integer.parseInt(parts[1]);
+                    int stack = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
+                    if (random.nextInt(100) < chance) {
+                        List<AbstractEntity> poisonTargets = new ArrayList<>();
+                        if (target != null && target.isAlive()) {
+                            poisonTargets.add(target);
+                        } else if (!aliveEnemies.isEmpty()) {
+                            poisonTargets.add(aliveEnemies.get(0));
+                        }
+                        if (!poisonTargets.isEmpty()) {
+                            actions.add(new ApplyBuffAction(poisonTargets.get(0), "Poison", stack));
+                        }
+                    }
+                    break;
+                }
                 case "trigger_withering": {
                     // trigger_withering 或 trigger_withering:N — 引爆凋零
                     int times = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
                     if (target != null && target.isAlive()) {
-                        for (int i = 0; i < times; i++) {
-                            for (BuffHook buff : new ArrayList<>(target.getBuffs())) {
-                                if (buff.getBuffName().equals("Withering") && buff.getStack() > 0) {
-                                    int witherDmg = buff.getStack() * 2;
-                                    target.takeDamage(witherDmg);
-                                    target.removeBuff("Withering");
-                                    break;
-                                }
-                            }
-                        }
+                        actions.add(new TriggerWitheringAction(target, times));
                     }
                     break;
                 }
@@ -629,6 +620,12 @@ public class CombatEngine {
         }
 
         return actions;
+    }
+
+    private boolean isExtraEnergyBuff(String buffName) {
+        return "extra_energy".equalsIgnoreCase(buffName)
+                || "extraenergy".equalsIgnoreCase(buffName)
+                || "ExtraEnergyBuff".equalsIgnoreCase(buffName);
     }
 
     /**
@@ -659,6 +656,9 @@ public class CombatEngine {
         // 1. 调用 Buff.onTurnEnd
         for (BuffHook buff : player.getBuffs()) {
             buff.onTurnEnd(player);
+            if (buff instanceof UndeadBuff undeadBuff) {
+                undeadBuff.tick(player);
+            }
         }
         for (Enemy enemy : enemies) {
             if (enemy.isAlive()) {

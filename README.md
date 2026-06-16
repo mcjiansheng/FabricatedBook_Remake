@@ -293,7 +293,9 @@ com.fabricatedbook
 │   │   ├── Weak.java              # 虚弱
 │   │   ├── Poison.java            # 中毒
 │   │   ├── Withering.java         # 凋零
-│   │   └── Armor.java             # 装甲（格挡不消失）
+│   │   ├── ArmorBuff.java         # 装甲（格挡不消失）
+│   │   ├── UndeadBuff.java        # 不死
+│   │   └── ExtraEnergyBuff.java   # 额外能量
 │   │
 │   ├── card
 │   │   ├── Card.java              # 卡牌数据载体

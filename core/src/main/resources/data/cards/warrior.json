@@ -31,13 +31,13 @@
     "id": "warrior_painful_blow",
     "name": "痛击",
     "cost": 2,
-    "description": "造成 8 点伤害，提供 2 点脆弱和易碎",
+    "description": "造成 8 点伤害，提供 2 点脆弱",
     "type": "ATTACK",
     "rarity": "COMMON",
     "value": 1,
     "targetType": "SINGLE_ENEMY",
     "targetCount": 1,
-    "effects": ["damage:8", "debuff:Fragile:2", "debuff:BlockReduction:2"],
+    "effects": ["damage:8", "debuff:Fragile:2"],
     "exhaust": false,
     "profession": "warrior"
   },
@@ -149,7 +149,7 @@
     "value": 2,
     "targetType": "SELF",
     "targetCount": 1,
-    "effects": ["buff:self:undead:3", "buff:self:extra_energy:2"],
+    "effects": ["buff:self:undead:3", "buff:self:extra_energy:3:2"],
     "exhaust": true,
     "profession": "warrior"
   },
@@ -417,6 +417,36 @@
     "targetCount": 1,
     "effects": ["buff:self:BlockIncrease:3", "block:10"],
     "exhaust": false,
+    "profession": "warrior"
+  },
+  {
+    "id": "warrior_eradicate",
+    "name": "根除",
+    "cost": -1,
+    "description": "造成 X 段 11 点伤害，保留",
+    "type": "ATTACK",
+    "rarity": "UNCOMMON",
+    "value": 2,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["damage_x:11"],
+    "exhaust": false,
+    "retain": true,
+    "profession": "warrior"
+  },
+  {
+    "id": "warrior_defy",
+    "name": "违逆",
+    "cost": 1,
+    "description": "获得 7 格挡，对一名敌人造成 2 层虚弱，虚无",
+    "type": "SKILL",
+    "rarity": "COMMON",
+    "value": 1,
+    "targetType": "SINGLE_ENEMY",
+    "targetCount": 1,
+    "effects": ["block:7", "debuff:Weak:2"],
+    "exhaust": false,
+    "ethereal": true,
     "profession": "warrior"
   }
 ]
