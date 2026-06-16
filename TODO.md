@@ -53,7 +53,7 @@
 ## 阶段六：卡牌系统 ✓
 
 - [x] `Card.java` — 卡牌数据载体（含枚举：CardType、TargetType）
-- [x] `CardPool.java` — 卡牌池（战士全 30 张）
+- [x] `CardPool.java` — 卡牌池（战士卡牌）
 - [x] `CardFactory.java` — 从 JSON 生成卡牌
 
 ## 阶段七：藏品系统 ✓
@@ -117,7 +117,7 @@
 
 ## 阶段十四：JSON 数据配置 ✓
 
-- [x] `data/cards/warrior.json` — 战士 30 张卡牌（2 基础 + 28 进阶）
+- [x] `data/cards/warrior.json` — 战士卡牌数据
 - [x] `data/monsters/level1~5.json` — 5 层全部敌人 + Boss
 - [x] `data/relics.json` — 45 个藏品（7 类稀有度）
 - [x] `data/maps/levels.json` — 5 层地图配置

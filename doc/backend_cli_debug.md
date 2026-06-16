@@ -67,7 +67,7 @@ gradlew.bat runBackendDebug
 | `choose <编号>` | 选择一条可达路线并进入对应节点 |
 | `go <编号>` | `choose` 的别名 |
 | `battle` | 不走地图，直接启动一场普通战斗 |
-| `deck` | 查看抽牌堆、手牌、弃牌堆数量 |
+| `deck` | 查看抽牌堆、手牌、弃牌堆、消耗牌堆数量 |
 | `potions` | 查看药水栏 |
 | `relics` | 查看已持有藏品 |
 | `givepotion <id>` | 获得指定药水；`random` 表示随机 |

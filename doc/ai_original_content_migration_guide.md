@@ -166,9 +166,18 @@
   "targetCount": 1,
   "effects": ["damage:6"],
   "exhaust": false,
+  "retain": false,
+  "ethereal": false,
   "profession": "warrior"
 }
 ```
+
+说明：
+
+- `cost = -1` 表示 X 费。打出时消耗当前全部剩余能量，并将实际消耗量记为 X。
+- `exhaust = true` 表示打出后进入消耗牌堆，不进入弃牌堆。
+- `retain = true` 表示回合结束时保留在手牌中。
+- `ethereal = true` 表示回合结束时若仍在手牌中，则进入消耗牌堆。
 
 ### 5.2 枚举取值
 
@@ -205,6 +214,7 @@
 ```text
 damage:N
 damage:N:TIMES
+damage_x:N
 damage_all:N
 damage_all:N:TIMES
 block:N
@@ -225,6 +235,11 @@ bonus_per_damage_taken:THRESHOLD:BONUS
 add_random_attack
 stun_chance:PERCENT
 ```
+
+补充：
+
+- `damage_x:N`：对单目标造成 X 段 N 点伤害，X 为该 X 费牌打出时消耗的实际能量。
+- 当前消耗牌进入 `exhaustPile`，不会在本场战斗洗牌时进入抽牌堆；新战斗开始时会回到玩家牌组。
 
 ### 5.4 支持的 Buff 名称
 
