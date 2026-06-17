@@ -52,6 +52,12 @@ gradlew.bat runBackendDebug
 初始层级: 荒野
 ```
 
+可以通过 `--seed` 指定对局种子：
+
+```bash
+./gradlew runBackendDebug --args="--seed=12345"
+```
+
 随后系统会生成当前层地图，并进入地图命令循环。
 
 ## 三、地图调试命令
@@ -62,17 +68,23 @@ gradlew.bat runBackendDebug
 |:--|:--|
 | `help` | 显示地图命令和战斗入口说明 |
 | `status` | 查看玩家 HP、金币、当前层 |
+| `seed` | 查看当前对局随机种子 |
 | `map` | 打印当前层地图和可选路线 |
 | `routes` | 只打印当前位置可选路线 |
 | `choose <编号>` | 选择一条可达路线并进入对应节点 |
 | `go <编号>` | `choose` 的别名 |
 | `battle` | 不走地图，直接启动一场普通战斗 |
+| `save` | 保存当前对局到 `saves/save.json` |
+| `load` / `continue` | 从 `saves/save.json` 继续对局 |
+| `newrun [seed]` | 使用指定种子或随机种子开始新对局 |
 | `deck` | 查看抽牌堆、手牌、弃牌堆、消耗牌堆数量 |
 | `potions` | 查看药水栏 |
 | `relics` | 查看已持有藏品 |
 | `givepotion <id>` | 获得指定药水；`random` 表示随机 |
 | `giverelic <id>` | 获得指定藏品；`random` 表示随机 |
 | `selftest` | 运行卡牌、怪物、药水、藏品和商店自检 |
+| `seedtest [seed]` | 验证同种子地图和战斗起手抽牌顺序可复现 |
+| `savetest` | 验证战斗中存档会回到战斗前快照 |
 | `newmap` | 重新生成当前层地图 |
 | `quit` / `exit` | 退出调试控制台 |
 
@@ -254,7 +266,35 @@ printf 'selftest\nquit\n' | ./gradlew runBackendDebug
 SELFTEST PASS
 ```
 
-## 九、脚本化回归示例
+### 种子与存档回归
+
+种子回归：
+
+```bash
+printf 'seedtest 12345\nquit\n' | ./gradlew runBackendDebug --args="--seed=12345"
+```
+
+成功时会输出：
+
+```text
+SEEDTEST PASS
+```
+
+战斗中存档回归：
+
+```bash
+printf 'savetest\nquit\n' | ./gradlew runBackendDebug --args="--seed=12345"
+```
+
+成功时会输出：
+
+```text
+SAVETEST PASS
+```
+
+`savetest` 会模拟进入战斗后修改玩家 HP 和金币，再保存并读取。期望读档结果回到战斗前 HP/金币，且不记录该战斗节点已完成。
+
+## 十、脚本化回归示例
 
 调试器支持标准输入，因此可以用管道执行简单回归。
 
@@ -278,7 +318,13 @@ printf 'choose 1\n1\nquit\n' | ./gradlew runBackendDebug
 
 注意：地图是随机生成的，`choose 1` 可能进入战斗、事件、奖励等不同节点。写自动化脚本时建议优先使用 `battle` 命令验证战斗，使用 `map` / `routes` 人工观察路线。
 
-## 十、跨平台说明
+验证保存、读档和种子保持：
+
+```bash
+printf 'save\nload\nseed\nstatus\nquit\n' | ./gradlew runBackendDebug --args="--seed=777"
+```
+
+## 十一、跨平台说明
 
 该命令行调试系统不依赖 LibGDX 窗口，不需要 OpenGL，也不需要 macOS 的 `-XstartOnFirstThread` 参数。
 
@@ -292,23 +338,24 @@ printf 'choose 1\n1\nquit\n' | ./gradlew runBackendDebug
 
 `runGame` 是 LibGDX 桌面前端启动任务，在 macOS 上会自动附加 `-XstartOnFirstThread`。`runBackendDebug` 是纯命令行任务，不附加平台特定 JVM 参数。
 
-## 十一、当前边界
+## 十二、当前边界
 
 命令行调试器的目标是调通后端机制，不是完整替代游戏前端。当前有以下边界：
 
 - 命令行调试器里的商店和奖励节点仍是轻量处理；正式 LibGDX 前端已接入完整商店商品和战斗奖励。
 - 事件结果中的 `relicId` 已在正式前端实例化为真实藏品；命令行调试器后续也可同步这条路径。
-- 地图和敌人调试数据采用轻量固定配置，尚未完全接入 JSON 怪物池。
+- 地图和敌人调试数据采用轻量固定配置，敌人已接入 JSON 怪物池。
 - `auto` 战斗用于流程回归，不代表真实 AI 或最佳出牌策略。
+- CLI 的地图生成和前端地图生成均接入种子，但使用的布局/图结构实现不同。
+- CLI 存档与前端存档共用 `SaveManager`，都是单槽位 `saves/save.json`。
 
 这些边界不会影响核心后端链路的调试：地图生成、路线选择、事件选项、战斗初始化、出牌、Action 队列、Buff 修正、敌人回合和胜负结算都已经通过正式后端路径执行。
 
-## 十二、建议扩展方向
+## 十三、建议扩展方向
 
 后续可以按以下顺序增强：
 
-1. 让战斗敌人从 `DataLoader.loadMonsters(level)` 中抽取。
-2. 给 `runBackendDebug` 增加参数，如 `--level 3`、`--seed 1234`、`--battle boss`。
+1. 给 `runBackendDebug` 增加更多参数，如 `--level 3`、`--battle boss`。
 3. 如需命令行覆盖商店购买，复用 `ShopManager` 做交互式商品选择。
 4. 如需命令行覆盖奖励选择，复用 `BattleScreen` 当前的奖励生成规则或下沉为后端奖励服务。
 5. 将命令行事件的 `relicId` 结果同步接入 `RelicManager`。

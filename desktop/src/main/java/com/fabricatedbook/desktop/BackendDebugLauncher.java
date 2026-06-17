@@ -20,8 +20,10 @@ import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicData;
 import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.data.DataLoader;
+import com.fabricatedbook.data.SaveManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +38,8 @@ import java.util.Scanner;
 public class BackendDebugLauncher {
 
     private final Scanner scanner = new Scanner(System.in);
-    private final Random random = new Random();
+    private Random random = new Random();
+    private final SaveManager saveManager = new SaveManager();
     private final List<MapConfig> configs = List.of(
             MapConfig.wilderness(),
             MapConfig.forest(),
@@ -45,21 +48,19 @@ public class BackendDebugLauncher {
             MapConfig.tower()
     );
 
+    private GameRunState runState;
     private Player player;
     private MapGraph map;
     private int levelIndex;
     private boolean running = true;
 
     public static void main(String[] args) {
-        new BackendDebugLauncher().run();
+        new BackendDebugLauncher().run(args);
     }
 
-    private void run() {
-        player = new Player("debug-player", "调试战士", Profession.WARRIOR);
-        initDebugDeck();
-        player.setGold(80);
-        levelIndex = 0;
-        createMap();
+    private void run(String[] args) {
+        long seed = parseSeedArg(args, System.currentTimeMillis());
+        startNewRun(seed);
 
         println("Fabricated Book 后端调试控制台");
         println("输入 help 查看命令。");
@@ -94,6 +95,9 @@ public class BackendDebugLauncher {
             case "status":
                 printStatus();
                 break;
+            case "seed":
+                printSeed();
+                break;
             case "map":
                 printMap();
                 break;
@@ -110,6 +114,19 @@ public class BackendDebugLauncher {
                 break;
             case "battle":
                 runBattle(NodeType.FIGHT);
+                break;
+            case "save":
+                saveRun();
+                break;
+            case "load":
+            case "continue":
+                loadRun();
+                break;
+            case "newrun":
+                startNewRun(parts.length >= 2 ? parseLong(parts[1], System.currentTimeMillis())
+                        : System.currentTimeMillis());
+                printStatus();
+                printMap();
                 break;
             case "deck":
                 printDeck();
@@ -128,6 +145,13 @@ public class BackendDebugLauncher {
                 break;
             case "selftest":
                 runSelfTest();
+                break;
+            case "seedtest":
+                runSeedTest(parts.length >= 2 ? parseLong(parts[1], runState.getSeed())
+                        : runState.getSeed());
+                break;
+            case "savetest":
+                runSaveTest();
                 break;
             case "newmap":
                 createMap();
@@ -148,25 +172,42 @@ public class BackendDebugLauncher {
         println("");
         println("地图命令:");
         println("  status             查看玩家状态");
+        println("  seed               查看当前对局随机种子");
         println("  map                打印当前层地图");
         println("  routes             查看当前位置可选路线");
         println("  choose <编号>       选择一条可达路线并进入节点");
         println("  battle             直接启动一场普通战斗");
+        println("  save               保存当前对局");
+        println("  load/continue      从存档继续对局");
+        println("  newrun [seed]      用指定/随机种子开始新对局");
         println("  deck               查看当前牌堆/手牌/弃牌堆数量");
         println("  potions            查看药水栏");
         println("  relics             查看藏品列表");
         println("  givepotion <id>    获得一瓶药水，random 随机");
         println("  giverelic <id>     获得一个藏品，random 随机");
         println("  selftest           运行数据/卡牌/怪物/药水/藏品自检");
+        println("  seedtest [seed]    验证同种子地图和战斗抽牌顺序可复现");
+        println("  savetest           验证战斗中存档回到战斗前快照");
         println("  newmap             重新生成当前层地图");
         println("  quit               退出调试控制台");
         println("");
         println("战斗命令会在进入战斗后显示。");
     }
 
+    private void startNewRun(long seed) {
+        player = new Player("debug-player", "调试战士", Profession.WARRIOR);
+        initDebugDeck();
+        player.setGold(80);
+        levelIndex = 0;
+        runState = new GameRunState(seed, player);
+        random = runState.randomFor("backend-cli");
+        createMap();
+    }
+
     private void createMap() {
         MapConfig config = configs.get(levelIndex);
-        map = new MapGraph(config);
+        runState.setCurrentLayerIdx(levelIndex);
+        map = new MapGraph(config, runState.getSeed(), "backend-map:" + levelIndex);
         player.setCurrentFloor(config.getLevel());
     }
 
@@ -174,7 +215,61 @@ public class BackendDebugLauncher {
         println("玩家: " + player.getName()
                 + " HP " + player.getHp() + "/" + player.getMaxHp()
                 + " 金币 " + player.getGold()
-                + " 当前层 " + configs.get(levelIndex).getLevelName());
+                + " 当前层 " + configs.get(levelIndex).getLevelName()
+                + " 种子 " + runState.getSeed());
+    }
+
+    private void printSeed() {
+        println("当前对局种子: " + runState.getSeed());
+    }
+
+    private void saveRun() {
+        if (saveManager.saveRun(runState)) {
+            println("已保存对局。");
+        } else {
+            println("保存失败。");
+        }
+    }
+
+    private void loadRun() {
+        GameRunState loaded = saveManager.loadRun();
+        if (loaded == null) {
+            println("读档失败或无存档。");
+            return;
+        }
+        runState = loaded;
+        player = loaded.getPlayer();
+        levelIndex = loaded.getCurrentLayerIdx();
+        random = runState.randomFor("backend-cli");
+        createMap();
+        restoreCompletedNode(loaded.getCompletedNode());
+        println("已继续对局。");
+        printStatus();
+        printMap();
+    }
+
+    private void restoreCompletedNode(GameRunState.NodeRef nodeRef) {
+        if (nodeRef == null) {
+            return;
+        }
+        levelIndex = Math.max(0, Math.min(configs.size() - 1, nodeRef.layer));
+        runState.setCurrentLayerIdx(levelIndex);
+        createMap();
+        map.restorePosition(nodeRef.row, nodeRef.col);
+    }
+
+    private GameRunState.NodeRef toNodeRef(Node node) {
+        if (node == null) return null;
+        return new GameRunState.NodeRef(levelIndex, node.getRow(), node.getCol(),
+                node.getType().ordinal());
+    }
+
+    private Random randomForNode(String purpose, Node node) {
+        if (node == null) {
+            return runState.randomFor(purpose, levelIndex, "none");
+        }
+        return runState.randomFor(purpose, levelIndex, node.getRow(), node.getCol(),
+                node.getType().name());
     }
 
     private void printMap() {
@@ -235,7 +330,18 @@ public class BackendDebugLauncher {
 
         println("进入节点: " + node.getType().getDisplayName()
                 + " (" + node.getRow() + "," + node.getCol() + ")");
+        if (node.getType().isCombat()) {
+            runState.beginCombat(toNodeRef(node));
+        }
         resolveNode(node);
+        if (node.getType().isCombat()) {
+            if (player.isAlive()) {
+                runState.completeActiveNode();
+            }
+        } else {
+            runState.clearCombatState();
+            runState.setCompletedNode(toNodeRef(node));
+        }
 
         if (!running) {
             return;
@@ -289,9 +395,11 @@ public class BackendDebugLauncher {
     }
 
     private void resolveEvent() {
-        EventHandler handler = new EventHandler();
+        EventHandler handler = new EventHandler(randomForNode("event-result",
+                map.getPlayerPosition()));
         List<String> names = handler.getEventNames();
-        String eventName = names.get(random.nextInt(names.size()));
+        String eventName = names.get(randomForNode("event-name", map.getPlayerPosition())
+                .nextInt(names.size()));
         List<EventHandler.EventOption> options = handler.getOptions(eventName);
         println("事件: " + eventName);
         for (int i = 0; i < options.size(); i++) {
@@ -351,7 +459,8 @@ public class BackendDebugLauncher {
 
     private void runBattle(NodeType nodeType) {
         List<Enemy> enemies = createEnemies(nodeType);
-        CombatEngine engine = new CombatEngine();
+        CombatEngine engine = new CombatEngine(runState.getSeed(),
+                "backend-combat:" + levelIndex + ":" + nodeType.name());
         engine.setBattleNodeType(nodeType);
         engine.setRelicManager(new RelicManager(player));
         engine.setViewNotifier(new ConsoleNotifier());
@@ -546,10 +655,11 @@ public class BackendDebugLauncher {
             }
         }
         if (!matched.isEmpty()) {
-            DataLoader.EnemyGroup selected = matched.get(random.nextInt(matched.size()));
+            Random enemyRandom = runState.randomFor("backend-enemies", levelIndex, nodeType.name());
+            DataLoader.EnemyGroup selected = matched.get(enemyRandom.nextInt(matched.size()));
             if (nodeType == NodeType.EMERGENCY) {
                 for (int i = 0; i < 3; i++) {
-                    DataLoader.EnemyGroup candidate = matched.get(random.nextInt(matched.size()));
+                    DataLoader.EnemyGroup candidate = matched.get(enemyRandom.nextInt(matched.size()));
                     if (totalHp(candidate) > totalHp(selected)) {
                         selected = candidate;
                     }
@@ -776,6 +886,98 @@ public class BackendDebugLauncher {
         println(ok ? "SELFTEST PASS" : "SELFTEST FAIL");
     }
 
+    private void runSeedTest(long seed) {
+        println("开始种子自检: " + seed);
+        boolean ok = true;
+        String mapA = mapSignature(seed, 0);
+        String mapB = mapSignature(seed, 0);
+        String mapC = mapSignature(seed + 1, 0);
+        ok &= assertCheck(mapA.equals(mapB), "同种子地图节点布局一致");
+        ok &= assertCheck(!mapA.equals(mapC), "不同种子地图节点布局通常不同");
+
+        String handA = openingHandSignature(seed, NodeType.FIGHT);
+        String handB = openingHandSignature(seed, NodeType.FIGHT);
+        String handC = openingHandSignature(seed + 1, NodeType.FIGHT);
+        ok &= assertCheck(handA.equals(handB), "同种子战斗起手抽牌顺序一致: " + handA);
+        ok &= assertCheck(!handA.equals(handC), "不同种子战斗起手抽牌通常不同");
+        println(ok ? "SEEDTEST PASS" : "SEEDTEST FAIL");
+    }
+
+    private void runSaveTest() {
+        println("开始存档自检...");
+        boolean ok = true;
+        long seed = 424242L;
+        startNewRun(seed);
+        int baselineHp = player.getHp();
+        int baselineGold = player.getGold();
+        Node combatNode = firstAvailableCombatNode();
+        if (combatNode == null) {
+            combatNode = map.getAvailableNodes().isEmpty() ? map.getPlayerPosition()
+                    : map.getAvailableNodes().get(0);
+        }
+        runState.beginCombat(toNodeRef(combatNode));
+        player.takeDamage(17);
+        player.gainGold(33);
+        ok &= assertCheck(saveManager.saveRun(runState), "战斗中可以保存对局");
+
+        GameRunState loaded = saveManager.loadRun();
+        ok &= assertCheck(loaded != null, "可以读取对局存档");
+        if (loaded != null) {
+            Player loadedPlayer = loaded.getPlayer();
+            ok &= assertCheck(loadedPlayer.getHp() == baselineHp,
+                    "战斗中 HP 变化未写入存档: " + loadedPlayer.getHp());
+            ok &= assertCheck(loadedPlayer.getGold() == baselineGold,
+                    "战斗中金币变化未写入存档: " + loadedPlayer.getGold());
+            ok &= assertCheck(loaded.getCompletedNode() == null,
+                    "战斗中退出不会记录该战斗节点已完成");
+            ok &= assertCheck(!loaded.isInCombat(),
+                    "读档后不保留战斗过程状态");
+            ok &= assertCheck(openingHandSignature(seed, NodeType.FIGHT)
+                            .equals(openingHandSignature(seed, NodeType.FIGHT)),
+                    "读档后重新进入同节点可复现抽牌顺序");
+        }
+        println(ok ? "SAVETEST PASS" : "SAVETEST FAIL");
+    }
+
+    private String mapSignature(long seed, int layer) {
+        MapGraph testMap = new MapGraph(configs.get(layer), seed, "backend-map:" + layer);
+        StringBuilder builder = new StringBuilder();
+        for (List<Node> row : testMap.getGrid()) {
+            for (Node node : row) {
+                builder.append(node.getType().name().charAt(0));
+            }
+            builder.append('/');
+        }
+        return builder.toString();
+    }
+
+    private String openingHandSignature(long seed, NodeType nodeType) {
+        Player testPlayer = new Player("seed-player", "种子战士", Profession.WARRIOR);
+        addStarterDeck(testPlayer);
+        GameRunState testRun = new GameRunState(seed, testPlayer);
+        CombatEngine engine = new CombatEngine(testRun.getSeed(), "backend-combat:0:"
+                + nodeType.name());
+        engine.setBattleNodeType(nodeType);
+        engine.setRelicManager(new RelicManager(testPlayer));
+        engine.initBattle(testPlayer, List.of(EntityFactory.createSimpleEnemy(
+                "seed_dummy", "种子假人", 1)));
+        StringBuilder builder = new StringBuilder();
+        for (Card card : testPlayer.getHand()) {
+            if (!builder.isEmpty()) builder.append(',');
+            builder.append(card.getId());
+        }
+        return builder.toString();
+    }
+
+    private Node firstAvailableCombatNode() {
+        for (Node node : map.getAvailableNodes()) {
+            if (node.getType().isCombat()) {
+                return node;
+            }
+        }
+        return null;
+    }
+
     private Potion findPotion(List<Potion> potions, String id) {
         for (Potion potion : potions) {
             if (potion.getId().equals(id)) {
@@ -791,17 +993,25 @@ public class BackendDebugLauncher {
     }
 
     private void initDebugDeck() {
-        addCopiesToDrawPile("war_atk1", 5);
-        addCopiesToDrawPile("war_def1", 5);
+        addStarterDeck(player);
+    }
+
+    private void addStarterDeck(Player targetPlayer) {
+        addCopiesToDrawPile(targetPlayer, "war_atk1", 5);
+        addCopiesToDrawPile(targetPlayer, "war_def1", 5);
     }
 
     private void addCopiesToDrawPile(String cardId, int count) {
+        addCopiesToDrawPile(player, cardId, count);
+    }
+
+    private void addCopiesToDrawPile(Player targetPlayer, String cardId, int count) {
         Card source = CardPool.findById(cardId);
         if (source == null) {
             return;
         }
         for (int i = 0; i < count; i++) {
-            player.getDrawPile().add(copyCard(source));
+            targetPlayer.getDrawPile().add(copyCard(source));
         }
     }
 
@@ -833,6 +1043,29 @@ public class BackendDebugLauncher {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+    private long parseLong(String value, long fallback) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private long parseSeedArg(String[] args, long fallback) {
+        if (args == null) return fallback;
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if (arg == null) continue;
+            if (arg.startsWith("--seed=")) {
+                return parseLong(arg.substring("--seed=".length()), fallback);
+            }
+            if ("--seed".equals(arg) && i + 1 < args.length) {
+                return parseLong(args[i + 1], fallback);
+            }
+        }
+        return fallback;
     }
 
     private List<Integer> parseCardIndexes(String value) {
