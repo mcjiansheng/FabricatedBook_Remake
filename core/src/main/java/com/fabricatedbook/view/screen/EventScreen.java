@@ -21,10 +21,12 @@ import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.TopStatusBar;
 import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.List;
+import java.util.Random;
 
 /**
  * EventScreen — 事件画面
@@ -49,6 +51,7 @@ public class EventScreen implements Screen {
     private TopStatusBar topStatusBar;
     private Table optionTable;
     private boolean resolved;
+    private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
     private static final float CONTENT_TOP_PAD = 138f;
     private static final float CONTENT_LEFT_PAD = 118f;
@@ -71,9 +74,14 @@ public class EventScreen implements Screen {
 
     public EventScreen(FabricBookGame game, Player player, String eventName,
                        MapScreen returnMap) {
+        this(game, player, eventName, returnMap, null);
+    }
+
+    public EventScreen(FabricBookGame game, Player player, String eventName,
+                       MapScreen returnMap, Random eventRandom) {
         this.game = game;
         this.player = player;
-        this.eventHandler = new EventHandler();
+        this.eventHandler = new EventHandler(eventRandom);
         this.eventName = eventName;
         this.returnMap = returnMap;
         this.camera = new OrthographicCamera();
@@ -170,6 +178,7 @@ public class EventScreen implements Screen {
                     }
 
                     // 显示结果
+                    game.autosaveCurrentRun();
                     showResult(result.description);
                 }
             });
@@ -215,6 +224,9 @@ public class EventScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+            toggleEscapeMenu();
+        }
         Gdx.gl.glClearColor(0.78f, 0.78f, 0.78f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -255,9 +267,10 @@ public class EventScreen implements Screen {
     @Override public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
     }
-    @Override public void pause() {}
+    @Override public void pause() { game.autosaveCurrentRun(); }
     @Override public void resume() {}
     @Override public void hide() {
+        game.autosaveCurrentRun();
         Gdx.input.setInputProcessor(null);
     }
     @Override public void dispose() {
@@ -265,5 +278,14 @@ public class EventScreen implements Screen {
         if (shapeRenderer != null) {
             shapeRenderer.dispose();
         }
+    }
+
+    private void toggleEscapeMenu() {
+        if (escapeMenu != null && escapeMenu.hasParent()) {
+            escapeMenu.remove();
+            escapeMenu = null;
+            return;
+        }
+        escapeMenu = EscapeMenu.show(stage, game, () -> escapeMenu = null);
     }
 }

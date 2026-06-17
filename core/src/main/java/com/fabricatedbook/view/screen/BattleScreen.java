@@ -34,12 +34,14 @@ import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.actor.CardActor;
 import com.fabricatedbook.view.actor.EnemyActor;
 import com.fabricatedbook.view.actor.PlayerActor;
 import com.fabricatedbook.view.ui.HandPanel;
 import com.fabricatedbook.view.ui.EnergyBar;
+import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 
@@ -64,6 +66,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private final Player player;
     private final List<Enemy> enemies;
     private final MapScreen returnMap;
+    private final GameRunState runState;
 
     private Stage stage;
     private OrthographicCamera camera;
@@ -87,6 +90,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private boolean rewardCardChosen;
     private RelicManager relicManager;
     private Group rewardModal;
+    private Group escapeMenu;
     private List<RewardEntry> pendingRewards;
 
     /**
@@ -109,10 +113,14 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         this.player = player;
         this.enemies = enemies;
         this.returnMap = returnMap;
+        this.runState = game.getCurrentRun();
         this.enemyActors = new ArrayList<>();
         this.battleInitialized = false;
         this.resultShown = false;
-        this.random = new Random();
+        this.random = runState != null && runState.getActiveNode() != null
+                ? runState.randomFor("reward:" + runState.getActiveNode().layer
+                + ":" + runState.getActiveNode().col + ":" + runState.getActiveNode().row)
+                : new Random();
         this.goldAtBattleStart = player.getGold();
         this.rewardCardChosen = false;
         this.relicManager = null;
@@ -193,6 +201,9 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
     @Override
     public void render(float delta) {
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+            toggleEscapeMenu();
+        }
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.12f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -311,9 +322,10 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
     }
-    @Override public void pause() {}
+    @Override public void pause() { game.autosaveCurrentRun(); }
     @Override public void resume() {}
     @Override public void hide() {
+        game.autosaveCurrentRun();
         Gdx.input.setInputProcessor(null);
     }
     @Override
@@ -340,10 +352,10 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                     float x, float y) {
                     if (!combatEngine.isInBattle()) return;
-                    Potion used = player.removePotion(index);
-                    if (used != null && used.use(player, enemies, relicManager)) {
-                        statusLabel.setText("使用药水：" + used.getName());
-                        renderPotionButtons();
+                Potion used = player.removePotion(index);
+                if (used != null && used.use(player, enemies, relicManager)) {
+                    statusLabel.setText("使用药水：" + used.getName());
+                    renderPotionButtons();
                     }
                 }
             });
@@ -564,6 +576,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
+                game.abandonCurrentRun();
                 game.setScreen(new TitleScreen(game));
             }
         });
@@ -595,18 +608,20 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 this::showCardRewardSelection, true));
 
         int relicChance = new RelicManager(player).modifyRelicRewardChance(35);
-        if (random.nextInt(100) < relicChance) {
-            Relic relic = RelicFactory.randomRelic(player, false);
+        if (rewardRandom("relic-chance").nextInt(100) < relicChance) {
+            Relic relic = RelicFactory.randomRelic(player, false,
+                    rewardRandom("relic-pick"));
             if (relic != null) {
                 pendingRewards.add(new RewardEntry("藏品：" + relic.getName(), Color.GOLD,
                         () -> new RelicManager(player).addRelic(relic)));
             }
         }
 
-        if (random.nextFloat() < 0.45f) {
+        if (rewardRandom("potion-chance").nextFloat() < 0.45f) {
             List<Potion> potions = new com.fabricatedbook.data.DataLoader().loadPotions();
             if (!potions.isEmpty() && player.canAddPotion()) {
-                Potion potion = potions.get(random.nextInt(potions.size())).copy();
+                Potion potion = potions.get(rewardRandom("potion-pick")
+                        .nextInt(potions.size())).copy();
                 pendingRewards.add(new RewardEntry("药水：" + potion.getName(), Color.BLACK,
                         () -> player.addPotion(potion)));
             }
@@ -701,6 +716,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 }
                 entry.claimAction.run();
                 entry.claimed = true;
+                commitRewardPhase();
+                game.autosaveCurrentRun();
                 statusLabel.setText("获得：" + entry.label);
                 showRewardClaimModal();
             }
@@ -758,6 +775,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                     player.getDrawPile().add(CardFactory.createFromTemplate(card));
                     statusLabel.setText("获得卡牌：" + card.getName());
                     markCardRewardClaimed();
+                    commitRewardPhase();
+                    game.autosaveCurrentRun();
                     modal.remove();
                     showRewardClaimModal();
                 }
@@ -775,6 +794,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                                 float x, float y) {
                 rewardCardChosen = true;
                 markCardRewardClaimed();
+                commitRewardPhase();
+                game.autosaveCurrentRun();
                 modal.remove();
                 showRewardClaimModal();
             }
@@ -815,7 +836,31 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         if (pool.isEmpty()) {
             pool = CardPool.getCardsByProfession(player.getProfession().name().toLowerCase());
         }
-        return CardPool.randomSelect(pool, Math.min(3, pool.size()));
+        return CardPool.randomSelect(pool, Math.min(3, pool.size()),
+                rewardRandom("card-pick"));
+    }
+
+    private Random rewardRandom(String purpose) {
+        if (runState == null || runState.getActiveNode() == null) {
+            return new Random(random.nextLong());
+        }
+        GameRunState.NodeRef node = runState.getActiveNode();
+        return runState.randomFor("reward", node.layer, node.col, node.row, purpose);
+    }
+
+    private void commitRewardPhase() {
+        if (runState != null && runState.isInCombat()) {
+            runState.completeActiveNode();
+        }
+    }
+
+    private void toggleEscapeMenu() {
+        if (escapeMenu != null && escapeMenu.hasParent()) {
+            escapeMenu.remove();
+            escapeMenu = null;
+            return;
+        }
+        escapeMenu = EscapeMenu.show(stage, game, () -> escapeMenu = null);
     }
 
     private static class RewardEntry {

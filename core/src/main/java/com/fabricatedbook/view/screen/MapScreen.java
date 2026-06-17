@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.fabricatedbook.core.engine.CombatEngine;
 import com.fabricatedbook.core.entity.Enemy;
@@ -21,10 +22,12 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.TopStatusBar;
 
 import java.util.ArrayList;
@@ -105,11 +108,13 @@ public class MapScreen implements Screen {
 
     // ====== 字段 ======
     private final FabricBookGame game;
+    private final GameRunState runState;
     private final Player player;
     private int currentLayerIdx; // 当前楼层索引 0-4
     private MapNode[][][] allLayers; // [layer][col][row]
     private int[][] layerNodeCounts; // [layer][col] 每列节点数
     private MapNode currentNode; // 当前所在的节点
+    private MapNode activeNode;
     private OrthographicCamera camera;
     private Viewport viewport;
     private ShapeRenderer shapeRenderer;
@@ -117,6 +122,7 @@ public class MapScreen implements Screen {
     private BitmapFont font;
     private GlyphLayout glyphLayout;
     private TopStatusBar topStatusBar;
+    private Stage uiStage;
     private Random random;
 
     // 贴图资源
@@ -151,26 +157,40 @@ public class MapScreen implements Screen {
             "当前层效果：最终高塔"
     };
     private float layerIntroTimer;
+    private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
     public MapScreen(FabricBookGame game, Player player) {
-        this(game, player, 1);
+        this(game, new GameRunState(System.currentTimeMillis(), player), 1);
     }
 
     public MapScreen(FabricBookGame game, Player player, int initialLayer) {
+        this(game, new GameRunState(System.currentTimeMillis(), player), initialLayer);
+    }
+
+    public MapScreen(FabricBookGame game, GameRunState runState) {
+        this(game, runState, runState.getCurrentLayerIdx() + 1);
+    }
+
+    public MapScreen(FabricBookGame game, GameRunState runState, int initialLayer) {
         this.game = game;
-        this.player = player;
+        this.runState = runState;
+        this.player = runState.getPlayer();
         this.currentLayerIdx = Math.max(0, Math.min(4, initialLayer - 1));
+        this.runState.setCurrentLayerIdx(this.currentLayerIdx);
         this.currentNode = null;
+        this.activeNode = null;
         this.scrollX = 0;
         this.scrollY = 0;
-        this.random = new Random();
+        this.random = runState.randomFor("map-layout");
         this.layerIntroTimer = 2.2f;
+        this.game.setCurrentRun(runState);
 
         viewport = ResponsiveViewport.create();
         camera = (OrthographicCamera) viewport.getCamera();
 
         loadTextures();
         generateAllLayers();
+        restoreRunPosition();
     }
 
     /** 加载节点贴图 */
@@ -207,7 +227,8 @@ public class MapScreen implements Screen {
 
         // 每列随机节点数
         for (int col = 1; col < len - 1; col++) {
-            lineNum[col] = 1 + random.nextInt(width);
+            lineNum[col] = 1 + runState.randomFor("map-line-count", layerIdx, col)
+                    .nextInt(width);
         }
         lineNum[0] = 1;
         lineNum[len - 1] = 1;
@@ -232,7 +253,8 @@ public class MapScreen implements Screen {
                 } else if (layerIdx == 3 && col == len - 2) {
                     layer[col][row] = new MapNode(BOSS);
                 } else {
-                    int type = randomChoice(LAYER_PROBABILITIES[layerIdx]);
+                    int type = randomChoice(LAYER_PROBABILITIES[layerIdx],
+                            runState.randomFor("map-node-type", layerIdx, col, row));
                     layer[col][row] = new MapNode(type);
                 }
                 layer[col][row].col = col;
@@ -250,7 +272,7 @@ public class MapScreen implements Screen {
                 }
             } else if (col < tail) {
                 // 中间列：按 C 版算法连接
-                connectColumns(layer, lineNum, col, tail);
+                connectColumns(layerIdx, layer, lineNum, col, tail);
             } else if (col == tail) {
                 // 最后一列普通节点连接到终点
                 for (int r = 0; r < lineNum[tail]; r++) {
@@ -266,13 +288,15 @@ public class MapScreen implements Screen {
     }
 
     /** 连接相邻两列（对应 C 版连接算法） */
-    private void connectColumns(MapNode[][] layer, int[] lineNum, int col, int tail) {
+    private void connectColumns(int layerIdx, MapNode[][] layer, int[] lineNum,
+                                int col, int tail) {
         if (col >= tail) return;
         int x = 0, y = 0;
         for (int j = 0; j < lineNum[col]; j++) {
             int size = Math.max(0, lineNum[col + 1] - 1 - y);
             if (size > 0) {
-                y += random.nextInt(size + 1);
+                y += runState.randomFor("map-connection", layerIdx, col, j)
+                        .nextInt(size + 1);
             }
             if (j == lineNum[col] - 1 && y < lineNum[col + 1] - 1) {
                 y = lineNum[col + 1] - 1;
@@ -325,6 +349,10 @@ public class MapScreen implements Screen {
 
     /** 权重随机选节点类型 */
     private int randomChoice(int[] probabilities) {
+        return randomChoice(probabilities, random);
+    }
+
+    private int randomChoice(int[] probabilities, Random random) {
         int total = 0;
         for (int p : probabilities) total += p;
         int r = random.nextInt(total);
@@ -343,9 +371,12 @@ public class MapScreen implements Screen {
         glyphLayout = new GlyphLayout();
         shapeRenderer = new ShapeRenderer();
         topStatusBar = new TopStatusBar(player, font);
+        uiStage = new Stage(viewport);
+        Gdx.input.setInputProcessor(uiStage);
 
         // 设置当前可访问节点
         updateAccessibleNodes();
+        game.autosaveCurrentRun();
     }
 
     /** 更新当前可访问节点 */
@@ -408,10 +439,21 @@ public class MapScreen implements Screen {
         // 绘制顶栏（在 batch.end() 后绘制，使用 shapeRenderer + batch）
         drawTopBar();
         drawLayerIntro();
+        if (uiStage != null) {
+            uiStage.act(delta);
+            uiStage.draw();
+        }
     }
 
     /** 处理输入（横向拖动） */
     private void handleInput(float delta) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            toggleEscapeMenu();
+            return;
+        }
+        if (escapeMenu != null && escapeMenu.hasParent()) {
+            return;
+        }
         if (Gdx.input.isTouched()) {
             Vector2 touch = toWorld(Gdx.input.getX(), Gdx.input.getY());
 
@@ -489,55 +531,132 @@ public class MapScreen implements Screen {
 
     /** 进入节点（根据类型进入不同场景） */
     private void enterNode(MapNode node) {
-        currentNode = node;
-        node.visited = true;
-        updateAccessibleNodes();
-        applyNodeEntryRelics(node.type);
-
         // 根据节点类型切换到对应场景
         switch (node.type) {
             case FIGHT:
             case EMERGENCY:
             case BOSS:
+                activeNode = node;
+                runState.beginCombat(toRef(node));
+                game.autosaveCurrentRun();
                 // 进入战斗
                 game.setScreen(new BattleScreen(game, createCombatEngine(), player,
                         createEnemiesFor(node.type), this));
                 break;
             case SHOP:
+                markNodeEntered(node);
                 // 进入商店
-                ShopManager shopManager = new ShopManager(player, new RelicManager(player));
+                ShopManager shopManager = new ShopManager(player, new RelicManager(player),
+                        runState.getSeed(), "shop:" + nodeKey(node));
                 shopManager.generateItems();
+                game.autosaveCurrentRun();
                 game.setScreen(new ShopScreen(game, player, shopManager, this));
                 break;
             case UNEXPECTEDLY:
+                markNodeEntered(node);
+                game.autosaveCurrentRun();
                 // 进入事件
-                game.setScreen(new EventScreen(game, player, randomEventName(), this));
+                game.setScreen(new EventScreen(game, player, randomEventName(), this,
+                        runState.randomFor("event-result", nodeKey(node))));
                 break;
             case REWARD:
+                markNodeEntered(node);
+                game.autosaveCurrentRun();
                 // 宝箱奖励
-                game.setScreen(new EventScreen(game, player, "好诗歪诗", this));
+                game.setScreen(new EventScreen(game, player, "好诗歪诗", this,
+                        runState.randomFor("event-result", nodeKey(node))));
                 break;
             case SAFE_HOUSE:
+                markNodeEntered(node);
+                game.autosaveCurrentRun();
                 // 安全屋
-                game.setScreen(new EventScreen(game, player, "人生意义", this));
+                game.setScreen(new EventScreen(game, player, "人生意义", this,
+                        runState.randomFor("event-result", nodeKey(node))));
                 break;
             case DECISION:
+                markNodeEntered(node);
+                game.autosaveCurrentRun();
                 // 命运抉择
-                game.setScreen(new EventScreen(game, player, "投资", this));
+                game.setScreen(new EventScreen(game, player, "投资", this,
+                        runState.randomFor("event-result", nodeKey(node))));
                 break;
         }
     }
 
+    private void markNodeEntered(MapNode node) {
+        currentNode = node;
+        activeNode = null;
+        runState.clearCombatState();
+        node.visited = true;
+        runState.setCompletedNode(toRef(node));
+        updateAccessibleNodes();
+        applyNodeEntryRelics(node.type);
+    }
+
+    private GameRunState.NodeRef toRef(MapNode node) {
+        if (node == null) return null;
+        return new GameRunState.NodeRef(currentLayerIdx, node.col, node.row, node.type);
+    }
+
+    private String nodeKey(MapNode node) {
+        if (node == null) return currentLayerIdx + ":none";
+        return currentLayerIdx + ":" + node.col + ":" + node.row + ":" + node.type;
+    }
+
+    private void restoreRunPosition() {
+        currentLayerIdx = runState.getCurrentLayerIdx();
+        GameRunState.NodeRef completed = runState.getCompletedNode();
+        if (completed != null) {
+            currentLayerIdx = completed.layer;
+            runState.setCurrentLayerIdx(currentLayerIdx);
+            currentNode = findNode(completed);
+            if (currentNode != null) {
+                currentNode.visited = true;
+            }
+        }
+        activeNode = null;
+        runState.clearCombatState();
+    }
+
+    private MapNode findNode(GameRunState.NodeRef ref) {
+        if (ref == null || ref.layer < 0 || ref.layer >= allLayers.length) return null;
+        MapNode[][] layer = allLayers[ref.layer];
+        if (ref.col < 0 || ref.col >= layer.length) return null;
+        if (ref.row < 0 || ref.row >= layer[ref.col].length) return null;
+        return layer[ref.col][ref.row];
+    }
+
+    private void toggleEscapeMenu() {
+        if (escapeMenu != null && escapeMenu.hasParent()) {
+            escapeMenu.remove();
+            escapeMenu = null;
+            return;
+        }
+        escapeMenu = EscapeMenu.show(uiStage, game, () -> escapeMenu = null);
+    }
+
     /** 当前节点结算完成后回到地图，必要时进入下一层。 */
     public void completeCurrentNodeAndReturn() {
+        if (activeNode != null) {
+            activeNode.visited = true;
+            currentNode = activeNode;
+            runState.completeActiveNode();
+            runState.setCompletedNode(toRef(currentNode));
+            activeNode = null;
+        } else if (currentNode != null) {
+            runState.setCompletedNode(toRef(currentNode));
+        }
         if (currentNode != null && currentNode.nxtNum == 0 && currentLayerIdx < allLayers.length - 1) {
             currentLayerIdx++;
+            runState.setCurrentLayerIdx(currentLayerIdx);
             currentNode = null;
+            runState.setCompletedNode(null);
             scrollX = 0;
             scrollY = 0;
             layerIntroTimer = 2.2f;
         }
         updateAccessibleNodes();
+        game.autosaveCurrentRun();
         game.setScreen(this);
     }
 
@@ -553,10 +672,11 @@ public class MapScreen implements Screen {
     }
 
     private CombatEngine createCombatEngine() {
-        CombatEngine engine = new CombatEngine();
+        MapNode node = activeNode != null ? activeNode : currentNode;
+        CombatEngine engine = new CombatEngine(runState.getSeed(), "combat:" + nodeKey(node));
         player.setCurrentFloor(currentLayerIdx + 1);
-        if (currentNode != null) {
-            switch (currentNode.type) {
+        if (node != null) {
+            switch (node.type) {
                 case EMERGENCY:
                     engine.setBattleNodeType(NodeType.EMERGENCY);
                     break;
@@ -582,6 +702,7 @@ public class MapScreen implements Screen {
      * - 如果当前楼层没有匹配组，fallback 到训练假人
      */
     private List<Enemy> createEnemiesFor(int nodeType) {
+        Random encounterRandom = runState.randomFor("enemies:" + nodeKey(activeNode));
         DataLoader loader = new DataLoader();
         int level = currentLayerIdx + 1;
         List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
@@ -610,16 +731,16 @@ public class MapScreen implements Screen {
             DataLoader.EnemyGroup selected;
             if (nodeType == EMERGENCY) {
                 // 优先选敌人数量多/HP 高的组作为精英
-                selected = matched.get(random.nextInt(matched.size()));
+                selected = matched.get(encounterRandom.nextInt(matched.size()));
                 // 尝试偏向选总 HP 更高的
                 for (int attempt = 0; attempt < 3; attempt++) {
-                    DataLoader.EnemyGroup candidate = matched.get(random.nextInt(matched.size()));
+                    DataLoader.EnemyGroup candidate = matched.get(encounterRandom.nextInt(matched.size()));
                     if (totalHp(candidate) > totalHp(selected)) {
                         selected = candidate;
                     }
                 }
             } else {
-                selected = matched.get(random.nextInt(matched.size()));
+                selected = matched.get(encounterRandom.nextInt(matched.size()));
             }
 
             List<Enemy> enemies = new ArrayList<>();
@@ -628,7 +749,7 @@ public class MapScreen implements Screen {
                     enemies.add(data.toEnemy());
                 }
             }
-            addBabelTowerEnemy(enemies, groups, selected, nodeType);
+            addBabelTowerEnemy(enemies, groups, selected, nodeType, encounterRandom);
             if (!enemies.isEmpty()) return enemies;
         }
 
@@ -721,7 +842,8 @@ public class MapScreen implements Screen {
     private void addBabelTowerEnemy(List<Enemy> enemies,
                                     List<DataLoader.EnemyGroup> groups,
                                     DataLoader.EnemyGroup selected,
-                                    int nodeType) {
+                                    int nodeType,
+                                    Random encounterRandom) {
         if (nodeType != EMERGENCY || !player.hasRelic("relic_babel_tower")
                 || groups == null) {
             return;
@@ -736,13 +858,14 @@ public class MapScreen implements Screen {
             }
         }
         if (!candidates.isEmpty()) {
-            enemies.add(candidates.get(random.nextInt(candidates.size())).toEnemy());
+            enemies.add(candidates.get(encounterRandom.nextInt(candidates.size())).toEnemy());
         }
     }
 
     private String randomEventName() {
         List<String> eventNames = new EventHandler().getEventNames();
-        return eventNames.get(random.nextInt(eventNames.size()));
+        return eventNames.get(runState.randomFor("event-name", nodeKey(currentNode))
+                .nextInt(eventNames.size()));
     }
 
     /** 绘制节点之间的连接线 */
@@ -939,6 +1062,7 @@ public class MapScreen implements Screen {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
+        if (uiStage != null) uiStage.getViewport().update(width, height, true);
     }
 
     @Override
@@ -949,6 +1073,7 @@ public class MapScreen implements Screen {
     public void hide() {}
     @Override
     public void dispose() {
+        if (uiStage != null) uiStage.dispose();
         if (shapeRenderer != null) shapeRenderer.dispose();
         for (int i = 1; i <= 9; i++) {
             if (nodeTextures[i] != null) nodeTextures[i].dispose();

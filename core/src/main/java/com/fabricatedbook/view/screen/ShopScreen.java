@@ -11,6 +11,7 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
+import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public class ShopScreen implements Screen {
     private OrthographicCamera camera;
     private Table itemTable;
     private Label goldLabel;
+    private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
     /**
      * 构造商店画面。
@@ -136,6 +138,7 @@ public class ShopScreen implements Screen {
                             float x, float y) {
                         if (shopManager.purchase(index)) {
                             goldLabel.setText("金币: " + player.getGold());
+                            game.autosaveCurrentRun();
                             renderItems();
                         }
                     }
@@ -157,6 +160,9 @@ public class ShopScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+            toggleEscapeMenu();
+        }
         Gdx.gl.glClearColor(0.12f, 0.1f, 0.08f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -167,12 +173,22 @@ public class ShopScreen implements Screen {
     @Override public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
     }
-    @Override public void pause() {}
+    @Override public void pause() { game.autosaveCurrentRun(); }
     @Override public void resume() {}
     @Override public void hide() {
+        game.autosaveCurrentRun();
         Gdx.input.setInputProcessor(null);
     }
     @Override public void dispose() {
         stage.dispose();
+    }
+
+    private void toggleEscapeMenu() {
+        if (escapeMenu != null && escapeMenu.hasParent()) {
+            escapeMenu.remove();
+            escapeMenu = null;
+            return;
+        }
+        escapeMenu = EscapeMenu.show(stage, game, () -> escapeMenu = null);
     }
 }

@@ -83,9 +83,10 @@ public class TitleScreen implements Screen {
                                 float x, float y) {
                 SaveManager saveManager = game.getSaveManager();
                 if (saveManager.hasSave()) {
-                    var player = saveManager.load();
-                    if (player != null) {
-                        game.setScreen(new MapScreen(game, player));
+                    var runState = saveManager.loadRun();
+                    if (runState != null) {
+                        game.setCurrentRun(runState);
+                        game.setScreen(new MapScreen(game, runState));
                     }
                 }
             }

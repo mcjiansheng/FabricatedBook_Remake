@@ -17,6 +17,7 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.data.SaveManager;
@@ -57,6 +58,8 @@ public class FabricBookGame extends Game {
 
     /** 存档管理器 */
     private SaveManager saveManager;
+
+    private GameRunState currentRun;
 
     /** 屏幕宽度 */
     public static final int SCREEN_WIDTH = 1280;
@@ -123,6 +126,7 @@ public class FabricBookGame extends Game {
 
     @Override
     public void dispose() {
+        autosaveCurrentRun();
         batch.dispose();
         for (BitmapFont cachedFont : fontsBySize.values()) {
             cachedFont.dispose();
@@ -148,6 +152,21 @@ public class FabricBookGame extends Game {
     }
     public DataLoader getDataLoader() { return dataLoader; }
     public SaveManager getSaveManager() { return saveManager; }
+    public GameRunState getCurrentRun() { return currentRun; }
+    public void setCurrentRun(GameRunState currentRun) { this.currentRun = currentRun; }
+
+    public void autosaveCurrentRun() {
+        if (saveManager != null && currentRun != null) {
+            saveManager.saveRun(currentRun);
+        }
+    }
+
+    public void abandonCurrentRun() {
+        currentRun = null;
+        if (saveManager != null) {
+            saveManager.deleteSave();
+        }
+    }
 
     public void applyFontScale(float logicalScale) {
         font.getData().setScale(logicalScale);
@@ -175,7 +194,9 @@ public class FabricBookGame extends Game {
                 setScreen(new FontDebugScreen(this));
                 break;
             case MAP:
-                setScreen(new MapScreen(this, player, debugConfig.getLayer()));
+                setScreen(new MapScreen(this,
+                        new GameRunState(System.currentTimeMillis(), player),
+                        debugConfig.getLayer()));
                 break;
             case BATTLE:
                 CombatEngine engine = new CombatEngine();
@@ -235,6 +256,12 @@ public class FabricBookGame extends Game {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F10)) {
             toggleBorderless();
         }
+    }
+
+    @Override
+    public void pause() {
+        autosaveCurrentRun();
+        super.pause();
     }
 
     private void toggleFullscreen() {

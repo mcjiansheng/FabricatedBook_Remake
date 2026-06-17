@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.fabricatedbook.core.potion.Potion;
+import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
@@ -106,7 +107,10 @@ public class CharacterSelectScreen implements Screen {
                                 float x, float y) {
                 Player player = new Player("player", name, profession);
                 giveDebugStartingPotions(player);
-                game.setScreen(new MapScreen(game, player));
+                GameRunState runState = new GameRunState(System.currentTimeMillis(), player);
+                game.setCurrentRun(runState);
+                game.getSaveManager().saveRun(runState);
+                game.setScreen(new MapScreen(game, runState));
             }
         });
         card.add(choose).width(150).height(44).padTop(8);

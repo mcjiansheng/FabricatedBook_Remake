@@ -14,6 +14,7 @@ import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.view.FabricBookGame;
+import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 
@@ -29,6 +30,7 @@ public class InventoryScreen implements Screen {
     private final Player player;
     private final MapScreen returnMap;
     private Stage stage;
+    private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
     public InventoryScreen(FabricBookGame game, Player player, MapScreen returnMap) {
         this.game = game;
@@ -106,6 +108,9 @@ public class InventoryScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+            toggleEscapeMenu();
+        }
         Gdx.gl.glClearColor(0.78f, 0.78f, 0.78f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
@@ -115,8 +120,20 @@ public class InventoryScreen implements Screen {
     @Override public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
     }
-    @Override public void pause() {}
+    @Override public void pause() { game.autosaveCurrentRun(); }
     @Override public void resume() {}
-    @Override public void hide() { Gdx.input.setInputProcessor(null); }
+    @Override public void hide() {
+        game.autosaveCurrentRun();
+        Gdx.input.setInputProcessor(null);
+    }
     @Override public void dispose() { stage.dispose(); }
+
+    private void toggleEscapeMenu() {
+        if (escapeMenu != null && escapeMenu.hasParent()) {
+            escapeMenu.remove();
+            escapeMenu = null;
+            return;
+        }
+        escapeMenu = EscapeMenu.show(stage, game, () -> escapeMenu = null);
+    }
 }
