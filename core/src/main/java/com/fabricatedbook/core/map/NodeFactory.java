@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import com.fabricatedbook.core.run.GameRunState;
 
 /**
  * NodeFactory — 节点工厂（权重随机算法）
@@ -26,9 +27,14 @@ public class NodeFactory {
      * @return 生成的节点列表（按列优先排列）
      */
     public static List<List<Node>> generateNodes(MapConfig config) {
+        return generateNodes(config, RANDOM);
+    }
+
+    public static List<List<Node>> generateNodes(MapConfig config, Random random) {
         int width = config.getWidth();
         int height = config.getHeight();
         List<List<Node>> grid = new ArrayList<>();
+        Random rng = random == null ? RANDOM : random;
 
         for (int row = 0; row < height; row++) {
             List<Node> rowNodes = new ArrayList<>();
@@ -40,10 +46,43 @@ public class NodeFactory {
                     if (col == width / 2) {
                         node = new Node(config.getEndNodeType(), row, col);
                     } else {
-                        node = new Node(randomNodeType(config.getNodeWeights()), row, col);
+                        node = new Node(randomNodeType(config.getNodeWeights(), rng), row, col);
                     }
                 } else {
-                    NodeType type = randomNodeType(config.getNodeWeights());
+                    NodeType type = randomNodeType(config.getNodeWeights(), rng);
+                    node = new Node(type, row, col);
+                }
+                rowNodes.add(node);
+            }
+            grid.add(rowNodes);
+        }
+
+        return grid;
+    }
+
+    public static List<List<Node>> generateNodes(MapConfig config, long seed,
+                                                 String keyPrefix) {
+        int width = config.getWidth();
+        int height = config.getHeight();
+        List<List<Node>> grid = new ArrayList<>();
+        String prefix = keyPrefix == null ? "map" : keyPrefix;
+
+        for (int row = 0; row < height; row++) {
+            List<Node> rowNodes = new ArrayList<>();
+            for (int col = 0; col < width; col++) {
+                Node node;
+                if (row == 0 && col == config.getStartCol()) {
+                    node = new Node(config.getStartNodeType(), row, col);
+                } else if (row == config.getEndRow() && config.getEndNodeType() != null) {
+                    if (col == width / 2) {
+                        node = new Node(config.getEndNodeType(), row, col);
+                    } else {
+                        node = new Node(randomNodeType(config.getNodeWeights(),
+                                GameRunState.randomFor(seed, prefix + ":node:" + row + ":" + col)), row, col);
+                    }
+                } else {
+                    NodeType type = randomNodeType(config.getNodeWeights(),
+                            GameRunState.randomFor(seed, prefix + ":node:" + row + ":" + col));
                     node = new Node(type, row, col);
                 }
                 rowNodes.add(node);
@@ -61,6 +100,10 @@ public class NodeFactory {
      * @return 选中的节点类型
      */
     public static NodeType randomNodeType(Map<NodeType, Integer> weights) {
+        return randomNodeType(weights, RANDOM);
+    }
+
+    public static NodeType randomNodeType(Map<NodeType, Integer> weights, Random random) {
         if (weights == null || weights.isEmpty()) {
             return NodeType.FIGHT;
         }
@@ -70,7 +113,8 @@ public class NodeFactory {
             return NodeType.FIGHT;
         }
 
-        int roll = RANDOM.nextInt(totalWeight);
+        Random rng = random == null ? RANDOM : random;
+        int roll = rng.nextInt(totalWeight);
         int cumulative = 0;
 
         for (Map.Entry<NodeType, Integer> entry : weights.entrySet()) {

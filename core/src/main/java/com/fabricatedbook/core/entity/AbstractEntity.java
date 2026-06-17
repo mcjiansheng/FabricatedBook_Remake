@@ -7,6 +7,7 @@ import com.fabricatedbook.core.card.Card;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 /**
  * AbstractEntity — 实体基类
@@ -63,6 +64,7 @@ public abstract class AbstractEntity {
     protected boolean dizzy;
 
     private StatusDamageModifier statusDamageModifier;
+    private Random shuffleRandom = new Random();
 
     @FunctionalInterface
     public interface StatusDamageModifier {
@@ -340,7 +342,7 @@ public abstract class AbstractEntity {
     public void shuffleDiscardToDraw() {
         drawPile.addAll(discardPile);
         discardPile.clear();
-        java.util.Collections.shuffle(drawPile);
+        java.util.Collections.shuffle(drawPile, shuffleRandom);
     }
 
     /**
@@ -379,6 +381,10 @@ public abstract class AbstractEntity {
 
     public void setStatusDamageModifier(StatusDamageModifier statusDamageModifier) {
         this.statusDamageModifier = statusDamageModifier;
+    }
+
+    public void setShuffleRandom(Random shuffleRandom) {
+        this.shuffleRandom = shuffleRandom == null ? new Random() : shuffleRandom;
     }
 
     public int modifyStatusDamage(int damage, String statusType) {

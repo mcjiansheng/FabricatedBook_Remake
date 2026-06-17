@@ -35,6 +35,10 @@ public final class RelicFactory {
     }
 
     public static Relic randomRelic(Player owner, boolean includeCursed) {
+        return randomRelic(owner, includeCursed, RANDOM);
+    }
+
+    public static Relic randomRelic(Player owner, boolean includeCursed, Random random) {
         List<RelicData> candidates = new ArrayList<>();
         for (RelicData data : loadRelicData()) {
             if (includeCursed || data.getRarity() != Relic.Rarity.CURSED) {
@@ -42,6 +46,6 @@ public final class RelicFactory {
             }
         }
         if (candidates.isEmpty()) return null;
-        return create(candidates.get(RANDOM.nextInt(candidates.size())), owner);
+        return create(candidates.get(random.nextInt(candidates.size())), owner);
     }
 }

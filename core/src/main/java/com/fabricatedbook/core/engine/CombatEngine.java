@@ -15,6 +15,7 @@ import com.fabricatedbook.core.event.OnEntityDeath;
 import com.fabricatedbook.core.event.OnTurnEnd;
 import com.fabricatedbook.core.event.OnCardUsed;
 import com.fabricatedbook.core.map.NodeType;
+import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.core.relic.EventBus;
 import com.fabricatedbook.core.relic.RelicManager;
 
@@ -64,6 +65,8 @@ public class CombatEngine {
 
     /** 随机数生成器 */
     private final Random random;
+    private final Long runSeed;
+    private final String randomKey;
 
     /** 事件总线 */
     private EventBus eventBus;
@@ -78,8 +81,23 @@ public class CombatEngine {
      * 构造战斗引擎。
      */
     public CombatEngine() {
+        this(new Random());
+    }
+
+    public CombatEngine(Random random) {
+        this(random, null, null);
+    }
+
+    public CombatEngine(long runSeed, String randomKey) {
+        this(GameRunState.randomFor(runSeed, randomKey + ":combat-flow"),
+                runSeed, randomKey);
+    }
+
+    private CombatEngine(Random random, Long runSeed, String randomKey) {
         this.actionManager = new ActionManager();
-        this.random = new Random();
+        this.random = random == null ? new Random() : random;
+        this.runSeed = runSeed;
+        this.randomKey = randomKey;
         this.turn = 0;
         this.inBattle = false;
         this.victory = false;
@@ -117,6 +135,7 @@ public class CombatEngine {
         this.victory = false;
 
         player.resetForCombatStart();
+        player.setShuffleRandom(randomFor("reshuffle"));
         installStatusDamageModifiers();
 
         // 初始化玩家手牌：抽牌堆放入基础卡牌，抽初始手牌
@@ -159,7 +178,7 @@ public class CombatEngine {
             }
             player.getDrawPile().addAll(starterDeck);
         }
-        Collections.shuffle(player.getDrawPile());
+        Collections.shuffle(player.getDrawPile(), randomFor("initial-shuffle"));
     }
 
     /**
@@ -874,7 +893,7 @@ public class CombatEngine {
                 player.gainGold(goldReward);
             }
 
-            int healAmount = finalBoss ? 0 : player.battleRewardHeal();
+            int healAmount = finalBoss ? 0 : player.battleRewardHeal(randomFor("victory-heal"));
 
             // 发布死亡事件
             for (Enemy enemy : enemies) {
@@ -976,18 +995,30 @@ public class CombatEngine {
     }
 
     private int calculateGoldReward() {
-        int gold = randomBetween(15, 30);
+        Random rewardRandom = randomFor("gold-reward");
+        int gold = randomBetween(15, 30, rewardRandom);
         if (battleNodeType == NodeType.EMERGENCY) {
-            gold += randomBetween(20, 30);
+            gold += randomBetween(20, 30, rewardRandom);
         }
         if (player.getCurrentFloor() == 2) {
-            gold += randomBetween(10, 15);
+            gold += randomBetween(10, 15, rewardRandom);
         }
         return gold;
     }
 
     private int randomBetween(int min, int max) {
         return min + random.nextInt(max - min + 1);
+    }
+
+    private int randomBetween(int min, int max, Random random) {
+        return min + random.nextInt(max - min + 1);
+    }
+
+    private Random randomFor(String purpose) {
+        if (runSeed == null || randomKey == null) {
+            return random;
+        }
+        return GameRunState.randomFor(runSeed, randomKey + ":" + purpose);
     }
 
     private boolean removeCardInstanceFromHand(Card card) {

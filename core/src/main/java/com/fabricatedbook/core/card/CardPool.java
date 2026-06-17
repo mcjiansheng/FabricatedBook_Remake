@@ -338,10 +338,14 @@ public class CardPool {
      * @return 随机选中的卡牌列表
      */
     public static List<Card> randomSelect(List<Card> pool, int count) {
+        return randomSelect(pool, count, RANDOM);
+    }
+
+    public static List<Card> randomSelect(List<Card> pool, int count, Random random) {
         List<Card> copy = new ArrayList<>(pool);
         List<Card> result = new ArrayList<>();
         for (int i = 0; i < count && !copy.isEmpty(); i++) {
-            int idx = RANDOM.nextInt(copy.size());
+            int idx = random.nextInt(copy.size());
             result.add(copy.remove(idx));
         }
         return result;

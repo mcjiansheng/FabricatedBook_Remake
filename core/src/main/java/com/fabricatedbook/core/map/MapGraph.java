@@ -36,15 +36,30 @@ public class MapGraph {
      * @param config 地图配置
      */
     public MapGraph(MapConfig config) {
+        this(config, new Random());
+    }
+
+    public MapGraph(MapConfig config, Random random) {
         this.config = config;
-        this.grid = NodeFactory.generateNodes(config);
-        this.random = new Random();
+        this.random = random == null ? new Random() : random;
+        this.grid = NodeFactory.generateNodes(config, this.random);
         this.currentRow = 0;
 
         // 生成节点间的连接关系
         generateConnections();
 
         // 设置起始可见性
+        applyInitialVisibility();
+    }
+
+    public MapGraph(MapConfig config, long seed, String keyPrefix) {
+        this.config = config;
+        this.random = new Random(com.fabricatedbook.core.run.GameRunState.seedFor(seed,
+                keyPrefix == null ? "map" : keyPrefix));
+        this.grid = NodeFactory.generateNodes(config, seed, keyPrefix);
+        this.currentRow = 0;
+
+        generateConnections();
         applyInitialVisibility();
     }
 
@@ -145,6 +160,28 @@ public class MapGraph {
         // 使用可达节点
         applyEnablement();
 
+        return true;
+    }
+
+    public boolean restorePosition(int row, int col) {
+        if (row < 0 || row >= grid.size()) return false;
+        List<Node> rowNodes = grid.get(row);
+        if (col < 0 || col >= rowNodes.size()) return false;
+        playerPosition = rowNodes.get(col);
+        currentRow = row;
+        for (int r = 0; r <= row && r < grid.size(); r++) {
+            for (Node node : grid.get(r)) {
+                node.setVisible(true);
+            }
+        }
+        playerPosition.setVisited(true);
+        playerPosition.setEnabled(true);
+        if (currentRow + 1 < grid.size()) {
+            for (Node node : grid.get(currentRow + 1)) {
+                node.setVisible(true);
+            }
+        }
+        applyEnablement();
         return true;
     }
 

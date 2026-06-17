@@ -63,7 +63,11 @@ public class EventHandler {
     }
 
     public EventHandler() {
-        this.random = new Random();
+        this(new Random());
+    }
+
+    public EventHandler(Random random) {
+        this.random = random == null ? new Random() : random;
     }
 
     /**

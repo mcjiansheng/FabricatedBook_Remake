@@ -8,7 +8,7 @@ import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicFactory;
-import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.run.GameRunState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -41,6 +41,12 @@ public class SaveManager {
      * 存档数据载体（用于 JSON 序列化/反序列化）。
      */
     public static class SaveData {
+        public int version;
+        public long runSeed;
+        public int currentLayerIdx;
+        public GameRunState.NodeRef completedNode;
+        public GameRunState.NodeRef activeNode;
+        public GameRunState.PlayerSnapshot combatBaseline;
         public String playerId;
         public String playerName;
         public String profession;
@@ -55,6 +61,7 @@ public class SaveManager {
 
         /** 无参构造（Gson 反序列化需要） */
         public SaveData() {
+            this.version = 1;
             this.relicIds = new ArrayList<>();
             this.potionIds = new ArrayList<>();
             this.deck = new ArrayList<>();
@@ -101,34 +108,53 @@ public class SaveManager {
      * @return true 如果保存成功
      */
     public boolean save(Player player) {
+        return saveSnapshot(GameRunState.PlayerSnapshot.from(player), 0L,
+                Math.max(0, player.getCurrentFloor() - 1), null, null, null);
+    }
+
+    public boolean saveRun(GameRunState runState) {
+        if (runState == null || runState.getPlayer() == null) {
+            return false;
+        }
+        GameRunState.PlayerSnapshot playerSnapshot = runState.isInCombat()
+                ? runState.getCombatBaseline()
+                : GameRunState.PlayerSnapshot.from(runState.getPlayer());
+        GameRunState.NodeRef activeNode = runState.isInCombat()
+                ? runState.getActiveNode()
+                : null;
+        return saveSnapshot(playerSnapshot, runState.getSeed(),
+                runState.getCurrentLayerIdx(), runState.getCompletedNode(),
+                activeNode, runState.getCombatBaseline());
+    }
+
+    private boolean saveSnapshot(GameRunState.PlayerSnapshot snapshot, long seed,
+                                 int currentLayerIdx,
+                                 GameRunState.NodeRef completedNode,
+                                 GameRunState.NodeRef activeNode,
+                                 GameRunState.PlayerSnapshot combatBaseline) {
         try {
             SaveData data = new SaveData();
-            data.playerId = player.getId();
-            data.playerName = player.getName();
-            data.profession = player.getProfession().name();
-            data.hp = player.getHp();
-            data.maxHp = player.getMaxHp();
-            data.gold = player.getGold();
-            data.currentFloor = player.getCurrentFloor();
-            data.cardCount = player.getCardCount();
-
-            // 保存藏品 ID
-            for (Relic relic : player.getRelics()) {
-                data.relicIds.add(relic.getId());
-            }
-
-            for (Potion potion : player.getPotions()) {
-                data.potionIds.add(potion.getId());
-            }
-
-            // 保存卡牌组（从 drawPile + hand + discardPile + exhaustPile）
-            List<Card> allCards = new ArrayList<>();
-            allCards.addAll(player.getDrawPile());
-            allCards.addAll(player.getHand());
-            allCards.addAll(player.getDiscardPile());
-            allCards.addAll(player.getExhaustPile());
-            for (Card card : allCards) {
-                data.deck.add(new SerializableCard(card));
+            data.version = 2;
+            data.runSeed = seed;
+            data.currentLayerIdx = currentLayerIdx;
+            data.completedNode = completedNode;
+            data.activeNode = activeNode;
+            data.combatBaseline = combatBaseline;
+            data.playerId = snapshot.playerId;
+            data.playerName = snapshot.playerName;
+            data.profession = snapshot.profession;
+            data.hp = snapshot.hp;
+            data.maxHp = snapshot.maxHp;
+            data.gold = snapshot.gold;
+            data.currentFloor = snapshot.currentFloor;
+            data.cardCount = snapshot.cardCount;
+            data.relicIds.addAll(snapshot.relicIds);
+            data.potionIds.addAll(snapshot.potionIds);
+            for (String cardId : snapshot.deckCardIds) {
+                Card template = CardPool.findById(cardId);
+                if (template != null) {
+                    data.deck.add(new SerializableCard(template));
+                }
             }
 
             // 确保 saves 目录存在
@@ -153,12 +179,40 @@ public class SaveManager {
         }
     }
 
+    public GameRunState loadRun() {
+        SaveData data = loadData();
+        if (data == null) {
+            return null;
+        }
+        Player player = playerFromData(data);
+        if (player == null) {
+            return null;
+        }
+        long seed = data.runSeed != 0L ? data.runSeed : System.currentTimeMillis();
+        GameRunState runState = new GameRunState(seed, player);
+        runState.setCurrentLayerIdx(data.version >= 2
+                ? data.currentLayerIdx
+                : Math.max(0, data.currentFloor - 1));
+        runState.setCompletedNode(data.completedNode);
+        if (data.activeNode != null && data.combatBaseline != null) {
+            runState.beginCombat(data.activeNode);
+            runState.clearCombatState();
+        }
+        System.out.println("[SaveManager] 对局读档成功: " + SAVE_FILE);
+        return runState;
+    }
+
     /**
      * 从存档文件读取玩家状态。
      *
      * @return 读取成功的玩家实体，失败返回 null
      */
     public Player load() {
+        SaveData data = loadData();
+        return data == null ? null : playerFromData(data);
+    }
+
+    private SaveData loadData() {
         try {
             File file = new File(SAVE_FILE);
             if (!file.exists()) {
@@ -180,8 +234,16 @@ public class SaveManager {
                 System.out.println("[SaveManager] 存档数据为空");
                 return null;
             }
+            return data;
 
-            // 恢复玩家
+        } catch (Exception e) {
+            System.err.println("[SaveManager] 读档失败: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private Player playerFromData(SaveData data) {
+        try {
             Profession profession = Profession.valueOf(data.profession);
             Player player = new Player(data.playerId, data.playerName, profession);
             player.setMaxHp(data.maxHp);

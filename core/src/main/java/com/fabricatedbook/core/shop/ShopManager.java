@@ -9,6 +9,7 @@ import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicData;
 import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
+import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.data.DataLoader;
 
 import java.util.*;
@@ -32,6 +33,8 @@ public class ShopManager {
 
     /** 随机数生成器 */
     private final Random random;
+    private final Long seed;
+    private final String randomKey;
 
     /** 当前商店中的商品列表 */
     private List<ShopItem> items;
@@ -88,9 +91,27 @@ public class ShopManager {
      * @param relicManager 藏品管理器
      */
     public ShopManager(Player player, RelicManager relicManager) {
+        this(player, relicManager, new Random());
+    }
+
+    public ShopManager(Player player, RelicManager relicManager, Random random) {
         this.player = player;
         this.relicManager = relicManager;
-        this.random = new Random();
+        this.random = random == null ? new Random() : random;
+        this.seed = null;
+        this.randomKey = null;
+        this.items = new ArrayList<>();
+        this.removeCost = 75;
+        this.removePurchased = false;
+    }
+
+    public ShopManager(Player player, RelicManager relicManager,
+                       long seed, String randomKey) {
+        this.player = player;
+        this.relicManager = relicManager;
+        this.random = new Random(GameRunState.seedFor(seed, randomKey));
+        this.seed = seed;
+        this.randomKey = randomKey == null ? "shop" : randomKey;
         this.items = new ArrayList<>();
         this.removeCost = 75;
         this.removePurchased = false;
@@ -108,10 +129,13 @@ public class ShopManager {
         // 1. 7 张卡牌 — 从玩家职业的卡牌池随机选择
         String profession = player.getProfession().name().toLowerCase();
         List<Card> allCards = CardPool.getCardsByProfession(profession);
-        List<Card> shopCards = CardPool.randomSelect(allCards, Math.min(7, allCards.size()));
-        for (Card card : shopCards) {
-            int price = card.getValue() == 1 ? 50 + random.nextInt(21)
-                    : 90 + random.nextInt(21);
+        List<Card> shopCards = CardPool.randomSelect(allCards,
+                Math.min(7, allCards.size()), randomFor("cards"));
+        for (int i = 0; i < shopCards.size(); i++) {
+            Card card = shopCards.get(i);
+            Random priceRandom = randomFor("card-price:" + i + ":" + card.getId());
+            int price = card.getValue() == 1 ? 50 + priceRandom.nextInt(21)
+                    : 90 + priceRandom.nextInt(21);
             items.add(new ShopItem(ShopItem.ItemType.CARD,
                     card.getName(), card.getDescription(),
                     price, card));
@@ -122,10 +146,13 @@ public class ShopManager {
                 .filter(data -> data.getRarity() != Relic.Rarity.CURSED)
                 .filter(data -> !player.hasRelic(data.getId()))
                 .toList();
-        List<RelicData> shopRelics = randomSelect(relicPool, Math.min(3, relicPool.size()));
-        for (RelicData data : shopRelics) {
+        List<RelicData> shopRelics = randomSelect(relicPool, Math.min(3, relicPool.size()),
+                randomFor("relics"));
+        for (int i = 0; i < shopRelics.size(); i++) {
+            RelicData data = shopRelics.get(i);
             Relic relic = RelicFactory.create(data, player);
-            int price = data.getRarity().getValue() * 25 + (55 + random.nextInt(16));
+            int price = data.getRarity().getValue() * 25
+                    + (55 + randomFor("relic-price:" + i + ":" + data.getId()).nextInt(16));
             items.add(new ShopItem(ShopItem.ItemType.RELIC,
                     relic.getName(), relic.getDescription(),
                     price, relic));
@@ -133,9 +160,11 @@ public class ShopManager {
 
         // 3. 3 个药水 — 从 JSON 数据池创建真实药水
         List<Potion> potionPool = new DataLoader().loadPotions();
-        List<Potion> shopPotions = randomSelect(potionPool, Math.min(3, potionPool.size()));
-        for (Potion potion : shopPotions) {
-            int price = 30 + random.nextInt(41);
+        List<Potion> shopPotions = randomSelect(potionPool, Math.min(3, potionPool.size()),
+                randomFor("potions"));
+        for (int i = 0; i < shopPotions.size(); i++) {
+            Potion potion = shopPotions.get(i);
+            int price = 30 + randomFor("potion-price:" + i + ":" + potion.getId()).nextInt(41);
             items.add(new ShopItem(ShopItem.ItemType.POTION,
                     potion.getName(), potion.getDescription(),
                     price, potion.copy()));
@@ -246,8 +275,19 @@ public class ShopManager {
     }
 
     private <T> List<T> randomSelect(List<T> source, int count) {
+        return randomSelect(source, count, random);
+    }
+
+    private <T> List<T> randomSelect(List<T> source, int count, Random random) {
         List<T> copy = new ArrayList<>(source);
         Collections.shuffle(copy, random);
         return copy.subList(0, Math.min(count, copy.size()));
+    }
+
+    private Random randomFor(String purpose) {
+        if (seed == null || randomKey == null) {
+            return random;
+        }
+        return GameRunState.randomFor(seed, randomKey + ":" + purpose);
     }
 }

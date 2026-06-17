@@ -5,6 +5,7 @@ import com.fabricatedbook.core.potion.Potion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Player — 玩家实体
@@ -142,8 +143,12 @@ public class Player extends AbstractEntity {
      * @return 实际回复量
      */
     public int battleRewardHeal() {
+        return battleRewardHeal(new Random());
+    }
+
+    public int battleRewardHeal(Random random) {
         if (profession == Profession.WARRIOR) {
-            int healAmount = 6 + (int)(Math.random() * 7); // 6-12
+            int healAmount = 6 + random.nextInt(7); // 6-12
             return heal(healAmount);
         }
         return 0;
