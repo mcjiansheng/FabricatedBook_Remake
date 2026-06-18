@@ -14,6 +14,8 @@
 - **命令模式驱动战斗** — 所有战斗动作封装为独立指令，便于动画编排
 - **组件化地图生成** — 概率权重驱动的随机地图
 
+文档阅读入口见 [doc/README.md](doc/README.md)，其中按入门、协作规范、玩法内容、前端设计、后端调试、原版分析、测试报告和数据文件对现有资料做了分类。
+
 ---
 
 ## 二、整体架构
@@ -117,7 +119,7 @@ CombatEngine 根据 card.json 生成 CombatAction 队列：
     ↓
 ActionManager 依次弹出 Action 并执行
     ├── 执行 DamageAction 前，遍历目标身上的 BuffHook
-    │   └── 目标有"脆弱(Fragile)" → 伤害修正为 12 × 1.25
+    │   └── 如果目标有"脆弱(Fragile)" → 伤害修正为 12 × 1.25
     ├── 执行 ApplyBuffAction
     └── 执行 GainEnergyAction
     ↓
