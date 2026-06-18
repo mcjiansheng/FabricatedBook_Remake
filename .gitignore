@@ -17,3 +17,8 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Runtime saves
+saves/
+desktop/saves/
+core/src/main/resources/saves/
