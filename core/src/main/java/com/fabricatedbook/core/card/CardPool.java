@@ -53,9 +53,9 @@ public class CardPool {
                 "获得 6 点格挡", Card.CardType.SKILL, Card.Rarity.BASIC, 0,
                 Card.TargetType.SELF, 1, List.of("block:6"), false, profession));
 
-        // 3. 痛击 (Painful Blow) — 攻击 | 2 | 造成 8 点伤害，提供 2 回合脆弱 | 价值 1
+        // 3. 痛击 (Painful Blow) — 初始攻击 | 2 | 造成 8 点伤害，提供 2 回合脆弱 | 价值 0
         warriorCards.add(createCard("war_painful_blow", "痛击", 2,
-                "造成 8 伤害，2 回合脆弱", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
+                "造成 8 伤害，2 回合脆弱", Card.CardType.ATTACK, Card.Rarity.BASIC, 0,
                 Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("damage:8", "debuff:fragile:2"),
                 false, profession));
@@ -321,7 +321,8 @@ public class CardPool {
     }
 
     public static boolean isNaturallyObtainable(Card card) {
-        if (card == null || card.isUnplayable()) return false;
+        if (card == null || card.isUnplayable()
+                || card.getRarity() == Card.Rarity.BASIC) return false;
         return card.getType() != Card.CardType.STATUS
                 && card.getType() != Card.CardType.CURSE
                 && card.getType() != Card.CardType.TASK;

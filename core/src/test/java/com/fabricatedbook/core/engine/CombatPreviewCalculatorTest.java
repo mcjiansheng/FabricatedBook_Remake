@@ -452,6 +452,32 @@ class CombatPreviewCalculatorTest {
     }
 
     @Test
+    void warriorStarterDeckIncludesPainfulBlowAsBasicCard() {
+        Player player = player();
+        CombatEngine engine = new CombatEngine();
+
+        engine.initBattle(player, List.of(enemy("e1")));
+
+        long painfulBlows = player.getHand().stream()
+                .filter(card -> "war_painful_blow".equals(card.getId()))
+                .count()
+                + player.getDrawPile().stream()
+                .filter(card -> "war_painful_blow".equals(card.getId()))
+                .count();
+        assertEquals(1, painfulBlows);
+        assertEquals(Card.Rarity.BASIC, CardPool.findById("war_painful_blow").getRarity());
+        assertEquals(0, CardPool.findById("war_painful_blow").getValue());
+    }
+
+    @Test
+    void basicCardsAreExcludedFromNaturalCardPools() {
+        List<Card> pool = CardPool.getObtainableCardsByProfession("warrior");
+
+        assertTrue(pool.stream().noneMatch(card -> card.getRarity() == Card.Rarity.BASIC));
+        assertTrue(pool.stream().noneMatch(card -> "war_painful_blow".equals(card.getId())));
+    }
+
+    @Test
     void armorBuffPreservesBlockAcrossRoundStart() {
         Player player = player();
         Enemy enemy = new Enemy("idle", "测试敌人", 40, List.of("idle"));

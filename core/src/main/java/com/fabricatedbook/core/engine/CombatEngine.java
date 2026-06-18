@@ -173,10 +173,15 @@ public class CombatEngine {
                 Card atk = CardPool.findById("war_atk1");
                 if (atk != null) starterDeck.add(CardFactory.createFromTemplate(atk));
             }
-            // 基础防御牌 ×5
-            for (int i = 0; i < 5; i++) {
+            // 基础防御牌 ×4
+            for (int i = 0; i < 4; i++) {
                 Card def = CardPool.findById("war_def1");
                 if (def != null) starterDeck.add(CardFactory.createFromTemplate(def));
+            }
+            // 初始专属牌：痛击 ×1
+            Card painfulBlow = CardPool.findById("war_painful_blow");
+            if (painfulBlow != null) {
+                starterDeck.add(CardFactory.createFromTemplate(painfulBlow));
             }
             player.getDrawPile().addAll(starterDeck);
         }
