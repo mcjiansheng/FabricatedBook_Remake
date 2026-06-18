@@ -5,8 +5,7 @@ import com.fabricatedbook.core.entity.AbstractEntity;
 /**
  * Poison — 中毒 Buff
  * <p>
- * 回合开始时造成相当于层数的伤害，然后层数减 1。
- * 游戏百科中描述：回合开始时依层数受到伤害，层数 -1。
+ * 中毒结算由 CombatEngine 在阵营指定时机显式触发。
  * <p>
  * 负面效果。对拥有者造成持续伤害，每回合递减。
  * 引用方：卡牌"淬毒""瘟疫"、盗贼、哥布林、毒刃等施加此 Buff。
@@ -25,16 +24,21 @@ public class Poison extends AbstractBuff {
         super(BUFF_NAME, stack);
     }
 
-    @Override
-    public void onTurnStart(AbstractEntity owner) {
-        if (stack <= 0) return;
-        if (owner == null || !owner.isAlive()) return;
+    public int tick(AbstractEntity owner, boolean blockedByBlock) {
+        if (stack <= 0) return 0;
+        if (owner == null || !owner.isAlive()) return 0;
 
-        // Poison is direct HP loss and must not consume block.
         int damage = owner.modifyStatusDamage(stack, BUFF_NAME);
-        owner.setHp(owner.getHp() - damage);
+        int hpLoss;
+        if (blockedByBlock) {
+            hpLoss = owner.takeDamage(damage);
+        } else {
+            int oldHp = owner.getHp();
+            owner.setHp(owner.getHp() - damage);
+            hpLoss = oldHp - owner.getHp();
+        }
 
-        // 层数减 1
         stack--;
+        return hpLoss;
     }
 }

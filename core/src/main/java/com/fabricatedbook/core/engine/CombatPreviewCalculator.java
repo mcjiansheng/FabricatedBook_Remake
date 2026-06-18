@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Pure combat-number preview calculator used by the view layer.
@@ -21,6 +23,11 @@ import java.util.Set;
  * excluded from previews.
  */
 public final class CombatPreviewCalculator {
+
+    private static final Pattern DAMAGE_TEXT = Pattern.compile(
+            "造成\\s*([0-9Xx×]+(?:\\s*[x×]\\s*[0-9Xx×]+)?)\\s*(点)?伤害");
+    private static final Pattern BLOCK_TEXT = Pattern.compile(
+            "获得\\s*([0-9Xx×]+(?:\\s*[x×]\\s*[0-9Xx×]+)?)\\s*(点)?格挡");
 
     private CombatPreviewCalculator() {
     }
@@ -83,16 +90,14 @@ public final class CombatPreviewCalculator {
                     int attackCount = (int) player.getHand().stream()
                             .filter(c -> c.getType() == Card.CardType.ATTACK)
                             .count();
-                    addDamage(totals, bonus * attackCount, 1, previewPlayer, player, damageTarget,
-                            relicManager);
+                    addBaseDamageToLastPreview(totals, bonus * attackCount);
                 }
                 case "bonus_low_hp" -> {
                     if (target == null || !target.isAlive() || parts.length < 3) break;
                     int threshold = parseInt(parts[1], 0);
                     int bonus = parseInt(parts[2], 0);
                     if (target.getHp() < threshold) {
-                        addDamage(totals, bonus, 1, previewPlayer, player, damageTarget,
-                                relicManager);
+                        addBaseDamageToLastPreview(totals, bonus);
                     }
                 }
                 case "bonus_per_damage_taken" -> {
@@ -102,8 +107,7 @@ public final class CombatPreviewCalculator {
                     int lostHp = player.getMaxHp() - player.getHp();
                     int extraDamage = (lostHp / Math.max(1, threshold)) * bonus;
                     if (extraDamage > 0) {
-                        addDamage(totals, extraDamage, 1, previewPlayer, player, damageTarget,
-                                relicManager);
+                        addBaseDamageToLastPreview(totals, extraDamage);
                     }
                 }
                 case "escalating" -> {
@@ -111,8 +115,7 @@ public final class CombatPreviewCalculator {
                     int bonus = parseInt(parts.length > 1 ? parts[1] : "0", 0);
                     int alreadyStoredBonus = Math.max(0, card.getEscalatingBonus() - bonus);
                     if (alreadyStoredBonus > 0) {
-                        addDamage(totals, alreadyStoredBonus, 1, previewPlayer, player, damageTarget,
-                                relicManager);
+                        addBaseDamageToLastPreview(totals, alreadyStoredBonus);
                     }
                 }
                 case "block" -> {
@@ -185,6 +188,7 @@ public final class CombatPreviewCalculator {
                                   AbstractEntity target,
                                   RelicManager relicManager) {
         int safeRepeat = Math.max(1, repeat);
+        int startIndex = totals.damageHits.size();
         for (int i = 0; i < safeRepeat; i++) {
             int damage = DamageCalculator.calculateDamage(baseDamage, calculationSource, target);
             if (relicManager != null) {
@@ -192,6 +196,18 @@ public final class CombatPreviewCalculator {
             }
             totals.addDamage(Math.max(0, damage));
         }
+        totals.lastDamage = new LastDamage(startIndex, baseDamage, safeRepeat,
+                calculationSource, relicSource, target, relicManager);
+    }
+
+    private static void addBaseDamageToLastPreview(PreviewTotals totals, int amount) {
+        if (amount <= 0 || totals.lastDamage == null) return;
+        LastDamage last = totals.lastDamage;
+        while (totals.damageHits.size() > last.startIndex) {
+            totals.damageHits.remove(totals.damageHits.size() - 1);
+        }
+        addDamage(totals, last.baseDamage + amount, last.repeat,
+                last.calculationSource, last.relicSource, last.target, last.relicManager);
     }
 
     private static AbstractEntity resolveCardDamageTarget(Card card,
@@ -283,6 +299,25 @@ public final class CombatPreviewCalculator {
             return card.getDescription();
         }
 
+        String original = card.getDescription();
+        String updated = original != null ? original : "";
+        boolean changed = false;
+        if (totals.hasDamage()) {
+            Replacement replacement = replaceFirstNumber(updated, DAMAGE_TEXT,
+                    formatDamage(totals.damageHits));
+            updated = replacement.text;
+            changed = changed || replacement.changed;
+        }
+        if (totals.block > 0) {
+            Replacement replacement = replaceFirstNumber(updated, BLOCK_TEXT,
+                    String.valueOf(totals.block));
+            updated = replacement.text;
+            changed = changed || replacement.changed;
+        }
+        if (changed) {
+            return updated;
+        }
+
         List<String> lines = new ArrayList<>();
         if (totals.hasDamage()) {
             lines.add("造成 " + formatDamage(totals.damageHits) + " 点伤害");
@@ -291,6 +326,18 @@ public final class CombatPreviewCalculator {
             lines.add("获得 " + totals.block + " 点格挡");
         }
         return String.join("，", lines);
+    }
+
+    private static Replacement replaceFirstNumber(String text, Pattern pattern,
+                                                  String replacementNumber) {
+        Matcher matcher = pattern.matcher(text);
+        if (!matcher.find()) {
+            return new Replacement(text, false);
+        }
+        String replaced = text.substring(0, matcher.start(1))
+                + replacementNumber
+                + text.substring(matcher.end(1));
+        return new Replacement(replaced, true);
     }
 
     private static String formatIntentDetail(List<Integer> damages, List<Integer> blocks) {
@@ -629,6 +676,7 @@ public final class CombatPreviewCalculator {
     private static class PreviewTotals {
         private final List<Integer> damageHits = new ArrayList<>();
         private int block;
+        private LastDamage lastDamage;
 
         private void addDamage(int damage) {
             damageHits.add(damage);
@@ -651,6 +699,40 @@ public final class CombatPreviewCalculator {
         private final List<Integer> damageHits = new ArrayList<>();
         private final List<Integer> selfBlocks = new ArrayList<>();
         private final List<String> debuffs = new ArrayList<>();
+    }
+
+    private static class LastDamage {
+        private final int startIndex;
+        private final int baseDamage;
+        private final int repeat;
+        private final AbstractEntity calculationSource;
+        private final AbstractEntity relicSource;
+        private final AbstractEntity target;
+        private final RelicManager relicManager;
+
+        private LastDamage(int startIndex, int baseDamage, int repeat,
+                           AbstractEntity calculationSource,
+                           AbstractEntity relicSource,
+                           AbstractEntity target,
+                           RelicManager relicManager) {
+            this.startIndex = startIndex;
+            this.baseDamage = baseDamage;
+            this.repeat = repeat;
+            this.calculationSource = calculationSource;
+            this.relicSource = relicSource;
+            this.target = target;
+            this.relicManager = relicManager;
+        }
+    }
+
+    private static class Replacement {
+        private final String text;
+        private final boolean changed;
+
+        private Replacement(String text, boolean changed) {
+            this.text = text;
+            this.changed = changed;
+        }
     }
 
     private static class PreviewEntity extends AbstractEntity {

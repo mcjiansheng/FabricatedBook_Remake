@@ -118,6 +118,11 @@ public class DamageAction implements CombatAction {
     public int getBaseDamage() { return baseDamage; }
     public boolean isMultiHit() { return isMultiHit; }
     public Map<AbstractEntity, Integer> getFinalDamageByTarget() { return finalDamageByTarget; }
+
+    public DamageAction withAddedBaseDamage(int amount) {
+        return new DamageAction(source, targets, baseDamage + Math.max(0, amount), isMultiHit);
+    }
+
     public void setDamageModifier(DamageModifier damageModifier) {
         this.damageModifier = damageModifier;
     }

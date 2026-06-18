@@ -74,18 +74,60 @@ class CombatPreviewCalculatorTest {
     }
 
     @Test
-    void poisonDirectlyLosesHpWithoutConsumingBlockOrDoubleCounting() {
+    void playerPoisonDamageCanBeBlocked() {
         Player player = player();
         player.setHp(20);
         player.setBlock(6);
         Poison poison = new Poison(3);
         player.addBuff(poison);
 
-        poison.onTurnStart(player);
+        poison.tick(player, true);
 
-        assertEquals(17, player.getHp());
-        assertEquals(6, player.getBlock());
+        assertEquals(20, player.getHp());
+        assertEquals(3, player.getBlock());
         assertEquals(2, poison.getStack());
+    }
+
+    @Test
+    void enemyPoisonDamagePiercesBlock() {
+        Enemy enemy = enemy("e1");
+        enemy.setBlock(6);
+        Poison poison = new Poison(3);
+        enemy.addBuff(poison);
+
+        poison.tick(enemy, false);
+
+        assertEquals(37, enemy.getHp());
+        assertEquals(6, enemy.getBlock());
+        assertEquals(2, poison.getStack());
+    }
+
+    @Test
+    void enemyPoisonTicksBeforeEnemyActionAndCanPreventIt() {
+        Player player = player();
+        Enemy enemy = new Enemy("e1", "测试敌人", 3, List.of("atk10"));
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+        enemy.addBuff(new Poison(3));
+        enemy.setBlock(20);
+
+        engine.endRound();
+
+        assertEquals(80, player.getHp());
+        assertTrue(engine.isVictory());
+    }
+
+    @Test
+    void enemyAppliedPoisonDoesNotTickUntilNextPlayerTurnEnds() {
+        Player player = player();
+        Enemy enemy = new Enemy("thief", "盗贼", 35, List.of("atk_poison_3"));
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+
+        engine.endRound();
+
+        assertEquals(78, player.getHp());
+        assertEquals(3, poisonStack(player));
     }
 
     @Test
@@ -130,6 +172,49 @@ class CombatPreviewCalculatorTest {
                 List.of(enemy), enemy, relicManager);
 
         assertEquals("造成 11 点伤害", preview.getDescription());
+    }
+
+    @Test
+    void cardPreviewOnlyReplacesDamageNumberAndKeepsConditionalText() {
+        Player player = player();
+        Enemy healthy = enemy("healthy");
+        healthy.setHp(30);
+        Enemy wounded = enemy("wounded");
+        wounded.setHp(29);
+        Card dragonFang = new Card("dragon", "龙牙", 1,
+                "造成 9 点伤害，敌方生命值 <30 则伤害 +5",
+                Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
+                Card.TargetType.SINGLE_ENEMY, 1,
+                List.of("damage:9", "bonus_low_hp:30:5"), false, "warrior");
+
+        CardPreview healthyPreview = CombatPreviewCalculator.previewCard(dragonFang, player,
+                List.of(healthy), healthy, null);
+        CardPreview woundedPreview = CombatPreviewCalculator.previewCard(dragonFang, player,
+                List.of(wounded), wounded, null);
+
+        assertEquals("造成 9 点伤害，敌方生命值 <30 则伤害 +5",
+                healthyPreview.getDescription());
+        assertEquals("造成 14 点伤害，敌方生命值 <30 则伤害 +5",
+                woundedPreview.getDescription());
+    }
+
+    @Test
+    void cardPreviewAppliesTargetVulnerabilityAfterConditionalDamageBonus() {
+        Player player = player();
+        Enemy wounded = enemy("wounded");
+        wounded.setHp(29);
+        wounded.addBuff(new Fragile(1));
+        Card dragonFang = new Card("dragon", "龙牙", 1,
+                "造成 9 点伤害，敌方生命值 <30 则伤害 +5",
+                Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
+                Card.TargetType.SINGLE_ENEMY, 1,
+                List.of("damage:9", "bonus_low_hp:30:5"), false, "warrior");
+
+        CardPreview preview = CombatPreviewCalculator.previewCard(dragonFang, player,
+                List.of(wounded), wounded, null);
+
+        assertEquals("造成 18 点伤害，敌方生命值 <30 则伤害 +5",
+                preview.getDescription());
     }
 
     @Test
@@ -392,6 +477,14 @@ class CombatPreviewCalculatorTest {
 
     private static Enemy enemy(String id) {
         return new Enemy(id, "测试敌人", 40, List.of("atk10"));
+    }
+
+    private static int poisonStack(Player player) {
+        return player.getBuffs().stream()
+                .filter(buff -> "Poison".equals(buff.getBuffName()))
+                .mapToInt(com.fabricatedbook.core.buff.BuffHook::getStack)
+                .findFirst()
+                .orElse(0);
     }
 
     private static Card attackCard(String id, Card.TargetType targetType, String... effects) {

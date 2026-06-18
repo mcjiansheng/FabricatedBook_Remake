@@ -3,6 +3,7 @@ package com.fabricatedbook.core.engine;
 import com.fabricatedbook.core.action.*;
 import com.fabricatedbook.core.buff.ExtraEnergyBuff;
 import com.fabricatedbook.core.buff.BuffHook;
+import com.fabricatedbook.core.buff.Poison;
 import com.fabricatedbook.core.buff.UndeadBuff;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
@@ -338,6 +339,16 @@ public class CombatEngine {
         return card.getCost() < 0 ? player.getEnergy() : card.getCost();
     }
 
+    private void addBaseDamageToLastDamageAction(List<CombatAction> actions, int amount) {
+        if (amount <= 0) return;
+        for (int i = actions.size() - 1; i >= 0; i--) {
+            if (actions.get(i) instanceof DamageAction damageAction) {
+                actions.set(i, damageAction.withAddedBaseDamage(amount));
+                return;
+            }
+        }
+    }
+
     /**
      * 解析卡牌效果生成 CombatAction 列表。
      * <p>
@@ -512,25 +523,14 @@ public class CombatEngine {
                     int attackCount = (int) player.getHand().stream()
                             .filter(c -> c.getType() == Card.CardType.ATTACK)
                             .count();
-                    // 修正前一个damage动作的伤害
-                    if (!actions.isEmpty() && actions.get(actions.size() - 1) instanceof DamageAction) {
-                        // 无法直接修改已有DamageAction，新加一个DamageAction
-                        List<AbstractEntity> targets = new ArrayList<>();
-                        if (target != null && target.isAlive()) {
-                            targets.add(target);
-                        } else if (!aliveEnemies.isEmpty()) {
-                            targets.add(aliveEnemies.get(0));
-                        }
-                        actions.add(new DamageAction(player, targets, bonus * attackCount));
-                    }
+                    addBaseDamageToLastDamageAction(actions, bonus * attackCount);
                     break;
                 }
                 case "bonus_low_hp": {
                     int threshold = Integer.parseInt(parts[1]);
                     int bonus = Integer.parseInt(parts[2]);
                     if (target != null && target.getHp() < threshold && target.isAlive()) {
-                        actions.add(new DamageAction(player,
-                                List.of(target), bonus));
+                        addBaseDamageToLastDamageAction(actions, bonus);
                     }
                     break;
                 }
@@ -556,13 +556,7 @@ public class CombatEngine {
                     int lostHp = player.getMaxHp() - player.getHp();
                     int extraDmg = (lostHp / threshold) * bonus;
                     if (extraDmg > 0) {
-                        List<AbstractEntity> targets = new ArrayList<>();
-                        if (target != null && target.isAlive()) {
-                            targets.add(target);
-                        } else if (!aliveEnemies.isEmpty()) {
-                            targets.add(aliveEnemies.get(0));
-                        }
-                        actions.add(new DamageAction(player, targets, extraDmg));
+                        addBaseDamageToLastDamageAction(actions, extraDmg);
                     }
                     break;
                 }
@@ -595,8 +589,8 @@ public class CombatEngine {
                         escTargets.add(aliveEnemies.get(0));
                     }
                     if (!escTargets.isEmpty() && card.getEscalatingBonus() > 0) {
-                        actions.add(new DamageAction(player, escTargets,
-                                card.getEscalatingBonus() - bonus)); // 本次之前已累计的额外伤害
+                        addBaseDamageToLastDamageAction(actions,
+                                card.getEscalatingBonus() - bonus); // 本次之前已累计的额外伤害
                     }
                     break;
                 }
@@ -711,6 +705,17 @@ public class CombatEngine {
             enemy.cleanExpiredBuffs();
         }
 
+        // 玩家中毒在玩家回合结束、敌方回合开始前结算；该伤害可被格挡抵消。
+        // 敌方中毒也在敌方行动前结算；该伤害穿透格挡，敌人可能因此无法行动。
+        resolvePoisonBeforeEnemyTurn();
+        player.cleanExpiredBuffs();
+        for (Enemy enemy : enemies) {
+            enemy.cleanExpiredBuffs();
+        }
+        applyEnemyDeathPassives();
+        checkBattleEnd();
+        if (!inBattle) return;
+
         // 4. 对手执行行动
         executeEnemyTurns();
 
@@ -732,6 +737,24 @@ public class CombatEngine {
         // 8. 如果战斗未结束，开始下一回合
         if (inBattle) {
             startRound();
+        }
+    }
+
+    private void resolvePoisonBeforeEnemyTurn() {
+        tickPoison(player, true);
+        for (Enemy enemy : enemies) {
+            if (enemy != null && enemy.isAlive()) {
+                tickPoison(enemy, false);
+            }
+        }
+    }
+
+    private void tickPoison(AbstractEntity target, boolean blockedByBlock) {
+        for (BuffHook buff : new ArrayList<>(target.getBuffs())) {
+            if (buff instanceof Poison poison) {
+                poison.tick(target, blockedByBlock);
+                return;
+            }
         }
     }
 
