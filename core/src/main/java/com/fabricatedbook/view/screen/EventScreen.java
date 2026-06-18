@@ -133,7 +133,7 @@ public class EventScreen implements Screen {
      */
     private void renderOptions() {
         optionTable.clear();
-        List<EventHandler.EventOption> options = eventHandler.getOptions(eventName);
+        List<EventHandler.EventOption> options = eventHandler.getOptions(eventName, player);
 
         for (int i = 0; i < options.size(); i++) {
             final int index = i;
@@ -151,7 +151,7 @@ public class EventScreen implements Screen {
                     resolved = true;
 
                     EventHandler.EventResult result =
-                            eventHandler.executeEvent(eventName, index);
+                            eventHandler.executeEvent(eventName, index, player);
 
                     // 应用结果
                     if (result.goldChange != 0) {
@@ -179,6 +179,9 @@ public class EventScreen implements Screen {
 
                     // 显示结果
                     game.autosaveCurrentRun();
+                    if (showEndingIfNeeded(result)) {
+                        return;
+                    }
                     showResult(result.description);
                 }
             });
@@ -218,6 +221,19 @@ public class EventScreen implements Screen {
         optionTable.add(backBtn).width(260).height(56).left();
     }
 
+    private boolean showEndingIfNeeded(EventHandler.EventResult result) {
+        if (result.outcome == null || result.outcome.isBlank()) {
+            return false;
+        }
+        EndingScreen.EndingType endingType = switch (result.outcome) {
+            case "ENDING_INTERRUPTED" -> EndingScreen.EndingType.INTERRUPTED;
+            case "ENDING_HIDDEN" -> EndingScreen.EndingType.HIDDEN;
+            default -> EndingScreen.EndingType.NORMAL;
+        };
+        game.setScreen(new EndingScreen(game, endingType));
+        return true;
+    }
+
     private String cleanLabel(String label) {
         return label.replaceAll("[^\\p{IsHan}A-Za-z0-9 ]", "").trim();
     }
@@ -252,7 +268,7 @@ public class EventScreen implements Screen {
         shapeRenderer.setColor(Color.BLACK);
         float x = CONTENT_LEFT_PAD + EVENT_TEXT_WIDTH + COLUMN_GAP;
         float top = FabricBookGame.SCREEN_HEIGHT - CONTENT_TOP_PAD;
-        int rows = resolved ? 1 : eventHandler.getOptions(eventName).size();
+        int rows = resolved ? 1 : eventHandler.getOptions(eventName, player).size();
         for (int i = 0; i < rows; i++) {
             float cardY = top - OPTION_HEIGHT - i * 124;
             shapeRenderer.rect(x, cardY, OPTION_WIDTH, resolved ? 150 : OPTION_HEIGHT);

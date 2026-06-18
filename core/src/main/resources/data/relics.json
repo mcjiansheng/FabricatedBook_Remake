@@ -275,14 +275,14 @@
     "id": "relic_avenger",
     "name": "\"复仇者\"",
     "rarity": "SPECIAL",
-    "description": "造成伤害有概率（1/3）增加 30%，险路恶敌中出现「迷失的守林人」",
+    "description": "造成伤害有概率（1/3）增加 30%；第 3 层险路恶敌变为「迷失的守林人」",
     "effectValue": 30
   },
   {
     "id": "relic_babel_tower",
     "name": "\"巴别塔\"",
     "rarity": "SPECIAL",
-    "description": "团结起来，不惜一切。险路恶敌中出现其他敌人",
+    "description": "团结起来，不惜一切。与「背叛」或「仇恨」共同开启第 5 层隐藏 Boss 路线",
     "effectValue": 0
   },
   {

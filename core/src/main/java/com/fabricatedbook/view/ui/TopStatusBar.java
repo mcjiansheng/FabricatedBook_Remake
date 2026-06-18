@@ -54,7 +54,8 @@ public class TopStatusBar {
                 210, FabricBookGame.SCREEN_HEIGHT - 10);
 
         font.setColor(Color.BLACK);
-        font.draw(batch, "药水 " + player.getPotions().size() + "/3",
+        font.draw(batch, "药水 " + player.getPotions().size() + "/"
+                        + player.getMaxPotionSlots(),
                 360, FabricBookGame.SCREEN_HEIGHT - 10);
         for (int i = 0; i < player.getPotions().size(); i++) {
             font.draw(batch, player.getPotions().get(i).getName(),

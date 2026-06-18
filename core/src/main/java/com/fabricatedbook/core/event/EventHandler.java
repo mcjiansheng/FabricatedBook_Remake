@@ -1,5 +1,7 @@
 package com.fabricatedbook.core.event;
 
+import com.fabricatedbook.core.entity.Player;
+
 import java.util.*;
 
 /**
@@ -52,13 +54,20 @@ public class EventHandler {
         public final int goldChange;
         public final int hpChange;
         public final String relicId;
+        public final String outcome;
 
         public EventResult(String description, int goldChange,
                            int hpChange, String relicId) {
+            this(description, goldChange, hpChange, relicId, null);
+        }
+
+        public EventResult(String description, int goldChange,
+                           int hpChange, String relicId, String outcome) {
             this.description = description;
             this.goldChange = goldChange;
             this.hpChange = hpChange;
             this.relicId = relicId;
+            this.outcome = outcome;
         }
     }
 
@@ -82,6 +91,8 @@ public class EventHandler {
 
     public String getEventDescription(String eventName) {
         return switch (eventName) {
+            case "命运抉择1" -> "迷雾渐起，前途未知，你将何去何从？";
+            case "命运抉择2" -> "你战胜了强大的敌人，但这只是见到“幕后黑手”的前提。\n他要求你前往高塔帮他“解决”一个麻烦，同时可以给予你一个东西。";
             case "相遇" -> "一位神秘旅人拦住了你的去路，提出同行。你能感觉到这份邀请背后藏着某种代价。";
             case "翅膀雕像" -> "一座破损的翅膀雕像伫立在路旁，石缝里透出微弱的光。";
             case "黏液世界" -> "脚下的地面变得湿滑，半透明的黏液从四周缓慢涌来。";
@@ -102,7 +113,13 @@ public class EventHandler {
      * @return 事件结果
      */
     public EventResult executeEvent(String eventName, int optionIndex) {
+        return executeEvent(eventName, optionIndex, null);
+    }
+
+    public EventResult executeEvent(String eventName, int optionIndex, Player player) {
         switch (eventName) {
+            case "命运抉择1": return firstDecision(optionIndex);
+            case "命运抉择2": return secondDecision(optionIndex, player);
             case "相遇": return encounter(optionIndex);
             case "翅膀雕像": return wingStatue(optionIndex);
             case "黏液世界": return slimeWorld(optionIndex);
@@ -123,7 +140,28 @@ public class EventHandler {
      * @return 选项列表
      */
     public List<EventOption> getOptions(String eventName) {
+        return getOptions(eventName, null);
+    }
+
+    public List<EventOption> getOptions(String eventName, Player player) {
         switch (eventName) {
+            case "命运抉择1":
+                return List.of(
+                        new EventOption("前进", "突破迷雾，进入森林"),
+                        new EventOption("回头", "结束游戏，获得隐藏结局「讲述中断」")
+                );
+            case "命运抉择2": {
+                List<EventOption> options = new ArrayList<>();
+                options.add(new EventOption("我要权力",
+                        "绝对的集权，皇权至高无上。获得藏品「集权」"));
+                options.add(new EventOption("我要财富",
+                        "为了利益无所不用其极。获得藏品「寡头」"));
+                if (canChooseBabelTower(player)) {
+                    options.add(new EventOption("没有你，对我很重要",
+                            "凡人联合起来对神的挑战。获得藏品「巴别塔」"));
+                }
+                return options;
+            }
             case "相遇":
                 return List.of(
                         new EventOption("✅ 同意", "同意同行，获得藏品「背叛」"),
@@ -175,6 +213,41 @@ public class EventHandler {
     }
 
     // ==================== 具体事件实现 ====================
+
+    private EventResult firstDecision(int option) {
+        if (option == 1) {
+            return new EventResult(
+                    "你选择回头，离开这本荒诞的书。故事在此中断。",
+                    0, 0, null, "ENDING_INTERRUPTED");
+        }
+        return new EventResult(
+                "你拨开迷雾，继续向森林深处前进。",
+                0, 0, null);
+    }
+
+    private EventResult secondDecision(int option, Player player) {
+        if (option == 0) {
+            return new EventResult(
+                    "你接受了权力的许诺。\n获得藏品「集权」",
+                    0, 0, "relic_centralization");
+        }
+        if (option == 1) {
+            return new EventResult(
+                    "你接受了财富的诱惑。\n获得藏品「寡头」",
+                    0, 0, "relic_oligarch");
+        }
+        if (option == 2 && canChooseBabelTower(player)) {
+            return new EventResult(
+                    "你拒绝了他的交易，选择记住那座跨过语言、文化与阶级阻隔的塔。\n获得藏品「巴别塔」",
+                    0, 0, "relic_babel_tower");
+        }
+        return new EventResult("你没有作出选择。", 0, 0, null);
+    }
+
+    private boolean canChooseBabelTower(Player player) {
+        return player != null && (player.hasRelic("relic_betrayal")
+                || player.hasRelic("relic_hatred"));
+    }
 
     /**
      * 相遇事件。

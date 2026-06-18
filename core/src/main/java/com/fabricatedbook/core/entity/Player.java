@@ -28,8 +28,11 @@ public class Player extends AbstractEntity {
     /** 已获得的藏品列表 */
     private List<Relic> relics;
 
-    /** 药水栏，最多 3 瓶。 */
+    /** 药水栏。 */
     private List<Potion> potions;
+
+    /** 药水栏上限，默认 3，可由职业、藏品或事件扩展。 */
+    private int maxPotionSlots;
 
     /** 当前楼层编号（1-5） */
     private int currentFloor;
@@ -50,6 +53,7 @@ public class Player extends AbstractEntity {
         this.gold = 0;
         this.relics = new ArrayList<>();
         this.potions = new ArrayList<>();
+        this.maxPotionSlots = 3;
         this.currentFloor = 1;
         this.cardCount = 0;
     }
@@ -116,7 +120,11 @@ public class Player extends AbstractEntity {
 
     public List<Potion> getPotions() { return potions; }
     public void setPotions(List<Potion> potions) { this.potions = potions; }
-    public boolean canAddPotion() { return potions.size() < 3; }
+    public int getMaxPotionSlots() { return maxPotionSlots; }
+    public void setMaxPotionSlots(int maxPotionSlots) {
+        this.maxPotionSlots = Math.max(0, maxPotionSlots);
+    }
+    public boolean canAddPotion() { return potions.size() < maxPotionSlots; }
 
     public boolean addPotion(Potion potion) {
         if (potion == null || !canAddPotion()) return false;

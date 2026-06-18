@@ -120,7 +120,7 @@ public class CharacterSelectScreen implements Screen {
 
     private void giveDebugStartingPotions(Player player) {
         List<Potion> potions = new DataLoader().loadPotions();
-        for (int i = 0; i < potions.size() && i < 3; i++) {
+        for (int i = 0; i < potions.size() && i < player.getMaxPotionSlots(); i++) {
             player.addPotion(potions.get(i).copy());
         }
     }

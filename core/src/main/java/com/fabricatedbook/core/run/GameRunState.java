@@ -125,6 +125,7 @@ public class GameRunState {
         public int gold;
         public int currentFloor;
         public int cardCount;
+        public int maxPotionSlots;
         public List<String> relicIds = new ArrayList<>();
         public List<String> potionIds = new ArrayList<>();
         public List<String> deckCardIds = new ArrayList<>();
@@ -139,6 +140,7 @@ public class GameRunState {
             snapshot.gold = player.getGold();
             snapshot.currentFloor = player.getCurrentFloor();
             snapshot.cardCount = player.getCardCount();
+            snapshot.maxPotionSlots = player.getMaxPotionSlots();
             for (Relic relic : player.getRelics()) {
                 snapshot.relicIds.add(relic.getId());
             }
@@ -164,6 +166,7 @@ public class GameRunState {
             restored.setGold(gold);
             restored.setCurrentFloor(currentFloor);
             restored.setCardCount(cardCount);
+            restored.setMaxPotionSlots(maxPotionSlots > 0 ? maxPotionSlots : 3);
 
             for (String cardId : deckCardIds) {
                 Card template = CardPool.findById(cardId);

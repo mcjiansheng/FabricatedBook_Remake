@@ -772,7 +772,8 @@ public class BackendDebugLauncher {
     }
 
     private void printPotions() {
-        println("药水: " + player.getPotions().size() + "/3");
+        println("药水: " + player.getPotions().size() + "/"
+                + player.getMaxPotionSlots());
         if (player.getPotions().isEmpty()) {
             println("  (空)");
             return;

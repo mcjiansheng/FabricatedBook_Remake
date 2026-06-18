@@ -1,139 +1,251 @@
-# FabricatedBookRemake — 开发任务清单
+# FabricatedBookRemake — 当前开发 Backlog
 
 > Java + LibGDX 重构杀戮尖塔  
-> 最后更新：2026-06-12
+> 最后更新：2026-06-18
 
----
+本文档只保留当前未完成、部分完成和需要测试人员继续规划的问题。已完全完成的历史阶段不再逐项展开；如需查阅项目结构、调试入口和文档索引，请先看 [doc/README.md](doc/README.md)。
 
-## 阶段一：项目初始化 ✓
+## 已完成概览
 
-- [x] 配置 Gradle 构建文件（`build.gradle` + `settings.gradle`）
-- [x] 配置 LibGDX 依赖
-- [x] 配置 `desktop/src/main/java/.../DesktopLauncher.java`
+以下模块已有可运行实现，后续只在发现缺陷或新增需求时创建具体任务：
 
-## 阶段二：核心接口层 ✓
+- 项目初始化、Gradle/LibGDX 桌面端入口。
+- core 基础接口、实体、Action、Buff、战斗引擎、伤害计算、Buff 解析。
+- 战士卡牌池、卡牌 DTO、JSON 卡牌工厂。
+- 藏品基础系统：`Relic`、`RelicManager`、`RelicData`、`DataRelic`、`RelicFactory`、事件总线。
+- 地图基础模型：`MapConfig`、`Node`、`NodeFactory`、`MapGraph`。
+- 数据层：`DataLoader`、`SaveManager`，支持存档保存/恢复卡牌、藏品 ID、药水 ID。
+- 商店基础逻辑：卡牌、藏品、药水商品生成和购买。
+- LibGDX 前端主要界面：标题、选角、地图、战斗、事件、商店、卡牌/藏品总览。
+- JSON 数据：战士卡牌、1-5 层怪物、藏品、地图、药水、事件。
+- 后端 CLI 调试入口和主链路报告：地图、战斗、事件、跨层推进、种子/存档回归命令。
+- core 自动化测试已有基础覆盖，当前至少包含 `CombatPreviewCalculatorTest`。
 
-- [x] `CombatAction.java` — 战斗动作接口
-- [x] `BuffHook.java` — Buff 生命周期钩子
-- [x] `GameEvent.java` — 游戏事件基类
+## 当前优先级
 
-## 阶段三：实体系统 ✓
+| 优先级 | 方向 | 目标 |
+|:--|:--|:--|
+| P0 | 回归测试与 Bug 收敛 | 先把现有主流程稳定下来，避免继续堆功能时破坏核心链路 |
+| P1 | 地图规则下沉 | 将 `MapScreen` 内置地图规则迁移到 core/JSON，明确 UI 与规则边界 |
+| P1 | 法师/女巫完整化 | 将试作职业扩展成可玩的完整职业 |
+| P1 | 复杂藏品和结局路线 | 补齐特殊藏品、隐藏 Boss、结局分支等原版关键体验 |
+| P2 | 前端体验补齐 | 完善商店弃牌、通关结算、总览网格、提示与验收 |
 
-- [x] `AbstractEntity.java` — 实体基类（HP/Block/Buff）
-- [x] `Player.java` — 玩家实体
-- [x] `Enemy.java` — 怪物实体
-- [x] `EntityFactory.java` — 实体工厂
+## 开发 Backlog
 
-## 阶段四：Action 系统 ✓
+### P0：测试与质量基线
 
-- [x] `DamageAction.java` — 伤害动作
-- [x] `HealAction.java` — 回血动作
-- [x] `ApplyBuffAction.java` — 施加 Buff
-- [x] `GainEnergyAction.java` — 获得能量
-- [x] `DrawCardAction.java` — 抽牌动作
-- [x] `GainBlockAction.java` — 获得格挡
-- [x] `RemoveCardAction.java` — 移除卡牌
+- [ ] 建立最小回归测试矩阵。
+  - [x] core 已有 JUnit 测试源码。
+  - [x] `./gradlew test` 可运行，core 测试通过。
+  - [ ] 将测试命令、期望结果和失败处理写入测试人员执行清单。
+  - [ ] 明确每次提交前至少运行哪些命令：`./gradlew test`、后端 CLI `selftest`、`seedtest`、`savetest` 等。
+- [ ] 补齐 core 单元测试缺口。
+  - [x] 伤害/格挡/状态伤害/预览已有部分测试。
+  - [x] 药水伤害和格挡已有部分测试。
+  - [x] 藏品状态伤害和累计胜利类效果已有部分测试。
+  - [ ] 补商店购买测试：卡牌、藏品、药水、金币不足、药水栏满退款、弃牌购买。
+  - [ ] 补存档恢复测试：卡牌、藏品、药水、战斗中退出回到战前快照。
+  - [ ] 补藏品即时效果测试：加生命上限、立即金币、立即抽牌/给牌、负面藏品。
+  - [ ] 补地图生成可复现测试：同种子布局、连接、起终点、迷雾 Boss -> 抉择结构。
+- [ ] 建立前端验收流程。
+  - [ ] 用 `desktop:runGame` 或 `desktop:openComputerUseApp` 覆盖标题、选角、地图、战斗、事件、商店、总览。
+  - [ ] 记录人工验收脚本：点击路径、拖拽卡牌、使用药水、领取奖励、购买商品、保存退出。
+  - [ ] 产出截图或录屏存档位置约定。
+  - [ ] 判断是否需要 Computer Use 坐标点击脚本或其它 UI 自动化方案。
 
-## 阶段五：Buff 系统 ✓
+### P1：地图系统规则下沉
 
-- [x] `Fragile.java` — 脆弱（受伤害 +25%）
-- [x] `BlockReduction.java` — 易碎（格挡 -50%）
-- [x] `Resistance.java` — 抗性（受伤害 -25%）
-- [x] `BlockIncrease.java` — 坚强（格挡 +50%）
-- [x] `Weak.java` — 虚弱（伤害 -25%）
-- [x] `Strength.java` — 力量（伤害 +25%）
-- [x] `Dizziness.java` — 眩晕（无法行动）
-- [x] `Poison.java` — 中毒（持续伤害）
-- [x] `Withering.java` — 凋零（可引爆）
-- [x] `ArmorBuff.java` — 装甲（格挡不消失）
-- [x] `UndeadBuff.java` — 不死
-- [x] `ExtraEnergyBuff.java` — 额外能量
-- [x] `AbstractBuff.java` — Buff 骨架基类
+- [ ] 设计 core 层地图模型，承载当前 `MapScreen` 内置的原版列优先稀疏地图。
+  - [ ] 明确是否扩展 `MapGraph`，还是新增 `LayerGraph` / `RunMapGraph`。
+  - [ ] 支持每层 `length`、`width`、起点类型、终点类型、特殊列、节点概率、层名、层效果文案。
+  - [x] 前端临时支持迷雾层倒数第二列 Boss、最后一列命运抉择。
+  - [ ] 将迷雾层倒数第二列 Boss、最后一列命运抉择规则下沉到 core/JSON。
+  - [ ] 保留同种子可复现的随机流 key 设计。
+- [ ] 将 `MapScreen` 内置常量迁移到 core/JSON。
+  - [ ] 迁移 `LAYER_LENGTHS`、`LAYER_WIDTHS`。
+  - [ ] 迁移 `LAYER_START_TYPES`、`LAYER_END_TYPES`、迷雾特殊 Boss 列。
+  - [ ] 迁移 `LAYER_PROBABILITIES`。
+  - [ ] 迁移 `LAYER_NAMES`、`LAYER_EFFECTS` 或建立统一文案来源。
+  - [ ] 更新 `data/maps/levels.json`，让它表达原版稀疏地图参数，而不是旧矩形 `width/height` 语义。
+- [ ] 让 `MapScreen` 只负责渲染和输入。
+  - [ ] 地图生成、节点连接、可达性计算移动到 core。
+  - [ ] UI 点击后只调用 core 层移动/完成节点接口。
+  - [ ] 前端地图和后端 CLI 地图尽量共用同一规则实现。
+  - [ ] 更新 `doc/frontend_design.md`、`doc/original_map_analysis.md` 或新增迁移说明。
 
-## 阶段六：卡牌系统 ✓
+### P1：法师、女巫职业完整化
 
-- [x] `Card.java` — 卡牌数据载体（含枚举：CardType、TargetType）
-- [x] `CardPool.java` — 卡牌池（战士卡牌）
-- [x] `CardFactory.java` — 从 JSON 生成卡牌
+- [ ] 明确职业设计。
+  - [ ] 法师核心机制：能量、保留能量、奇偶回合或其它规则。
+  - [ ] 女巫核心机制暂不急于完成；后续仍需确认药水奖励概率、药水相关卡牌或 Buff。
+  - [x] 玩家药水上限已从固定 3 改为可扩展字段，UI/存档可适配更高上限。
+  - [ ] 确认生命值、初始牌组、职业特性是否按原版恢复。
+- [ ] 补齐卡牌数据。
+  - [ ] 新增 `data/cards/mage.json`。
+  - [ ] 新增 `data/cards/witch.json`。
+  - [ ] 为两个职业定义基础攻击/防御和完整卡池。
+  - [ ] 确认所有 effects 均被 `CombatEngine` 支持。
+- [ ] 改造卡牌池加载。
+  - [ ] 决定短期同步硬编码，还是让 `CardPool` 从 JSON 注册所有职业。
+  - [ ] 消除战斗初始牌组固定取 `war_atk1` / `war_def1` 的逻辑。
+  - [ ] 商店、奖励、随机攻击牌按当前职业取正确卡池。
+- [ ] 接入前端和存档。
+  - [ ] 更新角色选择文案，不再显示“试作职业”。
+  - [ ] 确认 `PlayerActor` 职业贴图映射。
+  - [ ] 确认存档恢复职业后卡池可用。
+- [ ] 增加职业测试。
+  - [ ] 三职业新游戏能进入战斗。
+  - [ ] 三职业初始牌组数量和卡牌 ID 正确。
+  - [ ] 三职业商店和奖励不会刷空卡池。
 
-## 阶段七：藏品系统 ✓
+### P1：复杂藏品、隐藏路线与结局
 
-- [x] `Relic.java` — 藏品接口
-- [x] `EventBus.java` — 事件总线
-- [x] `RelicManager.java` — 藏品管理器
-- [x] `RelicData.java` / `DataRelic.java` / `RelicFactory.java` — JSON 藏品实例化
-- [x] 商店、事件、战斗奖励可获得真实藏品
-- [x] 常用即时/被动效果已接入
-- [ ] 少数高度特殊藏品仍需专门实现完整原版规则
+- [ ] 梳理藏品实现状态。
+  - [ ] 为 `relics.json` 每个藏品标注：已完整、部分实现、未实现、需要规则确认。
+  - [ ] 对照 `doc/game_encyclopedia.md` 和 `DataRelic` 当前 switch 覆盖情况建立清单。
+- [ ] 补复杂藏品专用实现。
+  - [ ] `背叛`：1-4 层伤害加成、第 5 层敌人血量加成、结局路线影响。
+  - [ ] `仇恨`：1-4 层伤害降低、第 5 层敌人血量降低、结局路线影响。
+  - [ ] `"复仇者"`：伤害概率加成。
+  - [x] `"复仇者"`：第 3 层险路恶敌变为「迷失的守林人」。
+  - [ ] `"巴别塔"`：紧急作战额外敌人逻辑。
+  - [x] `"巴别塔"`：与「背叛」/「仇恨」共同影响第 5 层隐藏 Boss 路线。
+  - [ ] `"集权"`：进入战斗节点后的持续伤害成长与存档。
+  - [ ] `"寡头"`：进入非战斗节点金币收益，目前前端已有部分逻辑，需下沉到规则层。
+  - [ ] 负面藏品与特殊结局相关效果。
+- [ ] 补隐藏 Boss 和结局。
+  - [x] 第一层命运抉择“回头”触发隐藏结局“讲述中断”。
+  - [x] 迷雾 Boss 后命运抉择“门扉”。
+  - [x] 高塔普通结局：击败「魔王」进入普通结局。
+  - [x] 隐藏结局“沉入虚妄”基础条件链：相遇获得「背叛」/「仇恨」、门扉获得「巴别塔」、击败「幕后黑手」。
+  - [x] 第 5 层 Boss 按路线切换：「魔王」/「幕后黑手」。
+  - [ ] 结局界面补探索统计、击败 Boss 名称、关键藏品等信息。
+  - [ ] 为隐藏路线补脚本化验收入口，避免只依赖人工点击。
+- [ ] 测试与文档。
+  - [ ] 为特殊藏品数值效果加单元测试或 CLI 回归。
+  - [x] 为命运抉择、巴别塔可见条件、药水上限补核心单元测试。
+  - [ ] 为隐藏路线加种子/脚本化验收。
+  - [x] 更新百科中的追猎、门扉、幕后黑手和隐藏结局说明。
+  - [ ] 更新前端设计文档中的结局/路线调试说明。
 
-## 阶段八：地图系统 ✓
+### P1：事件、节点与环境效果
 
-- [x] `MapConfig.java` — 地图配置
-- [x] `Node.java` — 地图节点
-- [x] `NodeFactory.java` — 节点工厂（权重随机）
-- [x] `MapGraph.java` — 图结构
+- [ ] 确认事件系统是否继续由 `EventHandler` 硬编码，还是迁移到 `data/events.json` 驱动。
+  - [ ] 事件标题、描述、选项由 JSON 读取。
+  - [ ] 事件效果由 Java handler 或通用 DSL 执行。
+  - [ ] 特殊事件保留专用 handler。
+- [ ] 补节点语义。
+  - [ ] `DECISION` 不应映射为普通随机事件。
+  - [ ] `REWARD` 应支持三选一藏品或明确采用当前事件映射。
+  - [ ] `SAFE_HOUSE` 应支持休息、治疗、补给选项，而不是固定事件替代。
+- [ ] 补层环境效果。
+  - [ ] 森林：非战斗节点损失金币，战斗获得金币增加。
+  - [ ] 诡异秘林：进入战斗/非战斗调整伤害，范围限制 ±3。
+  - [ ] 迷雾：每次前进概率回血或扣血。
+  - [ ] 环境效果进入 core 规则层，前端和 CLI 共用。
+  - [ ] 环境效果纳入存档和数值预览。
 
-## 阶段九：战斗引擎 ✓
+### P2：前端体验补齐
 
-- [x] `CombatEngine.java` — 战斗引擎
-- [x] `ActionManager.java` — Action 队列管理
-- [x] `DamageCalculator.java` — 伤害计算器
-- [x] `ViewNotifier.java` — 后端→前端通知接口
-- [x] `BuffResolver.java` — Buff 解析工具
+- [ ] 通关与失败体验。
+  - [ ] 最后一层 Boss 胜利后进入结局界面，而不是返回地图。
+  - [ ] 战斗失败界面补充返回主菜单/退出等选项。
+  - [ ] 标题页继续游戏失败时给出用户可见提示。
+- [ ] 商店界面完善。
+  - [ ] 为弃牌购买补选择卡牌 UI。
+  - [ ] 金币不足、药水栏满、已购买等状态给出明确反馈。
+  - [ ] 考虑将商品从纯文本列表升级为卡牌/藏品/药水卡片展示。
+- [ ] 卡牌与藏品总览升级。
+  - [ ] 卡牌总览从文本列表升级为卡牌网格。
+  - [ ] 藏品总览从文本列表升级为图标格子或卡片。
+  - [ ] 保持滚动体验和返回路径稳定。
+- [ ] 奖励界面确认最终交互。
+  - [ ] 明确保留“全部领取后继续”，还是还原原版“逐项点击，可提前离开”。
+  - [ ] 卡牌奖励是否允许跳过需定稿。
+  - [ ] 药水栏满时奖励药水如何处理。
+- [ ] 非战斗药水交互。
+  - [ ] 地图、事件、商店、奖励界面是否允许丢弃药水。
+  - [x] 药水上限不再固定为 3；顶部状态、战斗按钮、存档和 CLI 显示已按玩家上限适配。
+  - [ ] 若未来上限超过当前战斗区可承载数量，继续优化多行按钮的滚动或折叠展示。
 
-## 阶段十：事件系统 ✓
+### P2：数据和内容整理
 
-- [x] `EventHandler.java` — 事件处理器（含相遇、雕像、黏液等全部事件）
+- [ ] 统一卡牌来源。
+  - [ ] `CardPool` 硬编码战士卡与 `warrior.json` ID/字段不完全一致，需要确认最终来源。
+  - [ ] 若改为 JSON 注册，删除或降级硬编码卡池。
+- [ ] 统一怪物 action DSL。
+  - [ ] 保持 `EnemyActionResolver` 对现有 JSON 的兼容。
+  - [ ] 文档化推荐 action 写法。
+  - [ ] 为新增敌人提供图片映射规范。
+- [ ] 统一地图文档。
+  - [ ] `game_encyclopedia.md`、`original_map_analysis.md`、`frontend_design.md`、`run_seed_and_save.md` 中地图描述需在规则下沉后同步。
+- [ ] 更新迁移指南。
+  - [ ] `ai_original_content_migration_guide.md` 中已完成状态与当前代码重新对齐。
+  - [ ] 移除过期 Claude 提示或标注适用前提。
 
-## 阶段十一：数据层 ✓
+## 测试人员规划区
 
-- [x] `DataLoader.java` — JSON 数据加载器
-- [x] `SaveManager.java` — 存档管理器
-- [x] 存档保存/恢复藏品 ID 和药水 ID
+测试人员可在这里补充测试计划、优先级、覆盖范围和负责人。建议每条计划包含：范围、入口、数据准备、步骤、期望结果、负责人、状态。
 
-## 阶段十二：商店系统 ✓
+| ID | 优先级 | 范围 | 测试入口 | 负责人 | 状态 | 备注 |
+|:--|:--|:--|:--|:--|:--|:--|
+| TP-001 | P0 | 后端 CLI 自检 | `./gradlew runBackendDebug` -> `selftest` | 待定 | 待规划 | 覆盖数据加载、药水、藏品、商店 |
+| TP-002 | P0 | 种子与存档 | `seedtest` / `savetest` | 待定 | 待规划 | 验证可复现和战斗中退出 |
+| TP-003 | P0 | 战斗主流程 | 前端 `battle` 调试入口 | 待定 | 待规划 | 拖拽出牌、药水、奖励 |
+| TP-004 | P1 | 地图探索 | 前端 `map` 调试入口 | 待定 | 待规划 | 拖拽地图、节点可达、跨层推进 |
+| TP-005 | P1 | 商店/事件 | 前端 `shop` / `event` 调试入口 | 待定 | 待规划 | 购买、事件结果、返回地图 |
 
-- [x] `ShopManager.java` — 商店逻辑
-- [x] 商店卡牌、藏品、药水均使用真实对象
-- [x] 购买藏品进入藏品栏，购买药水进入 3 格药水栏
+### 测试记录模板
 
-## 阶段十三：View 层（LibGDX）✓
+```text
+测试 ID：
+测试日期：
+版本/提交：
+测试范围：
+测试入口：
+前置条件：
+步骤：
+期望结果：
+实际结果：
+是否通过：
+附件/截图：
+备注：
+```
 
-- [x] `FabricBookGame.java` — 入口
-- [x] `TitleScreen.java` — 标题画面
-- [x] `CharacterSelectScreen.java` — 角色选择
-- [x] `MapScreen.java` — 地图探索
-- [x] `BattleScreen.java` — 战斗场景
-- [x] `ShopScreen.java` — 商店
-- [x] `EventScreen.java` — 事件
-- [x] `CardActor.java` — 卡牌 Actor
-- [x] `EnemyActor.java` — 怪物 Actor
-- [x] `PlayerActor.java` — 玩家 Actor
-- [x] `ButtonActor.java` — 按钮
-- [x] `HandPanel.java` — 手牌面板
-- [x] `EnergyBar.java` — 能量条
-- [x] `BuffBar.java` — Buff 状态栏
-- [x] 战斗界面支持使用药水
+## Bug 提交区
 
-## 阶段十四：JSON 数据配置 ✓
+请测试人员把未进入 Issue/PR 的问题先记录在这里。建议确认后再拆成 GitHub Issue 或开发任务。
 
-- [x] `data/cards/warrior.json` — 战士卡牌数据
-- [x] `data/monsters/level1~5.json` — 5 层全部敌人 + Boss
-- [x] `data/relics.json` — 45 个藏品（7 类稀有度）
-- [x] `data/maps/levels.json` — 5 层地图配置
-- [x] `data/potions.json` — 10 种药水
-- [x] `data/events.json` — 8 个事件
+| Bug ID | 严重度 | 模块 | 标题 | 复现状态 | 负责人 | 状态 |
+|:--|:--|:--|:--|:--|:--|:--|
+| BUG-001 | 待定 | 待定 | 待填写 | 待复现 | 待定 | 待分派 |
 
-## 阶段十五：集成测试 ☐
+### Bug 模板
 
-- [x] Gradle 构建验证（`./gradlew build`）
-- [x] 后端调试报告已覆盖地图、战斗、事件、跨层通关主链路
-- [ ] 自动化测试源码仍为空（Gradle 显示 `NO-SOURCE`）
-- [ ] 前端完整点击/拖拽流程仍需人工或 UI 自动化验收
+```text
+Bug ID：
+严重度：阻塞 / 高 / 中 / 低
+模块：
+标题：
+发现日期：
+发现版本/提交：
+复现概率：
+复现步骤：
+期望结果：
+实际结果：
+截图/日志：
+初步判断：
+关联文档/代码：
+状态：待复现 / 已确认 / 修复中 / 待验证 / 已关闭
+```
 
-## 当前剩余重点
+## 决策待确认
 
-- [ ] 将 `MapScreen` 内置的原版地图常量逐步下沉到 `MapConfig` / JSON。
-- [ ] 将法师、女巫从试作职业扩展为完整卡池和初始牌组。
-- [ ] 为复杂藏品补专用实现，例如环境/结局/特殊敌人相关效果。
-- [ ] 建立最小单元测试：药水使用、藏品即时效果、伤害修正、商店购买、存档恢复。
+- [x] 第 6 层固定隐藏层暂不作为近期目标。
+- [ ] 地图规则最终放在 `MapGraph` 扩展还是新增稀疏图模型。
+- [ ] 卡牌数据最终以 JSON 为唯一来源，还是保留 `CardPool` 硬编码兜底。
+- [ ] 事件系统是否全面 JSON 化。
+- [ ] 奖励交互采用重制版便利流程还是原版逐项领取流程。
+- [x] 女巫和其它职业不急于完成；但药水上限必须保留扩展能力，可能超过 5。
+- [x] 第 5 层隐藏结局路线作为近期目标，已先完成基础代码和百科修正。

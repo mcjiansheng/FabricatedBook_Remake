@@ -55,6 +55,7 @@ public class SaveManager {
         public int gold;
         public int currentFloor;
         public int cardCount;
+        public int maxPotionSlots;
         public List<String> relicIds;
         public List<String> potionIds;
         public List<SerializableCard> deck;
@@ -148,6 +149,7 @@ public class SaveManager {
             data.gold = snapshot.gold;
             data.currentFloor = snapshot.currentFloor;
             data.cardCount = snapshot.cardCount;
+            data.maxPotionSlots = snapshot.maxPotionSlots;
             data.relicIds.addAll(snapshot.relicIds);
             data.potionIds.addAll(snapshot.potionIds);
             for (String cardId : snapshot.deckCardIds) {
@@ -251,6 +253,7 @@ public class SaveManager {
             player.setGold(data.gold);
             player.setCurrentFloor(data.currentFloor);
             player.setCardCount(data.cardCount);
+            player.setMaxPotionSlots(data.maxPotionSlots > 0 ? data.maxPotionSlots : 3);
 
             // 恢复卡牌组到抽牌堆
             for (SerializableCard sc : data.deck) {

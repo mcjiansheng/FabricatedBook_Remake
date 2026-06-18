@@ -61,7 +61,7 @@ public class MapScreen implements Screen {
     private static final int[] LAYER_LENGTHS = {4, 5, 6, 7, 7};
     private static final int[] LAYER_WIDTHS = {3, 3, 4, 4, 4};
     private static final int[] LAYER_START_TYPES = {FIGHT, FIGHT, REWARD, EMERGENCY, UNEXPECTEDLY};
-    private static final int[] LAYER_END_TYPES = {DECISION, SHOP, BOSS, BOSS, BOSS};
+    private static final int[] LAYER_END_TYPES = {DECISION, SHOP, BOSS, DECISION, BOSS};
     private static final int LAYER_END_BOSS_COL = 5;
 
     // 每层节点概率（与 C 版保持一致）
@@ -153,7 +153,7 @@ public class MapScreen implements Screen {
             "当前层效果：无",
             "当前层效果：奖励与商店出现",
             "当前层效果：Boss 节点出现",
-            "当前层效果：路线更窄，Boss 连战",
+            "当前层效果：路线更窄，Boss 后出现门扉",
             "当前层效果：最终高塔"
     };
     private float layerIntroTimer;
@@ -577,10 +577,14 @@ public class MapScreen implements Screen {
                 markNodeEntered(node);
                 game.autosaveCurrentRun();
                 // 命运抉择
-                game.setScreen(new EventScreen(game, player, "投资", this,
+                game.setScreen(new EventScreen(game, player, decisionEventName(), this,
                         runState.randomFor("event-result", nodeKey(node))));
                 break;
         }
+    }
+
+    private String decisionEventName() {
+        return currentLayerIdx == 3 ? "命运抉择2" : "命运抉择1";
     }
 
     private void markNodeEntered(MapNode node) {
@@ -660,6 +664,17 @@ public class MapScreen implements Screen {
         game.setScreen(this);
     }
 
+    public boolean isFinalLayer() {
+        return currentLayerIdx == allLayers.length - 1;
+    }
+
+    public EndingScreen.EndingType endingForFinalBoss() {
+        return player.hasRelic("relic_babel_tower")
+                && (player.hasRelic("relic_betrayal") || player.hasRelic("relic_hatred"))
+                ? EndingScreen.EndingType.HIDDEN
+                : EndingScreen.EndingType.NORMAL;
+    }
+
     private void clampScroll() {
         MapNode[][] layer = allLayers[currentLayerIdx];
         if (layer == null || layer.length == 0) return;
@@ -706,6 +721,13 @@ public class MapScreen implements Screen {
         DataLoader loader = new DataLoader();
         int level = currentLayerIdx + 1;
         List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
+
+        if (nodeType == BOSS) {
+            List<Enemy> forcedBoss = selectForcedBoss(groups, level);
+            if (!forcedBoss.isEmpty()) {
+                return forcedBoss;
+            }
+        }
 
         // 筛选匹配的怪物组。普通战斗不能混入 emergency 专用组。
         List<DataLoader.EnemyGroup> matched = new ArrayList<>();
@@ -832,6 +854,32 @@ public class MapScreen implements Screen {
         return id.contains("emergency") || name.contains("紧急");
     }
 
+    private List<Enemy> selectForcedBoss(List<DataLoader.EnemyGroup> groups, int level) {
+        String forcedName = null;
+        if (level == 3 && player.hasRelic("relic_avenger")) {
+            forcedName = "迷失的守林人";
+        } else if (level == 5) {
+            forcedName = player.hasRelic("relic_babel_tower")
+                    && (player.hasRelic("relic_betrayal") || player.hasRelic("relic_hatred"))
+                    ? "幕后黑手" : "魔王";
+        }
+        if (forcedName == null) {
+            return List.of();
+        }
+        for (DataLoader.EnemyGroup group : groups) {
+            if (!group.isBoss() || !forcedName.equals(group.getName())
+                    || group.getEnemies() == null || group.getEnemies().isEmpty()) {
+                continue;
+            }
+            List<Enemy> enemies = new ArrayList<>();
+            for (DataLoader.EnemyData data : group.getEnemies()) {
+                enemies.add(data.toEnemy());
+            }
+            return enemies;
+        }
+        return List.of();
+    }
+
     private void applyNodeEntryRelics(int nodeType) {
         if (nodeType != FIGHT && nodeType != EMERGENCY && nodeType != BOSS
                 && player.hasRelic("relic_oligarch")) {
@@ -863,7 +911,10 @@ public class MapScreen implements Screen {
     }
 
     private String randomEventName() {
-        List<String> eventNames = new EventHandler().getEventNames();
+        List<String> eventNames = new ArrayList<>(new EventHandler().getEventNames());
+        if (currentLayerIdx >= 3) {
+            eventNames.remove("追猎");
+        }
         return eventNames.get(runState.randomFor("event-name", nodeKey(currentNode))
                 .nextInt(eventNames.size()));
     }

@@ -343,6 +343,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private void renderPotionButtons() {
         potionTable.clear();
         TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
+        int buttonsPerRow = Math.max(1, Math.min(6, player.getMaxPotionSlots()));
         for (int i = 0; i < player.getPotions().size(); i++) {
             final int index = i;
             Potion potion = player.getPotions().get(i);
@@ -360,6 +361,9 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 }
             });
             potionTable.add(button).width(126).height(34).padRight(8);
+            if ((i + 1) % buttonsPerRow == 0) {
+                potionTable.row().padTop(6);
+            }
         }
     }
 
@@ -822,6 +826,10 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
     private void returnToMapAfterReward() {
         if (returnMap != null) {
+            if (returnMap.isFinalLayer()) {
+                game.setScreen(new EndingScreen(game, returnMap.endingForFinalBoss()));
+                return;
+            }
             returnMap.completeCurrentNodeAndReturn();
         } else {
             game.setScreen(new TitleScreen(game));
