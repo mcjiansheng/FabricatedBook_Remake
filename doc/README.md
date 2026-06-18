@@ -7,7 +7,7 @@
 ### 第一次了解项目
 
 1. [../README.md](../README.md) - 项目定位、整体架构、核心系统、构建与运行入口。
-2. [game_encyclopedia.md](game_encyclopedia.md) - 游戏规则、卡牌、Buff、药水、藏品、敌人、事件和结局总览。
+2. [game_encyclopedia/README.md](game_encyclopedia/README.md) - 游戏百科总入口，按规则、卡牌、藏品、怪物、节点事件和结局拆分。
 3. [frontend_design.md](frontend_design.md) - 当前 Java + LibGDX 前端界面规格和交互流程。
 4. [backend_cli_debug.md](backend_cli_debug.md) - 不启动前端时验证后端地图、事件、战斗和存档的命令行入口。
 
@@ -27,7 +27,7 @@
 
 ### 准备做地图系统
 
-1. [game_encyclopedia.md](game_encyclopedia.md) - 玩法层面的地图、节点、环境效果和流程速查。
+1. [game_encyclopedia/overview.md](game_encyclopedia/overview.md) 和 [game_encyclopedia/nodes_events.md](game_encyclopedia/nodes_events.md) - 玩法层面的地图、节点、环境效果和事件规则。
 2. [original_map_analysis.md](original_map_analysis.md) - 原版 C 项目的列优先稀疏地图、节点概率、滑动窗口连接和环境效果分析。
 3. [map_test_report.md](map_test_report.md) - 后端 CLI 地图专项测试报告，记录过首尾行硬编码、DECISION 处理、迷雾后抉择等问题。
 4. [layer_by_layer_test.md](layer_by_layer_test.md) - 第 1 层逐层地图测试记录，是地图专项报告的早期简版。
@@ -53,7 +53,11 @@
 
 | 文档 | 作用 | 适合什么时候读 |
 |:--|:--|:--|
-| [game_encyclopedia.md](game_encyclopedia.md) | 游戏百科，包含规则、地图、节点、卡牌、Buff、药水、藏品、敌人、事件、结局 | 查玩法设计、核对内容和文案 |
+| [game_encyclopedia/README.md](game_encyclopedia/README.md) | 游戏百科总入口，专题拆分规则、地图、节点、卡牌、Buff、药水、藏品、敌人、事件、结局 | 查玩法设计、核对内容和文案 |
+| [game_encyclopedia/cards.md](game_encyclopedia/cards.md) | 卡牌池和卡牌类型说明 | 补卡牌、改卡牌文案或核对卡牌设计 |
+| [game_encyclopedia/relics.md](game_encyclopedia/relics.md) | 各稀有度藏品、特殊藏品、负面藏品 | 补藏品、核对藏品效果和隐藏路线相关条件 |
+| [game_encyclopedia/monsters.md](game_encyclopedia/monsters.md) | 各层敌人、Boss 和隐藏 Boss 图鉴 | 补怪物、改行动或核对 Boss 解锁条件 |
+| [game_encyclopedia/nodes_events.md](game_encyclopedia/nodes_events.md) | 节点系统、事件列表、命运抉择 | 修改节点、事件、商店、命运抉择时 |
 | [ai_original_content_migration_guide.md](ai_original_content_migration_guide.md) | 原版内容迁移指南，说明 JSON 字段、支持的 effect/action DSL、迁移顺序和验收 | 补卡牌、怪物、藏品、药水、事件或地图数据 |
 
 ### 前端设计与调试
@@ -108,11 +112,11 @@
 
 | 我要做的事 | 优先阅读 |
 |:--|:--|
-| 新增或修改复杂玩法规则 | [../AGENTS.md](../AGENTS.md), [../README.md](../README.md), [game_encyclopedia.md](game_encyclopedia.md) |
-| 修卡牌效果或预览 | [game_encyclopedia.md](game_encyclopedia.md), [ai_original_content_migration_guide.md](ai_original_content_migration_guide.md), [frontend_design.md](frontend_design.md) |
+| 新增或修改复杂玩法规则 | [../AGENTS.md](../AGENTS.md), [../README.md](../README.md), [game_encyclopedia/README.md](game_encyclopedia/README.md) |
+| 修卡牌效果或预览 | [game_encyclopedia/cards.md](game_encyclopedia/cards.md), [ai_original_content_migration_guide.md](ai_original_content_migration_guide.md), [frontend_design.md](frontend_design.md) |
 | 修怪物行动或意图 | [ai_original_content_migration_guide.md](ai_original_content_migration_guide.md), [backend_cli_debug.md](backend_cli_debug.md), [debug_test_report.md](debug_test_report.md) |
 | 修地图生成 | [original_map_analysis.md](original_map_analysis.md), [map_test_report.md](map_test_report.md), [run_seed_and_save.md](run_seed_and_save.md) |
-| 修商店/奖励/药水 | [frontend_design.md](frontend_design.md), [game_encyclopedia.md](game_encyclopedia.md), [ai_original_content_migration_guide.md](ai_original_content_migration_guide.md) |
+| 修商店/奖励/药水 | [frontend_design.md](frontend_design.md), [game_encyclopedia/nodes_events.md](game_encyclopedia/nodes_events.md), [game_encyclopedia/effects_potions.md](game_encyclopedia/effects_potions.md), [ai_original_content_migration_guide.md](ai_original_content_migration_guide.md) |
 | 验证后端主链路 | [backend_cli_debug.md](backend_cli_debug.md), [run_seed_and_save.md](run_seed_and_save.md) |
 | 验证前端界面 | [frontend_debug_cli.md](frontend_debug_cli.md), [computer_use_app_capture.md](computer_use_app_capture.md) |
 | 准备提交或 PR | [../CONTRIBUTING.md](../CONTRIBUTING.md), [../AGENTS.md](../AGENTS.md) |

@@ -103,7 +103,7 @@
 
 - [ ] 梳理藏品实现状态。
   - [ ] 为 `relics.json` 每个藏品标注：已完整、部分实现、未实现、需要规则确认。
-  - [ ] 对照 `doc/game_encyclopedia.md` 和 `DataRelic` 当前 switch 覆盖情况建立清单。
+  - [ ] 对照 `doc/game_encyclopedia/relics.md` 和 `DataRelic` 当前 switch 覆盖情况建立清单。
 - [ ] 补复杂藏品专用实现。
   - [ ] `背叛`：1-4 层伤害加成、第 5 层敌人血量加成、结局路线影响。
   - [ ] `仇恨`：1-4 层伤害降低、第 5 层敌人血量降低、结局路线影响。
@@ -179,7 +179,7 @@
   - [ ] 文档化推荐 action 写法。
   - [ ] 为新增敌人提供图片映射规范。
 - [ ] 统一地图文档。
-  - [ ] `game_encyclopedia.md`、`original_map_analysis.md`、`frontend_design.md`、`run_seed_and_save.md` 中地图描述需在规则下沉后同步。
+  - [ ] `game_encyclopedia/overview.md`、`game_encyclopedia/nodes_events.md`、`original_map_analysis.md`、`frontend_design.md`、`run_seed_and_save.md` 中地图描述需在规则下沉后同步。
 - [ ] 更新迁移指南。
   - [ ] `ai_original_content_migration_guide.md` 中已完成状态与当前代码重新对齐。
   - [ ] 移除过期 Claude 提示或标注适用前提。
