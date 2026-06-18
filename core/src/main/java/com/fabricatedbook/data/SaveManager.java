@@ -84,6 +84,7 @@ public class SaveManager {
         public boolean exhaust;
         public boolean retain;
         public boolean ethereal;
+        public boolean unplayable;
 
         public SerializableCard() {}
 
@@ -99,6 +100,7 @@ public class SaveManager {
             this.exhaust = card.isExhaust();
             this.retain = card.isRetain();
             this.ethereal = card.isEthereal();
+            this.unplayable = card.isUnplayable();
         }
     }
 
@@ -267,7 +269,7 @@ public class SaveManager {
                     Card card = new Card(sc.id, sc.name, sc.cost, sc.description,
                             type, rarity, sc.value, targetType, 1,
                             new ArrayList<>(), sc.exhaust, sc.retain, sc.ethereal,
-                            data.profession.toLowerCase());
+                            sc.unplayable, data.profession.toLowerCase());
                     player.getDrawPile().add(card);
                 }
             }

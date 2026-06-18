@@ -362,6 +362,12 @@ public abstract class AbstractEntity {
         hand.clear();
         for (Card card : endingHand) {
             if (card.isEthereal()) {
+                for (String effect : card.getEffects()) {
+                    if (effect != null && effect.startsWith("end_turn_damage:")) {
+                        int damage = Integer.parseInt(effect.substring("end_turn_damage:".length()));
+                        takeDamage(damage);
+                    }
+                }
                 exhaustPile.add(card);
             } else if (card.isRetain()) {
                 hand.add(card);

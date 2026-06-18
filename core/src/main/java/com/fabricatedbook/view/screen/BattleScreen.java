@@ -284,6 +284,12 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         }
 
         Card card = actor.getCard();
+        if (card.isUnplayable()) {
+            statusLabel.setText("无法打出");
+            clearTargetHighlight();
+            activeDraggedCard = null;
+            return false;
+        }
         Enemy target = null;
         if (requiresSingleEnemy(card)) {
             EnemyActor targetActor = enemyActorAt(stageX, stageY);
@@ -837,12 +843,13 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     }
 
     private List<Card> rollCardRewards() {
-        List<Card> pool = CardPool.getCardsByProfession(
+        List<Card> pool = CardPool.getObtainableCardsByProfession(
                 player.getProfession().name().toLowerCase()).stream()
                 .filter(card -> card.getRarity() != Card.Rarity.BASIC)
                 .toList();
         if (pool.isEmpty()) {
-            pool = CardPool.getCardsByProfession(player.getProfession().name().toLowerCase());
+            pool = CardPool.getObtainableCardsByProfession(
+                    player.getProfession().name().toLowerCase());
         }
         return CardPool.randomSelect(pool, Math.min(3, pool.size()),
                 rewardRandom("card-pick"));

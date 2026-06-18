@@ -128,7 +128,7 @@ public class ShopManager {
 
         // 1. 7 张卡牌 — 从玩家职业的卡牌池随机选择
         String profession = player.getProfession().name().toLowerCase();
-        List<Card> allCards = CardPool.getCardsByProfession(profession);
+        List<Card> allCards = CardPool.getObtainableCardsByProfession(profession);
         List<Card> shopCards = CardPool.randomSelect(allCards,
                 Math.min(7, allCards.size()), randomFor("cards"));
         for (int i = 0; i < shopCards.size(); i++) {

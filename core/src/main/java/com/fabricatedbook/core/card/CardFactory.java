@@ -36,6 +36,7 @@ public class CardFactory {
                 template.getValue(), template.getTargetType(), template.getTargetCount(),
                 new ArrayList<>(template.getEffects()), template.isExhaust(),
                 template.isRetain(), template.isEthereal(),
+                template.isUnplayable(),
                 template.getProfession()
         );
     }
@@ -79,6 +80,7 @@ public class CardFactory {
                 card.setExhaust(getJsonBool(obj, "exhaust", false));
                 card.setRetain(getJsonBool(obj, "retain", false));
                 card.setEthereal(getJsonBool(obj, "ethereal", false));
+                card.setUnplayable(getJsonBool(obj, "unplayable", false));
                 card.setProfession(getJsonString(obj, "profession", null));
 
                 if (obj.has("effects")) {

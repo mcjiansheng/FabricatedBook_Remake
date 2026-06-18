@@ -48,9 +48,9 @@ public class CardPool {
                 "造成 6 点伤害", Card.CardType.ATTACK, Card.Rarity.BASIC, 0,
                 Card.TargetType.SINGLE_ENEMY, 1, List.of("damage:6"), false, profession));
 
-        // 2. 防御 (Defense) — 防御 | 1 | 获得 6 点格挡 | 价值 0
+        // 2. 防御 (Defense) — 技能 | 1 | 获得 6 点格挡 | 价值 0
         warriorCards.add(createCard("war_def1", "防御", 1,
-                "获得 6 点格挡", Card.CardType.DEFENSE, Card.Rarity.BASIC, 0,
+                "获得 6 点格挡", Card.CardType.SKILL, Card.Rarity.BASIC, 0,
                 Card.TargetType.SELF, 1, List.of("block:6"), false, profession));
 
         // 3. 痛击 (Painful Blow) — 攻击 | 2 | 造成 8 点伤害，提供 2 回合脆弱 | 价值 1
@@ -66,15 +66,15 @@ public class CardPool {
                 Card.TargetType.ALL_ENEMIES, 0,
                 List.of("damage_all:5"), false, profession));
 
-        // 5. 奇袭 (Ambush) — 技能 | 0 | 造成 5 点伤害 + 3 回合虚弱，消耗 | 价值 1
+        // 5. 奇袭 (Ambush) — 攻击 | 0 | 造成 5 点伤害 + 3 回合虚弱，消耗 | 价值 1
         warriorCards.add(createCard("war_ambush", "奇袭", 0,
-                "造成 5 点伤害 + 3 回合虚弱，消耗", Card.CardType.SKILL, Card.Rarity.COMMON, 1,
+                "造成 5 点伤害 + 3 回合虚弱，消耗", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
                 Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("damage:5", "debuff:weak:3"), true, profession));
 
-        // 6. 反击 (Counterattack) — 技能 | 1 | 根据格挡值造成伤害 | 价值 1
+        // 6. 反击 (Counterattack) — 攻击 | 1 | 根据格挡值造成伤害 | 价值 1
         warriorCards.add(createCard("war_counterattack", "反击", 1,
-                "根据格挡值造成伤害", Card.CardType.SKILL, Card.Rarity.COMMON, 1,
+                "根据格挡值造成伤害", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
                 Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("counter:block"), false, profession));
 
@@ -84,11 +84,11 @@ public class CardPool {
                 Card.Rarity.COMMON, 1, Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("damage:10", "bonus_per_attack:3"), false, profession));
 
-        // 8. 装甲 (Armorer) — 装备 | 2 | 装甲效果，消耗 | 价值 2
+        // 8. 装甲 (Armorer) — 能力 | 2 | 装甲效果 | 价值 3
         warriorCards.add(createCard("war_armorer", "装甲", 2,
-                "格挡值不再在回合结束时消失，消耗", Card.CardType.EQUIP, Card.Rarity.UNCOMMON, 2,
+                "格挡值不再在回合结束时消失", Card.CardType.ABILITY, Card.Rarity.EPIC, 3,
                 Card.TargetType.SELF, 1,
-                List.of("buff:self:armor"), true, profession));
+                List.of("buff:self:armor"), false, profession));
 
         // 9. 致命节奏 (Deadly Tempo) — 攻击 | 1 | 造成 7 伤害，每使用一次 +1 | 价值 1
         warriorCards.add(createCard("war_deadly_tempo", "致命节奏", 1,
@@ -96,16 +96,16 @@ public class CardPool {
                 Card.Rarity.COMMON, 1, Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("damage:7", "escalating:1"), false, profession));
 
-        // 10. 底牌 (ACE) — 技能 | 0 | 抽 5 张牌，消耗 | 价值 2
+        // 10. 底牌 (ACE) — 技能 | 0 | 抽 5 张牌，消耗 | 价值 3
         warriorCards.add(createCard("war_ace", "底牌", 0,
-                "抽 5 张牌，消耗", Card.CardType.SKILL, Card.Rarity.UNCOMMON, 2,
+                "抽 5 张牌，消耗", Card.CardType.SKILL, Card.Rarity.EPIC, 3,
                 Card.TargetType.SELF, 1,
                 List.of("draw:5"), true, profession));
 
-        // 11. 搏命挣扎 (Struggle Desperately) — 技能 | 0 | 不死 3 回合，每回合 +2 能量，消耗 | 价值 2
+        // 11. 搏命挣扎 (Struggle Desperately) — 技能 | 0 | 不死 3 回合，每回合 +2 能量，消耗 | 价值 3
         warriorCards.add(createCard("war_struggle", "搏命挣扎", 0,
                 "3 回合内不死，每回合 +2 能量，3 回合后死亡，消耗",
-                Card.CardType.SKILL, Card.Rarity.UNCOMMON, 2,
+                Card.CardType.SKILL, Card.Rarity.EPIC, 3,
                 Card.TargetType.SELF, 1,
                 List.of("buff:self:undead:3", "buff:self:extra_energy:3:2"), true, profession));
 
@@ -115,9 +115,9 @@ public class CardPool {
                 Card.TargetType.SELF, 1,
                 List.of("purify"), true, profession));
 
-        // 13. 治疗 (Heal) — 技能 | 1 | 回复 10 生命值，消耗 | 价值 1
+        // 13. 治疗 (Heal) — 技能 | 1 | 回复 10 生命值，消耗 | 价值 2
         warriorCards.add(createCard("war_heal", "治疗", 1,
-                "回复 10 生命值，消耗", Card.CardType.SKILL, Card.Rarity.COMMON, 1,
+                "回复 10 生命值，消耗", Card.CardType.SKILL, Card.Rarity.UNCOMMON, 2,
                 Card.TargetType.SELF, 1,
                 List.of("heal:10"), true, profession));
 
@@ -139,11 +139,11 @@ public class CardPool {
                 Card.Rarity.COMMON, 1, Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("damage:6", "stun_chance:25"), false, profession));
 
-        // 17. 剑刃风暴 (Bladestorm) — 攻击 | 2 | 对所有敌人造成 3×3 伤害 | 价值 2
+        // 17. 剑刃风暴 (Bladestorm) — 攻击 | 2 | 对所有敌人造成 4×4 伤害 | 价值 2
         warriorCards.add(createCard("war_bladestorm", "剑刃风暴", 2,
-                "对所有敌人造成 3×3 点伤害", Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
+                "对所有敌人造成 4×4 点伤害", Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
                 Card.TargetType.ALL_ENEMIES, 0,
-                List.of("damage_all:3:3"), false, profession));
+                List.of("damage_all:4:4"), false, profession));
 
         // 18. 哈撒给 (Hasaki) — 攻击 | 0 | 造成 4 伤害，3 回合易碎 | 价值 1
         warriorCards.add(createCard("war_hasaki", "哈撒给", 0,
@@ -157,31 +157,32 @@ public class CardPool {
                 Card.Rarity.COMMON, 1, Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("damage:9", "bonus_low_hp:30:5"), false, profession));
 
-        // 20. 英雄登场 (Hero Entrance) — 技能 | 0 | 12 AOE + 2 脆弱易碎 + 3 能量，消耗 | 价值 2
+        // 20. 英雄登场 (Hero Entrance) — 攻击 | 0 | 12 AOE + 2 脆弱易碎 + 3 能量，消耗 | 价值 3
         warriorCards.add(createCard("war_hero_entrance", "英雄登场", 0,
                 "对所有敌人造成 12 伤害 + 2 回合脆弱和易碎，获得 3 能量，消耗",
-                Card.CardType.SKILL, Card.Rarity.UNCOMMON, 2,
+                Card.CardType.ATTACK, Card.Rarity.EPIC, 3,
                 Card.TargetType.ALL_ENEMIES, 0,
                 List.of("damage_all:12", "debuff_all:fragile:2",
                         "debuff_all:block_reduction:2", "energy:3"),
                 true, profession));
 
-        // 21. 封尘绝念斩 (Fate Sealed) — 攻击 | 2 | 对所有敌人造成 16 伤害 | 价值 2
+        // 21. 封尘绝念斩 (Fate Sealed) — 攻击 | 2 | 攻击意图敌人越多伤害越高 | 价值 2
         warriorCards.add(createCard("war_fate_sealed", "封尘绝念斩", 2,
-                "对所有敌人造成 16 点伤害", Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
+                "每有一个意图为攻击的敌人，对所有意图为攻击的敌人造成 10 点伤害",
+                Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
                 Card.TargetType.ALL_ENEMIES, 0,
-                List.of("damage_all:16"), false, profession));
+                List.of("damage_all_attacking_intent:10"), false, profession));
 
-        // 22. 腐化 (Corrupt) — 攻击 | 1 | 造成 4 凋零并引爆 1 次 | 价值 1
+        // 22. 腐化 (Corrupt) — 技能 | 1 | 造成 4 凋零并引爆 1 次 | 价值 1
         warriorCards.add(createCard("war_corrupt", "腐化", 1,
-                "造成 4 层凋零并引爆 1 次", Card.CardType.ATTACK, Card.Rarity.COMMON, 1,
+                "造成 4 层凋零并引爆 1 次", Card.CardType.SKILL, Card.Rarity.COMMON, 1,
                 Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("debuff:withering:4", "trigger_withering"), false, profession));
 
-        // 23. 瘟疫 (Plague) — 技能 | 2 | 对全体 6 中毒，中毒层数翻倍，消耗 | 价值 2
+        // 23. 瘟疫 (Plague) — 技能 | 2 | 对全体 6 中毒，中毒层数翻倍，消耗 | 价值 3
         warriorCards.add(createCard("war_plague", "瘟疫", 2,
                 "对所有敌人造成 6 点中毒，并使所有敌人中毒层数翻倍，消耗",
-                Card.CardType.SKILL, Card.Rarity.UNCOMMON, 2,
+                Card.CardType.SKILL, Card.Rarity.EPIC, 3,
                 Card.TargetType.ALL_ENEMIES, 0,
                 List.of("debuff_all:poison:6", "double_poison"),
                 true, profession));
@@ -190,7 +191,7 @@ public class CardPool {
         warriorCards.add(createCard("war_poisoned", "淬毒", 1,
                 "造成 5×2 点伤害，每次 50% 概率附加中毒", Card.CardType.ATTACK,
                 Card.Rarity.UNCOMMON, 2, Card.TargetType.SINGLE_ENEMY, 1,
-                List.of("damage:5:2", "chance_debuff:Poison:1:50"), false, profession));
+                List.of("damage:2:5", "chance_debuff:Poison:1:50"), false, profession));
 
         // 25. 弱点 (Weakness) — 技能 | 0 | 1 回合脆弱和易碎 | 价值 1
         warriorCards.add(createCard("war_weakness", "弱点", 0,
@@ -204,11 +205,11 @@ public class CardPool {
                 Card.TargetType.SELF, 1,
                 List.of("block:30"), true, profession));
 
-        // 27. 爆裂黎明 (Blast Dawn) — 技能 | 5 | 6×10 AOE，消耗 | 价值 3
+        // 27. 爆裂黎明 (Blast Dawn) — 攻击 | 5 | 6×10 AOE，消耗 | 价值 3
         warriorCards.add(createCard("war_blast_dawn", "爆裂黎明", 5,
-                "对所有敌人造成 6×10 点伤害，消耗", Card.CardType.SKILL,
+                "对所有敌人造成 6×10 点伤害，消耗", Card.CardType.ATTACK,
                 Card.Rarity.EPIC, 3, Card.TargetType.ALL_ENEMIES, 0,
-                List.of("damage_all:6:10"), true, profession));
+                List.of("damage_all:10:6"), true, profession));
 
         // 28. 凛神斩 (Reckoning) — 攻击 | 1 | 对所有敌人 3 伤害，每目标提供 5 格挡 | 价值 1
         warriorCards.add(createCard("war_reckoning", "凛神斩", 1,
@@ -223,9 +224,9 @@ public class CardPool {
                 Card.Rarity.UNCOMMON, 2, Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("damage:5", "bonus_per_damage_taken:10:3"), false, profession));
 
-        // 30. 不屈 (Unyielding) — 防御 | 2 | 获得 3 坚强，10 格挡 | 价值 1
+        // 30. 不屈 (Unyielding) — 技能 | 2 | 获得 3 坚强，10 格挡 | 价值 1
         warriorCards.add(createCard("war_unyielding", "不屈", 2,
-                "获得 3 回合坚强，10 点格挡", Card.CardType.DEFENSE, Card.Rarity.COMMON, 1,
+                "获得 3 回合坚强，10 点格挡", Card.CardType.SKILL, Card.Rarity.COMMON, 1,
                 Card.TargetType.SELF, 1,
                 List.of("block:10", "buff:self:block_increase:3"), false, profession));
 
@@ -241,6 +242,27 @@ public class CardPool {
                 Card.CardType.SKILL, Card.Rarity.COMMON, 1,
                 Card.TargetType.SINGLE_ENEMY, 1,
                 List.of("block:7", "debuff:weak:2"), false, false, true, profession));
+
+        // 33. 血液之舞 — 攻击 | 1 | 全体 15 伤害，弃牌堆加入流血 | 价值 2
+        warriorCards.add(createCard("war_blood_dance", "血液之舞", 1,
+                "对所有敌人造成 15 点伤害，往弃牌堆中放入一张「流血」",
+                Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
+                Card.TargetType.ALL_ENEMIES, 0,
+                List.of("damage_all:15", "add_card_to_discard:war_bleeding"),
+                false, profession));
+
+        // 34. 搜索 — 技能 | 1 | 抽 3 张牌 | 价值 2
+        warriorCards.add(createCard("war_search", "搜索", 1,
+                "抽 3 张牌", Card.CardType.SKILL, Card.Rarity.UNCOMMON, 2,
+                Card.TargetType.SELF, 1,
+                List.of("draw:3"), false, profession));
+
+        // 35. 流血 — 状态 | 无法打出，虚无 | 价值 0
+        warriorCards.add(createCard("war_bleeding", "流血", 0,
+                "无法打出，虚无。回合结束时若在手中则受到 1 点伤害",
+                Card.CardType.STATUS, Card.Rarity.BASIC, 0,
+                Card.TargetType.SELF, 1,
+                List.of("end_turn_damage:1"), false, false, true, true, profession));
 
         poolByProfession.put(profession, warriorCards);
         allCards.addAll(warriorCards);
@@ -270,6 +292,18 @@ public class CardPool {
                 targetType, targetCount, effects, exhaust, retain, ethereal, profession);
     }
 
+    private static Card createCard(String id, String name, int cost,
+                                   String description, Card.CardType type,
+                                   Card.Rarity rarity, int value,
+                                   Card.TargetType targetType, int targetCount,
+                                   List<String> effects, boolean exhaust,
+                                   boolean retain, boolean ethereal,
+                                   boolean unplayable, String profession) {
+        return new Card(id, name, cost, description, type, rarity, value,
+                targetType, targetCount, effects, exhaust, retain, ethereal,
+                unplayable, profession);
+    }
+
     /**
      * 获取指定职业的所有卡牌。
      *
@@ -278,6 +312,19 @@ public class CardPool {
      */
     public static List<Card> getCardsByProfession(String profession) {
         return poolByProfession.getOrDefault(profession, new ArrayList<>());
+    }
+
+    public static List<Card> getObtainableCardsByProfession(String profession) {
+        return getCardsByProfession(profession).stream()
+                .filter(CardPool::isNaturallyObtainable)
+                .toList();
+    }
+
+    public static boolean isNaturallyObtainable(Card card) {
+        if (card == null || card.isUnplayable()) return false;
+        return card.getType() != Card.CardType.STATUS
+                && card.getType() != Card.CardType.CURSE
+                && card.getType() != Card.CardType.TASK;
     }
 
     /**

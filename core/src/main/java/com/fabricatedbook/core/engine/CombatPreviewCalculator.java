@@ -75,6 +75,19 @@ public final class CombatPreviewCalculator {
                     addDamage(totals, baseDamage, repeat, previewPlayer, player, commonTarget,
                             relicManager);
                 }
+                case "damage_all_attacking_intent" -> {
+                    if (aliveEnemies.isEmpty() || parts.length < 2) break;
+                    int attackingCount = (int) aliveEnemies.stream()
+                            .filter(enemy -> enemy.getIntent() == com.fabricatedbook.core.entity.IntentType.ATTACK)
+                            .count();
+                    if (attackingCount <= 0) break;
+                    int baseDamage = parseInt(parts[1], 0);
+                    AbstractEntity commonTarget = commonEnemyTarget(aliveEnemies.stream()
+                            .filter(enemy -> enemy.getIntent() == com.fabricatedbook.core.entity.IntentType.ATTACK)
+                            .toList());
+                    addDamage(totals, baseDamage, attackingCount, previewPlayer, player,
+                            commonTarget, relicManager);
+                }
                 case "counter" -> {
                     if (damageTarget == null || parts.length < 2) break;
                     if ("block".equalsIgnoreCase(parts[1]) && player.getBlock() > 0) {
@@ -373,7 +386,7 @@ public final class CombatPreviewCalculator {
             }
         }
         if (same && damageHits.size() > 1) {
-            return first + " x " + damageHits.size();
+            return damageHits.size() + " × " + first;
         }
         if (damageHits.size() == 1) {
             return String.valueOf(first);
@@ -589,8 +602,8 @@ public final class CombatPreviewCalculator {
             if (parts.length < 2 || !isInteger(parts[0]) || !isInteger(parts[1])) {
                 return false;
             }
-            addRepeatedDamage(amounts, parseInt(parts[0], 0),
-                    parseInt(parts[1], 1));
+            addRepeatedDamage(amounts, parseInt(parts[1], 0),
+                    parseInt(parts[0], 1));
             return true;
         }
         if (!isInteger(normalized)) return false;

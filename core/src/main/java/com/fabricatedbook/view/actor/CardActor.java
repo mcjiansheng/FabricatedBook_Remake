@@ -67,6 +67,7 @@ public class CardActor extends Actor {
         if (card.getType() == Card.CardType.ATTACK) iconFile = "img/atk.png";
         else if (card.getType() == Card.CardType.DEFENSE) iconFile = "img/def.png";
         else if (card.getType() == Card.CardType.SKILL) iconFile = "img/inc.png";
+        else if (card.getType() == Card.CardType.ABILITY) iconFile = "img/inc.png";
         try {
             typeIcon = new Texture(iconFile);
         } catch (Exception e) {
@@ -292,7 +293,11 @@ public class CardActor extends Actor {
             case ATTACK -> Color.RED;
             case DEFENSE -> new Color(0.42f, 0.42f, 1f, 1f);
             case SKILL -> new Color(0.35f, 0.95f, 0.40f, 1f);
+            case ABILITY -> Color.GOLD;
             case EQUIP -> Color.GOLD;
+            case STATUS -> Color.GRAY;
+            case CURSE -> Color.PURPLE;
+            case TASK -> Color.CYAN;
         };
     }
 

@@ -12,6 +12,8 @@ import com.fabricatedbook.core.action.DamageAction;
 import com.fabricatedbook.core.action.DoublePoisonAction;
 import com.fabricatedbook.core.action.TriggerWitheringAction;
 import com.fabricatedbook.core.card.Card;
+import com.fabricatedbook.core.card.CardFactory;
+import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CombatPreviewCalculatorTest {
@@ -324,7 +327,128 @@ class CombatPreviewCalculatorTest {
         CardPreview preview = CombatPreviewCalculator.previewCard(card, player,
                 List.of(enemy), enemy, null);
 
-        assertEquals("造成 11 x 2 点伤害", preview.getDescription());
+        assertEquals("造成 2 × 11 点伤害", preview.getDescription());
+    }
+
+    @Test
+    void cardEffectsResolveInTextOrder() {
+        Player player = player();
+        Card painfulBlow = new Card("pain", "痛击", 2,
+                "造成 8 点伤害，提供 2 点脆弱", Card.CardType.ATTACK,
+                Card.Rarity.COMMON, 1, Card.TargetType.SINGLE_ENEMY, 1,
+                List.of("damage:8", "debuff:Fragile:2"), false, "warrior");
+        player.getDrawPile().add(painfulBlow);
+        Enemy enemy = enemy("e1");
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+
+        assertTrue(engine.playCard(painfulBlow, enemy));
+
+        assertEquals(32, enemy.getHp());
+        assertTrue(enemy.hasBuff("Fragile"));
+    }
+
+    @Test
+    void repeatedDamagePreviewUsesCountTimesDamageFormat() {
+        Player player = player();
+        Enemy enemy = enemy("e1");
+        Card poisoned = new Card("poisoned", "淬毒", 1,
+                "造成 5×2 点伤害，每次 50% 概率附加中毒",
+                Card.CardType.ATTACK, Card.Rarity.UNCOMMON, 2,
+                Card.TargetType.SINGLE_ENEMY, 1,
+                List.of("damage:2:5"), false, "warrior");
+
+        CardPreview preview = CombatPreviewCalculator.previewCard(poisoned, player,
+                List.of(enemy), enemy, null);
+
+        assertEquals("造成 5 × 2 点伤害，每次 50% 概率附加中毒",
+                preview.getDescription());
+    }
+
+    @Test
+    void abilityCardsLeaveCombatPilesAfterPlay() {
+        Player player = player();
+        Card armor = new Card("armor", "装甲", 2,
+                "格挡值不再在回合结束时消失", Card.CardType.ABILITY,
+                Card.Rarity.EPIC, 3, Card.TargetType.SELF, 1,
+                List.of("buff:self:armor"), false, "warrior");
+        player.getDrawPile().add(armor);
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy("e1")));
+
+        assertTrue(engine.playCard(armor, null));
+
+        assertFalse(player.getHand().contains(armor));
+        assertFalse(player.getDiscardPile().contains(armor));
+        assertFalse(player.getExhaustPile().contains(armor));
+        assertTrue(player.hasBuff("ArmorBuff"));
+    }
+
+    @Test
+    void unplayableBleedingDamagesAtEndOfTurnAndExhausts() {
+        Player player = player();
+        player.setHp(20);
+        Card bleeding = new Card("bleed", "流血", 0,
+                "无法打出，虚无。回合结束时若在手中则受到 1 点伤害",
+                Card.CardType.STATUS, Card.Rarity.BASIC, 0,
+                Card.TargetType.SELF, 1, List.of("end_turn_damage:1"),
+                false, false, true, true, "warrior");
+        player.getHand().add(bleeding);
+
+        player.resolveEndOfTurnHand();
+
+        assertEquals(19, player.getHp());
+        assertEquals(List.of(bleeding), player.getExhaustPile());
+    }
+
+    @Test
+    void unplayableCardsCannotBePlayed() {
+        Player player = player();
+        Card bleeding = new Card("bleed", "流血", 0, "无法打出",
+                Card.CardType.STATUS, Card.Rarity.BASIC, 0,
+                Card.TargetType.SELF, 1, List.of(), false, false, true,
+                true, "warrior");
+        player.getDrawPile().add(bleeding);
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy("e1")));
+
+        assertFalse(engine.playCard(bleeding, null));
+
+        assertTrue(player.getHand().contains(bleeding));
+    }
+
+    @Test
+    void bloodDanceAddsBleedingToDiscardPile() {
+        Player player = player();
+        Card bloodDance = CardFactory.createFromTemplate(CardPool.findById("war_blood_dance"));
+        player.getDrawPile().add(bloodDance);
+        Enemy enemy = enemy("e1");
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+
+        assertTrue(engine.playCard(bloodDance, null));
+
+        assertEquals(25, enemy.getHp());
+        assertTrue(player.getDiscardPile().stream()
+                .anyMatch(card -> "war_bleeding".equals(card.getId())));
+    }
+
+    @Test
+    void fateSealedRepeatsForEachAttackingIntentEnemy() {
+        Player player = player();
+        Card fateSealed = CardFactory.createFromTemplate(CardPool.findById("war_fate_sealed"));
+        player.getDrawPile().add(fateSealed);
+        Enemy attackingA = new Enemy("a", "攻击者A", 40, List.of("atk10"));
+        Enemy defending = new Enemy("d", "防御者", 40, List.of("def5"));
+        Enemy attackingB = new Enemy("b", "攻击者B", 40, List.of("atk10"));
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(attackingA, defending, attackingB));
+
+        assertTrue(engine.playCard(fateSealed, null));
+
+        assertEquals(20, attackingA.getHp());
+        assertEquals(40, defending.getHp());
+        assertEquals(20, attackingB.getHp());
     }
 
     @Test

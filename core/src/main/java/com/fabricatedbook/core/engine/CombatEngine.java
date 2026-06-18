@@ -10,6 +10,7 @@ import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.entity.AbstractEntity;
 import com.fabricatedbook.core.entity.Enemy;
+import com.fabricatedbook.core.entity.IntentType;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.event.OnCombatStart;
 import com.fabricatedbook.core.event.OnEntityDeath;
@@ -282,7 +283,7 @@ public class CombatEngine {
      * @return true 如果成功使用卡牌
      */
     public boolean playCard(Card card, Enemy target) {
-        if (!inBattle || card == null) return false;
+        if (!inBattle || card == null || card.isUnplayable()) return false;
 
         int energyCost = energyCostFor(card);
 
@@ -309,8 +310,10 @@ public class CombatEngine {
             queueAction(action);
         }
 
-        // 处理消耗
-        if (card.isExhaust()) {
+        // 处理去向。能力牌打出后直接离场，不进入弃牌堆或消耗堆。
+        if (card.isAbility()) {
+            System.out.println("[CombatEngine] 能力牌离场: " + card.getName());
+        } else if (card.isExhaust()) {
             player.getExhaustPile().add(card);
             System.out.println("[CombatEngine] 消耗牌: " + card.getName());
         } else {
@@ -376,6 +379,8 @@ public class CombatEngine {
      * - "block_per_target:N" -> 每个目标提供 N 格挡
      * - "bonus_per_damage_taken:threshold:bonus" -> 每损失 threshold 生命值，伤害 +bonus
      * - "add_random_attack" -> 随机获得一张攻击牌
+     * - "add_card_to_discard:cardId" -> 将指定卡牌加入弃牌堆
+     * - "damage_all_attacking_intent:N" -> 对所有当前意图为攻击的敌人造成 N 点伤害
      * - "stun_chance:N" -> N% 概率眩晕
      *
      * @param card   使用的卡牌
@@ -430,6 +435,20 @@ public class CombatEngine {
                     for (int i = 0; i < repeat; i++) {
                         actions.add(new DamageAction(player,
                                 new ArrayList<>(aliveEnemies), dmg, repeat > 1));
+                    }
+                    break;
+                }
+                case "damage_all_attacking_intent": {
+                    int dmg = Integer.parseInt(parts[1]);
+                    List<AbstractEntity> targets = new ArrayList<>();
+                    for (Enemy enemy : enemies) {
+                        if (enemy.isAlive() && enemy.getIntent() == IntentType.ATTACK) {
+                            targets.add(enemy);
+                        }
+                    }
+                    int repeat = targets.size();
+                    for (int i = 0; i < repeat; i++) {
+                        actions.add(new DamageAction(player, targets, dmg, repeat > 1));
                     }
                     break;
                 }
@@ -571,6 +590,15 @@ public class CombatEngine {
                     }
                     break;
                 }
+                case "add_card_to_discard": {
+                    if (parts.length > 1) {
+                        Card template = CardPool.findById(parts[1]);
+                        if (template != null) {
+                            player.getDiscardPile().add(CardFactory.createFromTemplate(template));
+                        }
+                    }
+                    break;
+                }
                 case "stun_chance": {
                     int chance = Integer.parseInt(parts[1]);
                     if (random.nextInt(100) < chance && target != null && target.isAlive()) {
@@ -599,15 +627,18 @@ public class CombatEngine {
                     String buffName = parts[1];
                     int stack = Integer.parseInt(parts[2]);
                     int chance = Integer.parseInt(parts[3]);
-                    if (random.nextInt(100) < chance) {
-                        List<AbstractEntity> cdTargets = new ArrayList<>();
-                        if (target != null && target.isAlive()) {
-                            cdTargets.add(target);
-                        } else if (!aliveEnemies.isEmpty()) {
-                            cdTargets.add(aliveEnemies.get(0));
-                        }
-                        if (!cdTargets.isEmpty()) {
-                            actions.add(new ApplyBuffAction(cdTargets.get(0), buffName, stack));
+                    int attempts = Math.max(1, countTrailingDamageActions(actions));
+                    for (int i = 0; i < attempts; i++) {
+                        if (random.nextInt(100) < chance) {
+                            List<AbstractEntity> cdTargets = new ArrayList<>();
+                            if (target != null && target.isAlive()) {
+                                cdTargets.add(target);
+                            } else if (!aliveEnemies.isEmpty()) {
+                                cdTargets.add(aliveEnemies.get(0));
+                            }
+                            if (!cdTargets.isEmpty()) {
+                                actions.add(new ApplyBuffAction(cdTargets.get(0), buffName, stack));
+                            }
                         }
                     }
                     break;
@@ -616,15 +647,18 @@ public class CombatEngine {
                     // poison_chance:Chance:Stack
                     int chance = Integer.parseInt(parts[1]);
                     int stack = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
-                    if (random.nextInt(100) < chance) {
-                        List<AbstractEntity> poisonTargets = new ArrayList<>();
-                        if (target != null && target.isAlive()) {
-                            poisonTargets.add(target);
-                        } else if (!aliveEnemies.isEmpty()) {
-                            poisonTargets.add(aliveEnemies.get(0));
-                        }
-                        if (!poisonTargets.isEmpty()) {
-                            actions.add(new ApplyBuffAction(poisonTargets.get(0), "Poison", stack));
+                    int attempts = Math.max(1, countTrailingDamageActions(actions));
+                    for (int i = 0; i < attempts; i++) {
+                        if (random.nextInt(100) < chance) {
+                            List<AbstractEntity> poisonTargets = new ArrayList<>();
+                            if (target != null && target.isAlive()) {
+                                poisonTargets.add(target);
+                            } else if (!aliveEnemies.isEmpty()) {
+                                poisonTargets.add(aliveEnemies.get(0));
+                            }
+                            if (!poisonTargets.isEmpty()) {
+                                actions.add(new ApplyBuffAction(poisonTargets.get(0), "Poison", stack));
+                            }
                         }
                     }
                     break;
@@ -644,6 +678,18 @@ public class CombatEngine {
         }
 
         return actions;
+    }
+
+    private int countTrailingDamageActions(List<CombatAction> actions) {
+        int count = 0;
+        for (int i = actions.size() - 1; i >= 0; i--) {
+            if (actions.get(i) instanceof DamageAction) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        return count;
     }
 
     private boolean isExtraEnergyBuff(String buffName) {
@@ -784,7 +830,7 @@ public class CombatEngine {
      * <p>
      * 动作模式：
      * atkX -> 攻击造成 X 点伤害
-     * atkXxY -> 攻击造成 X×Y 点伤害
+     * atkXxY -> 攻击造成 X 次 Y 点伤害
      * inc -> 增益（力量/坚强）
      * defX -> 获得 X 格挡
      *
@@ -807,8 +853,8 @@ public class CombatEngine {
                 String numPart = actionId.substring(3);
                 if (numPart.contains("x")) {
                     String[] parts = numPart.split("x");
-                    int dmg = Integer.parseInt(parts[0]);
-                    int times = Integer.parseInt(parts[1]);
+                    int times = Integer.parseInt(parts[0]);
+                    int dmg = Integer.parseInt(parts[1]);
                     for (int i = 0; i < times; i++) {
                         actions.add(new DamageAction(enemy, List.of(player), dmg, times > 1));
                     }
@@ -820,8 +866,8 @@ public class CombatEngine {
                 String numPart = actionId.substring(6);
                 if (numPart.contains("x")) {
                     String[] parts = numPart.split("x");
-                    int dmg = Integer.parseInt(parts[0]);
-                    int times = Integer.parseInt(parts[1]);
+                    int times = Integer.parseInt(parts[0]);
+                    int dmg = Integer.parseInt(parts[1]);
                     for (int i = 0; i < times; i++) {
                         actions.add(new DamageAction(enemy, List.of(player), dmg, times > 1));
                     }

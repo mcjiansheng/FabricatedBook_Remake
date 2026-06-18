@@ -280,7 +280,8 @@ public class DataRelic implements Relic {
     }
 
     private void addRandomCards(int count) {
-        List<Card> pool = CardPool.getCardsByProfession(owner.getProfession().name().toLowerCase());
+        List<Card> pool = CardPool.getObtainableCardsByProfession(
+                owner.getProfession().name().toLowerCase());
         if (pool.isEmpty()) return;
         for (int i = 0; i < count; i++) {
             Card template = pool.get(random.nextInt(pool.size()));

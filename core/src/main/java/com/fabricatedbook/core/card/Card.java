@@ -24,8 +24,16 @@ public class Card {
         DEFENSE,
         /** ⚡ 技能 — 特殊效果 */
         SKILL,
+        /** ✨ 能力 — 打出后离场，不进入弃牌堆或消耗堆 */
+        ABILITY,
         /** 🔧 装备 — 提供持续战斗效果 */
-        EQUIP
+        EQUIP,
+        /** ⚠️ 状态 — 通常由战斗生成 */
+        STATUS,
+        /** 💀 诅咒 — 通常为负面牌 */
+        CURSE,
+        /** 📜 任务 — 特殊目标或剧情牌 */
+        TASK
     }
 
     /** 目标选择类型枚举 */
@@ -96,6 +104,9 @@ public class Card {
     /** 是否虚无（回合结束仍在手牌中则进入消耗牌堆）。 */
     private boolean ethereal;
 
+    /** 是否无法被打出。 */
+    private boolean unplayable;
+
     /** 所属职业（"warrior"/"mage"/"witch"/null=通用） */
     private String profession;
 
@@ -113,6 +124,7 @@ public class Card {
         this.exhaust = false;
         this.retain = false;
         this.ethereal = false;
+        this.unplayable = false;
         this.targetCount = 1;
         this.rarity = Rarity.COMMON;
     }
@@ -147,6 +159,16 @@ public class Card {
                 targetCount, effects, exhaust, profession);
         this.retain = retain;
         this.ethereal = ethereal;
+    }
+
+    public Card(String id, String name, int cost, String description,
+                CardType type, Rarity rarity, int value,
+                TargetType targetType, int targetCount,
+                List<String> effects, boolean exhaust, boolean retain,
+                boolean ethereal, boolean unplayable, String profession) {
+        this(id, name, cost, description, type, rarity, value, targetType,
+                targetCount, effects, exhaust, retain, ethereal, profession);
+        this.unplayable = unplayable;
     }
 
     // ====== Getter / Setter ======
@@ -190,6 +212,9 @@ public class Card {
     public boolean isEthereal() { return ethereal; }
     public void setEthereal(boolean ethereal) { this.ethereal = ethereal; }
 
+    public boolean isUnplayable() { return unplayable; }
+    public void setUnplayable(boolean unplayable) { this.unplayable = unplayable; }
+
     public String getProfession() { return profession; }
     public void setProfession(String profession) { this.profession = profession; }
 
@@ -215,6 +240,10 @@ public class Card {
      */
     public boolean isSkill() {
         return type == CardType.SKILL;
+    }
+
+    public boolean isAbility() {
+        return type == CardType.ABILITY;
     }
 
     /**
