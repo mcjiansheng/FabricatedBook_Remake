@@ -14,6 +14,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.fabricatedbook.core.engine.CombatEngine;
 import com.fabricatedbook.core.entity.Enemy;
@@ -29,6 +32,7 @@ import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.TopStatusBar;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -373,10 +377,36 @@ public class MapScreen implements Screen {
         topStatusBar = new TopStatusBar(player, font);
         uiStage = new Stage(viewport);
         Gdx.input.setInputProcessor(uiStage);
+        addTopBarButtons();
 
         // 设置当前可访问节点
         updateAccessibleNodes();
         game.autosaveCurrentRun();
+    }
+
+    private void addTopBarButtons() {
+        TextButton cards = new TextButton("卡牌", UiStyles.buttonStyle(game));
+        cards.setBounds(FabricBookGame.SCREEN_WIDTH - 330,
+                FabricBookGame.SCREEN_HEIGHT - TopStatusBar.BUTTON_H - 5,
+                TopStatusBar.BUTTON_W, TopStatusBar.BUTTON_H);
+        cards.addListener(new ClickListener() {
+            @Override public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new InventoryScreen(game, player, MapScreen.this,
+                        InventoryScreen.Tab.CARDS));
+            }
+        });
+        TextButton relics = new TextButton("藏品", UiStyles.buttonStyle(game));
+        relics.setBounds(FabricBookGame.SCREEN_WIDTH - 170,
+                FabricBookGame.SCREEN_HEIGHT - TopStatusBar.BUTTON_H - 5,
+                TopStatusBar.BUTTON_W, TopStatusBar.BUTTON_H);
+        relics.addListener(new ClickListener() {
+            @Override public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new InventoryScreen(game, player, MapScreen.this,
+                        InventoryScreen.Tab.RELICS));
+            }
+        });
+        uiStage.addActor(cards);
+        uiStage.addActor(relics);
     }
 
     /** 更新当前可访问节点 */
@@ -459,9 +489,6 @@ public class MapScreen implements Screen {
 
             // 如果点在顶栏区域内，不处理地图拖动
             if (touch.y > FabricBookGame.SCREEN_HEIGHT - TOP_BAR_HEIGHT) {
-                if (Gdx.input.justTouched()) {
-                    handleTopBarClick(touch.x);
-                }
                 return;
             }
 
@@ -496,16 +523,6 @@ public class MapScreen implements Screen {
 
     private Vector2 toWorld(float screenX, float screenY) {
         return viewport.unproject(new Vector2(screenX, screenY));
-    }
-
-    private void handleTopBarClick(float touchX) {
-        float cardsX = FabricBookGame.SCREEN_WIDTH - 330;
-        float relicsX = FabricBookGame.SCREEN_WIDTH - 170;
-        if (touchX >= cardsX && touchX <= cardsX + TOP_BUTTON_W) {
-            game.setScreen(new InventoryScreen(game, player, this));
-        } else if (touchX >= relicsX && touchX <= relicsX + TOP_BUTTON_W) {
-            game.setScreen(new InventoryScreen(game, player, this));
-        }
     }
 
     /** 检测节点点击 */
@@ -1071,9 +1088,8 @@ public class MapScreen implements Screen {
 
     /** 绘制顶部状态栏 */
     private void drawTopBar() {
-        Vector2 mouse = toWorld(Gdx.input.getX(), Gdx.input.getY());
         topStatusBar.draw(batch, shapeRenderer, camera, currentLayerStatusText(),
-                true, mouse);
+                false, null);
     }
 
     public String currentLayerStatusText() {
