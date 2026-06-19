@@ -570,8 +570,7 @@ public class MapScreen implements Screen {
                 markNodeEntered(node);
                 game.autosaveCurrentRun();
                 // 安全屋
-                game.setScreen(new EventScreen(game, player, "人生意义", this,
-                        runState.randomFor("event-result", nodeKey(node))));
+                game.setScreen(new SafeHouseScreen(game, player, this));
                 break;
             case DECISION:
                 markNodeEntered(node);

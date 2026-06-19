@@ -129,6 +129,7 @@ public class GameRunState {
         public List<String> relicIds = new ArrayList<>();
         public List<String> potionIds = new ArrayList<>();
         public List<String> deckCardIds = new ArrayList<>();
+        public List<Boolean> deckCardUpgraded = new ArrayList<>();
 
         public static PlayerSnapshot from(Player player) {
             PlayerSnapshot snapshot = new PlayerSnapshot();
@@ -154,6 +155,7 @@ public class GameRunState {
             cards.addAll(player.getExhaustPile());
             for (Card card : cards) {
                 snapshot.deckCardIds.add(card.getId());
+                snapshot.deckCardUpgraded.add(card.isUpgraded());
             }
             return snapshot;
         }
@@ -168,10 +170,16 @@ public class GameRunState {
             restored.setCardCount(cardCount);
             restored.setMaxPotionSlots(maxPotionSlots > 0 ? maxPotionSlots : 3);
 
-            for (String cardId : deckCardIds) {
+            for (int i = 0; i < deckCardIds.size(); i++) {
+                String cardId = deckCardIds.get(i);
                 Card template = CardPool.findById(cardId);
                 if (template != null) {
-                    restored.getDrawPile().add(CardFactory.createFromTemplate(template));
+                    Card card = CardFactory.createFromTemplate(template);
+                    if (deckCardUpgraded != null && i < deckCardUpgraded.size()
+                            && Boolean.TRUE.equals(deckCardUpgraded.get(i))) {
+                        card.upgrade();
+                    }
+                    restored.getDrawPile().add(card);
                 }
             }
 

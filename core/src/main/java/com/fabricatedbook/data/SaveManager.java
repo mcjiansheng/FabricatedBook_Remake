@@ -85,12 +85,13 @@ public class SaveManager {
         public boolean retain;
         public boolean ethereal;
         public boolean unplayable;
+        public boolean upgraded;
 
         public SerializableCard() {}
 
         public SerializableCard(Card card) {
             this.id = card.getId();
-            this.name = card.getName();
+            this.name = card.getBaseName();
             this.cost = card.getCost();
             this.description = card.getDescription();
             this.type = card.getType().name();
@@ -101,6 +102,7 @@ public class SaveManager {
             this.retain = card.isRetain();
             this.ethereal = card.isEthereal();
             this.unplayable = card.isUnplayable();
+            this.upgraded = card.isUpgraded();
         }
     }
 
@@ -154,10 +156,17 @@ public class SaveManager {
             data.maxPotionSlots = snapshot.maxPotionSlots;
             data.relicIds.addAll(snapshot.relicIds);
             data.potionIds.addAll(snapshot.potionIds);
-            for (String cardId : snapshot.deckCardIds) {
+            for (int i = 0; i < snapshot.deckCardIds.size(); i++) {
+                String cardId = snapshot.deckCardIds.get(i);
                 Card template = CardPool.findById(cardId);
                 if (template != null) {
-                    data.deck.add(new SerializableCard(template));
+                    Card card = CardFactory.createFromTemplate(template);
+                    if (snapshot.deckCardUpgraded != null
+                            && i < snapshot.deckCardUpgraded.size()
+                            && Boolean.TRUE.equals(snapshot.deckCardUpgraded.get(i))) {
+                        card.upgrade();
+                    }
+                    data.deck.add(new SerializableCard(card));
                 }
             }
 
@@ -261,7 +270,11 @@ public class SaveManager {
             for (SerializableCard sc : data.deck) {
                 Card template = CardPool.findById(sc.id);
                 if (template != null) {
-                    player.getDrawPile().add(CardFactory.createFromTemplate(template));
+                    Card card = CardFactory.createFromTemplate(template);
+                    if (sc.upgraded) {
+                        card.upgrade();
+                    }
+                    player.getDrawPile().add(card);
                 } else {
                     Card.CardType type = Card.CardType.valueOf(sc.type);
                     Card.Rarity rarity = Card.Rarity.valueOf(sc.rarity);
@@ -270,6 +283,7 @@ public class SaveManager {
                             type, rarity, sc.value, targetType, 1,
                             new ArrayList<>(), sc.exhaust, sc.retain, sc.ethereal,
                             sc.unplayable, data.profession.toLowerCase());
+                    card.setUpgraded(sc.upgraded);
                     player.getDrawPile().add(card);
                 }
             }

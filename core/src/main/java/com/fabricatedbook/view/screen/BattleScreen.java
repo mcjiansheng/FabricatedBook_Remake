@@ -61,6 +61,8 @@ import java.util.Random;
  */
 public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInteractionHandler {
 
+    private static final int UPGRADED_REWARD_CHANCE_PERCENT = 10;
+
     private final FabricBookGame game;
     private final CombatEngine combatEngine;
     private final Player player;
@@ -851,8 +853,19 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             pool = CardPool.getObtainableCardsByProfession(
                     player.getProfession().name().toLowerCase());
         }
-        return CardPool.randomSelect(pool, Math.min(3, pool.size()),
+        List<Card> selected = CardPool.randomSelect(pool, Math.min(3, pool.size()),
                 rewardRandom("card-pick"));
+        List<Card> rewards = new ArrayList<>();
+        for (Card template : selected) {
+            Card card = CardFactory.createFromTemplate(template);
+            if (card.canUpgrade()
+                    && rewardRandom("card-upgrade:" + card.getId()).nextInt(100)
+                    < UPGRADED_REWARD_CHANCE_PERCENT) {
+                card.upgrade();
+            }
+            rewards.add(card);
+        }
+        return rewards;
     }
 
     private Random rewardRandom(String purpose) {

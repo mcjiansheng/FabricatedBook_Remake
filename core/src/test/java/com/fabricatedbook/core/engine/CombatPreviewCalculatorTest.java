@@ -17,6 +17,7 @@ import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
+import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
@@ -475,6 +476,69 @@ class CombatPreviewCalculatorTest {
 
         assertTrue(pool.stream().noneMatch(card -> card.getRarity() == Card.Rarity.BASIC));
         assertTrue(pool.stream().noneMatch(card -> "war_painful_blow".equals(card.getId())));
+    }
+
+    @Test
+    void cardUpgradeAppliesTemplateRulesAndNameSuffix() {
+        Player player = player();
+        Enemy enemy = enemy("e1");
+        Card attack = CardFactory.createFromTemplate(CardPool.findById("war_atk1"));
+
+        assertTrue(attack.canUpgrade());
+        assertTrue(attack.upgrade());
+
+        assertEquals("攻击+", attack.getName());
+        assertEquals("攻击", attack.getBaseName());
+        assertFalse(attack.canUpgrade());
+        assertEquals(List.of("damage:9"), attack.getEffects());
+        CardPreview preview = CombatPreviewCalculator.previewCard(attack, player,
+                List.of(enemy), enemy, null);
+        assertEquals("造成 9 点伤害", preview.getDescription());
+    }
+
+    @Test
+    void upgradedCardsSurviveRunSnapshotRestore() {
+        Player player = player();
+        Card sweep = CardFactory.createFromTemplate(CardPool.findById("war_sweep"));
+        assertTrue(sweep.upgrade());
+        player.getDrawPile().add(sweep);
+
+        Player restored = GameRunState.PlayerSnapshot.from(player).toPlayer();
+
+        assertEquals(1, restored.getDrawPile().size());
+        Card restoredCard = restored.getDrawPile().get(0);
+        assertEquals("横扫+", restoredCard.getName());
+        assertTrue(restoredCard.isUpgraded());
+        assertEquals(List.of("damage_all:7"), restoredCard.getEffects());
+    }
+
+    @Test
+    void statusCardsCannotUpgrade() {
+        Card bleeding = CardFactory.createFromTemplate(CardPool.findById("war_bleeding"));
+
+        assertFalse(bleeding.canUpgrade());
+        assertFalse(bleeding.upgrade());
+        assertEquals("流血", bleeding.getName());
+    }
+
+    @Test
+    void upgradedPlagueTriplesPoisonAfterApplyingPoison() {
+        Enemy enemy = enemy("e1");
+        enemy.addBuff(new Poison(3));
+        Card plague = CardFactory.createFromTemplate(CardPool.findById("war_plague"));
+        assertTrue(plague.upgrade());
+        Player player = player();
+        player.getDrawPile().add(plague);
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+
+        assertTrue(engine.playCard(plague, null));
+
+        assertEquals(27, enemy.getBuffs().stream()
+                .filter(buff -> "Poison".equals(buff.getBuffName()))
+                .findFirst()
+                .orElseThrow()
+                .getStack());
     }
 
     @Test

@@ -228,7 +228,7 @@ public class CardPool {
         warriorCards.add(createCard("war_unyielding", "不屈", 2,
                 "获得 3 回合坚强，10 点格挡", Card.CardType.SKILL, Card.Rarity.COMMON, 1,
                 Card.TargetType.SELF, 1,
-                List.of("block:10", "buff:self:block_increase:3"), false, profession));
+                List.of("buff:self:block_increase:3", "block:10"), false, profession));
 
         // 31. 根除 — 攻击 | X | 造成 X 段 11 点伤害，保留 | 价值 2
         warriorCards.add(createCard("war_eradicate", "根除", -1,
@@ -264,8 +264,106 @@ public class CardPool {
                 Card.TargetType.SELF, 1,
                 List.of("end_turn_damage:1"), false, false, true, true, profession));
 
+        configureWarriorUpgrades(warriorCards);
         poolByProfession.put(profession, warriorCards);
         allCards.addAll(warriorCards);
+    }
+
+    private static void configureWarriorUpgrades(List<Card> warriorCards) {
+        Map<String, Card> byId = new HashMap<>();
+        for (Card card : warriorCards) {
+            byId.put(card.getId(), card);
+        }
+
+        upgrade(byId, "war_atk1", null, "造成 9 点伤害", List.of("damage:9"));
+        upgrade(byId, "war_painful_blow", null, "造成 11 伤害，3 回合脆弱",
+                List.of("damage:11", "debuff:fragile:3"));
+        upgrade(byId, "war_counterattack", 0, "根据格挡值造成伤害", List.of("counter:block"));
+        upgrade(byId, "war_ambush", null, "造成 5 点伤害 + 3 回合虚弱",
+                List.of("damage:5", "debuff:weak:3"), false);
+        upgrade(byId, "war_reckoning", null, "对所有敌人造成 5 点伤害，每个目标提供 6 格挡",
+                List.of("damage_all:5", "block_per_target:6"));
+        upgrade(byId, "war_hasaki", null, "造成 6 点伤害，3 回合易碎",
+                List.of("damage:6", "debuff:block_reduction:3"));
+        upgrade(byId, "war_powerful_strike", null,
+                "造成 10 点伤害，手牌每张攻击牌使伤害 +4",
+                List.of("damage:10", "bonus_per_attack:4"));
+        upgrade(byId, "war_sweep", null, "对所有敌人造成 7 点伤害",
+                List.of("damage_all:7"));
+        upgrade(byId, "war_elbowing", null, "造成 9 点伤害，25% 概率眩晕 1 回合",
+                List.of("damage:9", "stun_chance:25"));
+        upgrade(byId, "war_deadly_tempo", null,
+                "造成 7 点伤害，每使用一次该牌伤害 +2",
+                List.of("damage:7", "escalating:2"));
+        upgrade(byId, "war_dragon_fang", null,
+                "造成 12 点伤害，敌方生命值 <30 则伤害 +8",
+                List.of("damage:12", "bonus_low_hp:30:8"));
+        upgrade(byId, "war_bladestorm", null, "对所有敌人造成 5×5 点伤害",
+                List.of("damage_all:5:5"));
+        upgrade(byId, "war_fate_sealed", null,
+                "每有一个意图为攻击的敌人，对所有意图为攻击的敌人造成 15 点伤害",
+                List.of("damage_all_attacking_intent:15"));
+        upgrade(byId, "war_eradicate", null, "造成 X 段 14 点伤害，保留",
+                List.of("damage_x:14"));
+        upgrade(byId, "war_poisoned", null,
+                "造成 6×2 点伤害，每次 70% 概率附加中毒",
+                List.of("damage:2:6", "chance_debuff:Poison:1:70"));
+        upgrade(byId, "war_blood_dance", null,
+                "对所有敌人造成 20 点伤害，往弃牌堆中放入一张「流血」",
+                List.of("damage_all:20", "add_card_to_discard:war_bleeding"));
+        upgrade(byId, "war_flesh_bone", null,
+                "造成 7 点伤害，每损失 10 生命值伤害 +4",
+                List.of("damage:7", "bonus_per_damage_taken:10:4"));
+        upgrade(byId, "war_critical_hit", null, "造成 43 点伤害",
+                List.of("damage:43"));
+        upgrade(byId, "war_blast_dawn", null, "对所有敌人造成 7×10 点伤害，消耗",
+                List.of("damage_all:10:7"));
+        upgrade(byId, "war_hero_entrance", null,
+                "对所有敌人造成 15 伤害 + 3 回合脆弱和易碎，获得 3 能量，消耗",
+                List.of("damage_all:15", "debuff_all:fragile:3",
+                        "debuff_all:block_reduction:3", "energy:3"));
+
+        upgrade(byId, "war_def1", null, "获得 8 点格挡", List.of("block:8"));
+        upgrade(byId, "war_unyielding", null, "获得 4 回合坚强，14 点格挡",
+                List.of("buff:self:block_increase:4", "block:14"));
+        upgrade(byId, "war_corrupt", null, "造成 6 层凋零并引爆 2 次",
+                List.of("debuff:withering:6", "trigger_withering:2"));
+        upgrade(byId, "war_weakness", null, "造成 2 回合脆弱和易碎",
+                List.of("debuff:fragile:2", "debuff:block_reduction:2"));
+        upgrade(byId, "war_boiling_blood", null,
+                "获得 3 回合力量，随机一张攻击牌",
+                List.of("buff:self:strength:3", "add_random_attack"));
+        upgrade(byId, "war_defy", null, "获得 9 格挡，对一名敌人造成 2 层虚弱，虚无",
+                List.of("block:9", "debuff:weak:2"));
+        upgrade(byId, "war_excited", 0, "清除所有负面效果，消耗", List.of("purify"));
+        upgrade(byId, "war_search", null, "抽 4 张牌", List.of("draw:4"));
+        upgrade(byId, "war_heal", null, "回复 12 生命值，消耗", List.of("heal:12"));
+        upgrade(byId, "war_cheat", null, "获得 35 点格挡，消耗", List.of("block:35"));
+        upgrade(byId, "war_ace", null, "抽 6 张牌，消耗", List.of("draw:6"));
+        upgrade(byId, "war_struggle", null,
+                "3 回合内不死，每回合 +3 能量，3 回合后死亡，消耗",
+                List.of("buff:self:undead:3", "buff:self:extra_energy:3:3"));
+        upgrade(byId, "war_plague", null,
+                "对所有敌人造成 6 点中毒，并使所有敌人中毒层数翻两倍，消耗",
+                List.of("debuff_all:poison:6", "double_poison:3"));
+
+        upgrade(byId, "war_armorer", 1, "格挡值不再在回合结束时消失",
+                List.of("buff:self:armor"));
+    }
+
+    private static void upgrade(Map<String, Card> byId, String id, Integer cost,
+                                String description, List<String> effects) {
+        upgrade(byId, id, cost, description, effects, null);
+    }
+
+    private static void upgrade(Map<String, Card> byId, String id, Integer cost,
+                                String description, List<String> effects,
+                                Boolean exhaust) {
+        Card card = byId.get(id);
+        if (card != null) {
+            card.setUpgrade(cost, description, effects, exhaust,
+                    null, null, null);
+        }
     }
 
     /**

@@ -30,8 +30,8 @@ public class CardFactory {
      */
     public static Card createFromTemplate(Card template) {
         if (template == null) return null;
-        return new Card(
-                template.getId(), template.getName(), template.getCost(),
+        Card copy = new Card(
+                template.getId(), template.getBaseName(), template.getCost(),
                 template.getDescription(), template.getType(), template.getRarity(),
                 template.getValue(), template.getTargetType(), template.getTargetCount(),
                 new ArrayList<>(template.getEffects()), template.isExhaust(),
@@ -39,6 +39,12 @@ public class CardFactory {
                 template.isUnplayable(),
                 template.getProfession()
         );
+        copy.setUpgrade(template.getUpgradedCost(), template.getUpgradedDescription(),
+                template.getUpgradedEffects(), template.getUpgradedExhaust(),
+                template.getUpgradedRetain(), template.getUpgradedEthereal(),
+                template.getUpgradedUnplayable());
+        copy.setUpgraded(template.isUpgraded());
+        return copy;
     }
 
     /**

@@ -107,6 +107,30 @@ public class Card {
     /** 是否无法被打出。 */
     private boolean unplayable;
 
+    /** 是否已经升级。 */
+    private boolean upgraded;
+
+    /** 升级后的消耗；为 null 表示不改变。 */
+    private Integer upgradedCost;
+
+    /** 升级后的描述；为 null 表示不改变。 */
+    private String upgradedDescription;
+
+    /** 升级后的效果；为 null 表示不改变。 */
+    private List<String> upgradedEffects;
+
+    /** 升级后的消耗牌标记；为 null 表示不改变。 */
+    private Boolean upgradedExhaust;
+
+    /** 升级后的保留标记；为 null 表示不改变。 */
+    private Boolean upgradedRetain;
+
+    /** 升级后的虚无标记；为 null 表示不改变。 */
+    private Boolean upgradedEthereal;
+
+    /** 升级后的无法打出标记；为 null 表示不改变。 */
+    private Boolean upgradedUnplayable;
+
     /** 所属职业（"warrior"/"mage"/"witch"/null=通用） */
     private String profession;
 
@@ -125,6 +149,7 @@ public class Card {
         this.retain = false;
         this.ethereal = false;
         this.unplayable = false;
+        this.upgraded = false;
         this.targetCount = 1;
         this.rarity = Rarity.COMMON;
     }
@@ -176,8 +201,16 @@ public class Card {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getName() { return upgraded ? name + "+" : name; }
+    public String getBaseName() { return name; }
+    public void setName(String name) {
+        if (name != null && name.endsWith("+")) {
+            this.name = name.substring(0, name.length() - 1);
+            this.upgraded = true;
+        } else {
+            this.name = name;
+        }
+    }
 
     public int getCost() { return cost; }
     public void setCost(int cost) { this.cost = cost; }
@@ -214,6 +247,58 @@ public class Card {
 
     public boolean isUnplayable() { return unplayable; }
     public void setUnplayable(boolean unplayable) { this.unplayable = unplayable; }
+
+    public boolean isUpgraded() { return upgraded; }
+    public void setUpgraded(boolean upgraded) { this.upgraded = upgraded; }
+
+    public boolean canUpgrade() {
+        return !upgraded
+                && type != CardType.STATUS
+                && type != CardType.CURSE
+                && type != CardType.TASK
+                && (upgradedCost != null
+                || upgradedDescription != null
+                || upgradedEffects != null
+                || upgradedExhaust != null
+                || upgradedRetain != null
+                || upgradedEthereal != null
+                || upgradedUnplayable != null);
+    }
+
+    public boolean upgrade() {
+        if (!canUpgrade()) return false;
+        if (upgradedCost != null) cost = upgradedCost;
+        if (upgradedDescription != null) description = upgradedDescription;
+        if (upgradedEffects != null) effects = new ArrayList<>(upgradedEffects);
+        if (upgradedExhaust != null) exhaust = upgradedExhaust;
+        if (upgradedRetain != null) retain = upgradedRetain;
+        if (upgradedEthereal != null) ethereal = upgradedEthereal;
+        if (upgradedUnplayable != null) unplayable = upgradedUnplayable;
+        upgraded = true;
+        return true;
+    }
+
+    public void setUpgrade(Integer cost, String description, List<String> effects,
+                           Boolean exhaust, Boolean retain, Boolean ethereal,
+                           Boolean unplayable) {
+        this.upgradedCost = cost;
+        this.upgradedDescription = description;
+        this.upgradedEffects = effects != null ? new ArrayList<>(effects) : null;
+        this.upgradedExhaust = exhaust;
+        this.upgradedRetain = retain;
+        this.upgradedEthereal = ethereal;
+        this.upgradedUnplayable = unplayable;
+    }
+
+    public Integer getUpgradedCost() { return upgradedCost; }
+    public String getUpgradedDescription() { return upgradedDescription; }
+    public List<String> getUpgradedEffects() {
+        return upgradedEffects != null ? new ArrayList<>(upgradedEffects) : null;
+    }
+    public Boolean getUpgradedExhaust() { return upgradedExhaust; }
+    public Boolean getUpgradedRetain() { return upgradedRetain; }
+    public Boolean getUpgradedEthereal() { return upgradedEthereal; }
+    public Boolean getUpgradedUnplayable() { return upgradedUnplayable; }
 
     public String getProfession() { return profession; }
     public void setProfession(String profession) { this.profession = profession; }
@@ -279,6 +364,6 @@ public class Card {
 
     @Override
     public String toString() {
-        return "[" + cost + "]" + name + " - " + description;
+        return "[" + cost + "]" + getName() + " - " + description;
     }
 }

@@ -11,10 +11,16 @@ import java.util.List;
 public class DoublePoisonAction implements CombatAction {
 
     private final List<AbstractEntity> targets;
+    private final int multiplier;
     private boolean finished;
 
     public DoublePoisonAction(List<AbstractEntity> targets) {
+        this(targets, 2);
+    }
+
+    public DoublePoisonAction(List<AbstractEntity> targets, int multiplier) {
         this.targets = targets;
+        this.multiplier = Math.max(2, multiplier);
         this.finished = false;
     }
 
@@ -25,7 +31,7 @@ public class DoublePoisonAction implements CombatAction {
             int currentPoison = poisonStack(target);
             if (currentPoison <= 0) continue;
             target.removeBuff("Poison");
-            new ApplyBuffAction(target, "Poison", currentPoison * 2).execute();
+            new ApplyBuffAction(target, "Poison", currentPoison * multiplier).execute();
         }
         finished = true;
     }
@@ -37,7 +43,7 @@ public class DoublePoisonAction implements CombatAction {
 
     @Override
     public String getDescription() {
-        return "中毒层数翻倍";
+        return multiplier == 2 ? "中毒层数翻倍" : "中毒层数翻两倍";
     }
 
     private int poisonStack(AbstractEntity target) {

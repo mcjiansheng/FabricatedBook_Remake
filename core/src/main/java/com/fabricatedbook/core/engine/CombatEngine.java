@@ -379,7 +379,7 @@ public class CombatEngine {
      * - "bonus_low_hp:threshold:bonus" -> 敌人血量低于阈值则增加伤害
      * - "escalating:N" -> 每用一次该牌增加 N 伤害（通过卡牌状态）
      * - "detonate_withering:N" -> 引爆 N 次凋零
-     * - "double_poison" -> 敌人中毒层数翻倍
+     * - "double_poison" -> 敌人中毒层数翻倍；"double_poison:N" -> 乘以 N
      * - "poison_chance:chance:amount" -> 每次攻击 chance% 概率附加 amount 中毒
      * - "block_per_target:N" -> 每个目标提供 N 格挡
      * - "bonus_per_damage_taken:threshold:bonus" -> 每损失 threshold 生命值，伤害 +bonus
@@ -566,7 +566,9 @@ public class CombatEngine {
                     break;
                 }
                 case "double_poison": {
-                    actions.add(new DoublePoisonAction(new ArrayList<>(aliveEnemies)));
+                    int multiplier = parts.length > 1 ? Integer.parseInt(parts[1]) : 2;
+                    actions.add(new DoublePoisonAction(new ArrayList<>(aliveEnemies),
+                            multiplier));
                     break;
                 }
                 case "block_per_target": {
@@ -585,7 +587,8 @@ public class CombatEngine {
                     break;
                 }
                 case "add_random_attack": {
-                    List<Card> attackCards = CardPool.getCardsByProfession(player.getProfession().name().toLowerCase())
+                    List<Card> attackCards = CardPool.getObtainableCardsByProfession(
+                                    player.getProfession().name().toLowerCase())
                             .stream().filter(c -> c.getType() == Card.CardType.ATTACK).toList();
                     if (!attackCards.isEmpty()) {
                         Card randomCard = attackCards.get(random.nextInt(attackCards.size()));
