@@ -24,6 +24,7 @@ import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.TopStatusBar;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.UiTheme;
 
 import java.util.List;
 import java.util.Random;
@@ -54,12 +55,12 @@ public class EventScreen implements Screen {
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
     private static final float CONTENT_TOP_PAD = 138f;
-    private static final float CONTENT_LEFT_PAD = 118f;
-    private static final float CONTENT_RIGHT_PAD = 118f;
-    private static final float EVENT_TEXT_WIDTH = 520f;
-    private static final float COLUMN_GAP = 108f;
-    private static final float OPTION_WIDTH = 560f;
-    private static final float OPTION_HEIGHT = 96f;
+    private static final float CONTENT_LEFT_PAD = 72f;
+    private static final float CONTENT_RIGHT_PAD = 72f;
+    private static final float EVENT_TEXT_WIDTH = 480f;
+    private static final float COLUMN_GAP = 48f;
+    private static final float OPTION_WIDTH = 528f;
+    private static final float OPTION_HEIGHT = 84f;
 
     /**
      * 构造事件画面。
@@ -108,20 +109,24 @@ public class EventScreen implements Screen {
 
         Table eventText = new Table();
         eventText.top().left();
+        eventText.setBackground(UiStyles.panelSurface());
+        eventText.pad(32);
 
         Label titleLabel = new Label(eventName, new Label.LabelStyle(
-                game.getFontForScale(1.7f), Color.BLACK));
+                game.getFontForScale(1.7f), UiTheme.ACCENT_GOLD));
         eventText.add(titleLabel).left().padBottom(34);
         eventText.row();
 
         Label description = new Label(eventHandler.getEventDescription(eventName),
-                new Label.LabelStyle(game.getFont(), Color.BLACK));
+                new Label.LabelStyle(game.getFont(), Color.WHITE));
         description.setWrap(true);
         description.setAlignment(Align.left);
-        eventText.add(description).width(500).left();
+        eventText.add(description).width(400).left();
 
         optionTable = new Table();
         optionTable.top().left();
+        optionTable.setBackground(UiStyles.panelSurface());
+        optionTable.pad(24);
         renderOptions();
 
         root.add(eventText).width(EVENT_TEXT_WIDTH).top().left().padRight(COLUMN_GAP);
@@ -185,7 +190,7 @@ public class EventScreen implements Screen {
                     showResult(result.description);
                 }
             });
-            optionTable.add(btn).width(OPTION_WIDTH).height(OPTION_HEIGHT)
+            optionTable.add(btn).width(480).height(OPTION_HEIGHT)
                     .left().padBottom(28);
             optionTable.row();
         }
@@ -203,7 +208,7 @@ public class EventScreen implements Screen {
                 game.getFont(), Color.WHITE));
         resultLabel.setWrap(true);
         resultLabel.setAlignment(Align.left);
-        optionTable.add(resultLabel).width(OPTION_WIDTH).left().padBottom(34);
+        optionTable.add(resultLabel).width(480).left().padBottom(34);
         optionTable.row();
 
         TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
@@ -243,10 +248,10 @@ public class EventScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             toggleEscapeMenu();
         }
-        Gdx.gl.glClearColor(0.78f, 0.78f, 0.78f, 1);
+        Gdx.gl.glClearColor(UiTheme.MAP_BACKGROUND.r, UiTheme.MAP_BACKGROUND.g,
+                UiTheme.MAP_BACKGROUND.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        drawOptionBackplates();
         drawTopBar();
 
         stage.act(delta);
@@ -257,27 +262,6 @@ public class EventScreen implements Screen {
         String layerText = returnMap != null ? returnMap.currentLayerStatusText() : "";
         topStatusBar.draw(batch, shapeRenderer, camera, layerText,
                 false, new Vector2());
-    }
-
-    private void drawOptionBackplates() {
-        if (optionTable == null || shapeRenderer == null) {
-            return;
-        }
-        shapeRenderer.setProjectionMatrix(stage.getCamera().combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(Color.BLACK);
-        float x = CONTENT_LEFT_PAD + EVENT_TEXT_WIDTH + COLUMN_GAP;
-        float top = FabricBookGame.SCREEN_HEIGHT - CONTENT_TOP_PAD;
-        int rows = resolved ? 1 : eventHandler.getOptions(eventName, player).size();
-        for (int i = 0; i < rows; i++) {
-            float cardY = top - OPTION_HEIGHT - i * 124;
-            shapeRenderer.rect(x, cardY, OPTION_WIDTH, resolved ? 150 : OPTION_HEIGHT);
-        }
-        if (resolved) {
-            shapeRenderer.setColor(0.38f, 0.38f, 0.38f, 1f);
-            shapeRenderer.rect(x, top - 240, 260, 56);
-        }
-        shapeRenderer.end();
     }
 
     @Override public void resize(int width, int height) {
