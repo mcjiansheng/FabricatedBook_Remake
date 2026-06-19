@@ -3,6 +3,7 @@ package com.fabricatedbook.view.actor;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -253,7 +254,7 @@ public class CardActor extends Actor {
         String desc = previewDescription != null ? previewDescription : card.getDescription();
         if (desc != null) {
             float lineY = drawY + visualHeight - 70 * scale;
-            for (String line : wrapLines(desc, 8, 5)) {
+            for (String line : wrapLines(desc, (CARD_WIDTH - 16) * scale, 5)) {
                 font.draw(batch, line, drawX + 8 * scale, lineY);
                 lineY -= 18 * scale;
             }
@@ -268,22 +269,40 @@ public class CardActor extends Actor {
         font.getData().setScale(oldScaleX, oldScaleY);
     }
 
-    private String[] wrapLines(String text, int maxChars, int maxLines) {
-        String normalized = text.replace("，", ",").replace("。", ".")
-                .replace("；", ";").replace("：", ":").trim();
+    private String[] wrapLines(String text, float maxWidth, int maxLines) {
+        String normalized = text.trim();
         java.util.List<String> lines = new java.util.ArrayList<>();
-        int start = 0;
-        while (start < normalized.length() && lines.size() < maxLines) {
-            int end = Math.min(normalized.length(), start + maxChars);
-            lines.add(normalized.substring(start, end));
-            start = end;
+        StringBuilder line = new StringBuilder();
+        int index = 0;
+        GlyphLayout layout = new GlyphLayout();
+        while (index < normalized.length() && lines.size() < maxLines) {
+            char next = normalized.charAt(index++);
+            if (next == '\n') {
+                lines.add(line.toString());
+                line.setLength(0);
+                continue;
+            }
+            line.append(next);
+            layout.setText(font, line);
+            if (layout.width > maxWidth && line.length() > 1) {
+                line.setLength(line.length() - 1);
+                lines.add(line.toString());
+                line.setLength(0);
+                line.append(next);
+            }
         }
-        if (start < normalized.length() && !lines.isEmpty()) {
+        if (line.length() > 0 && lines.size() < maxLines) {
+            lines.add(line.toString());
+        }
+        if (index < normalized.length() && !lines.isEmpty()) {
             int last = lines.size() - 1;
             String current = lines.get(last);
-            lines.set(last, current.length() > 1
-                    ? current.substring(0, current.length() - 1) + "..."
-                    : "...");
+            while (!current.isEmpty()) {
+                layout.setText(font, current + "...");
+                if (layout.width <= maxWidth) break;
+                current = current.substring(0, current.length() - 1);
+            }
+            lines.set(last, current + "...");
         }
         return lines.toArray(new String[0]);
     }

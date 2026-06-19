@@ -97,16 +97,18 @@ public class HandPanel extends Group {
 
         // 获取当前手牌
         // 重新创建卡牌 Actor
-        float totalWidth = hand.size() * CardActor.CARD_WIDTH
-                + (hand.size() - 1) * CARD_GAP;
-        float startX = (FabricBookGame.SCREEN_WIDTH - totalWidth) / 2f;
+        float availableWidth = FabricBookGame.SCREEN_WIDTH - 180f;
+        float gap = hand.size() <= 1 ? 0f : Math.min(CARD_GAP,
+                (availableWidth - hand.size() * CardActor.CARD_WIDTH) / (hand.size() - 1));
+        float totalWidth = hand.size() * CardActor.CARD_WIDTH + Math.max(0, hand.size() - 1) * gap;
+        float startX = Math.max(20f, (availableWidth - totalWidth) / 2f);
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
             CardActor actor = new CardActor(card, font, shapeRenderer);
             actor.setInteractionHandler(battleScreen);
 
-            actor.setPosition(startX + i * (CardActor.CARD_WIDTH + CARD_GAP),
+            actor.setPosition(startX + i * (CardActor.CARD_WIDTH + gap),
                     PANEL_Y);
             addActor(actor);
             cardActors.add(actor);
