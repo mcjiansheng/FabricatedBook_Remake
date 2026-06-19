@@ -13,6 +13,7 @@ import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.UiTheme;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class ShopScreen implements Screen {
     private OrthographicCamera camera;
     private Table itemTable;
     private Label goldLabel;
+    private Label feedbackLabel;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
     /**
@@ -66,7 +68,7 @@ public class ShopScreen implements Screen {
 
         // 标题
         Label titleLabel = new Label("诡异行商", new Label.LabelStyle(
-                game.getFontForScale(2.0f), com.badlogic.gdx.graphics.Color.GOLD));
+                game.getFontForScale(2.0f), UiTheme.ACCENT_GOLD));
         titleLabel.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 80,
                 FabricBookGame.SCREEN_HEIGHT - 60);
         stage.addActor(titleLabel);
@@ -77,6 +79,11 @@ public class ShopScreen implements Screen {
                         com.badlogic.gdx.graphics.Color.WHITE));
         goldLabel.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 60);
         stage.addActor(goldLabel);
+
+        feedbackLabel = new Label("选择商品购买。", new Label.LabelStyle(
+                game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
+        feedbackLabel.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 88);
+        stage.addActor(feedbackLabel);
 
         // 商品列表
         itemTable = new Table();
@@ -110,52 +117,96 @@ public class ShopScreen implements Screen {
     private void renderItems() {
         itemTable.clear();
         List<ShopManager.ShopItem> items = shopManager.getItems();
+        Table content = new Table();
+        content.top().left();
+        addSection(content, "卡牌", items, ShopManager.ShopItem.ItemType.CARD);
+        addSection(content, "藏品", items, ShopManager.ShopItem.ItemType.RELIC);
+        addSection(content, "药水", items, ShopManager.ShopItem.ItemType.POTION);
+        addRemoveService(content);
 
-        for (int i = 0; i < items.size(); i++) {
-            ShopManager.ShopItem item = items.get(i);
-            final int index = i;
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFadeScrollBars(false);
+        scroll.setScrollingDisabled(true, false);
+        itemTable.add(scroll).width(920).height(540).top();
+    }
 
-            String itemStr = item.getName() + " - " + item.getPrice() + "金币"
-                    + (item.isPurchased() ? " [已购]" : "");
-            Label itemLabel = new Label(itemStr, new Label.LabelStyle(
-                    game.getFont(),
-                    item.isPurchased() ? com.badlogic.gdx.graphics.Color.GRAY
-                            : com.badlogic.gdx.graphics.Color.WHITE));
-            itemTable.add(itemLabel).pad(5);
-
-            Label descLabel = new Label(item.getDescription(), new Label.LabelStyle(
-                    game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
-            descLabel.setWrap(true);
-            itemTable.add(descLabel).width(420).pad(5);
-
-            if (!item.isPurchased()) {
-                TextButton.TextButtonStyle buyStyle = UiStyles.buttonStyle(game);
-                TextButton buyBtn = new TextButton("购买", buyStyle);
-                buyBtn.addListener(new ClickListener() {
-                    @Override
-                    public void clicked(
-                            com.badlogic.gdx.scenes.scene2d.InputEvent event,
-                            float x, float y) {
-                        if (shopManager.purchase(index)) {
-                            goldLabel.setText("金币: " + player.getGold());
-                            game.autosaveCurrentRun();
-                            renderItems();
-                        }
-                    }
-                });
-                itemTable.add(buyBtn).width(80).height(30).padLeft(10);
-            }
-
-            itemTable.row();
+    private void addSection(Table content, String title, List<ShopManager.ShopItem> items,
+                            ShopManager.ShopItem.ItemType type) {
+        Label header = new Label(title, new Label.LabelStyle(
+                game.getFontForScale(1.25f), UiTheme.ACCENT_GOLD));
+        content.add(header).colspan(3).left().padTop(14).padBottom(8);
+        content.row();
+        for (int index = 0; index < items.size(); index++) {
+            ShopManager.ShopItem item = items.get(index);
+            if (item.getType() != type) continue;
+            addItemRow(content, item, index);
         }
+    }
 
-        // 弃牌选项
-        String removeStr = "弃牌 (" + shopManager.getRemoveCost() + "金币)"
-                + (shopManager.isRemovePurchased() ? " [已购]" : "");
-        Label removeLabel = new Label(removeStr, new Label.LabelStyle(
-                game.getFont(), com.badlogic.gdx.graphics.Color.WHITE));
-        itemTable.add(removeLabel).pad(5);
-        itemTable.row();
+    private void addItemRow(Table content, ShopManager.ShopItem item, int index) {
+        boolean sold = item.isPurchased();
+        Label name = new Label(item.getName() + "  ·  " + item.getPrice() + " 金币"
+                + (sold ? "  [已购]" : ""), new Label.LabelStyle(game.getFont(),
+                sold ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.WHITE));
+        Label description = new Label(item.getDescription(), new Label.LabelStyle(game.getFont(),
+                sold ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
+        description.setWrap(true);
+        content.add(name).width(240).left().pad(6);
+        content.add(description).width(470).left().pad(6);
+        if (sold) {
+            content.add(new Label("已售罄", new Label.LabelStyle(game.getFont(),
+                    com.badlogic.gdx.graphics.Color.GRAY))).width(120).pad(6);
+        } else {
+            TextButton buy = new TextButton("购买", UiStyles.buttonStyle(game));
+            buy.addListener(new ClickListener() {
+                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    purchaseItem(index, item);
+                }
+            });
+            content.add(buy).width(120).height(38).pad(6);
+        }
+        content.row();
+    }
+
+    private void addRemoveService(Table content) {
+        Label header = new Label("服务", new Label.LabelStyle(game.getFontForScale(1.25f), UiTheme.ACCENT_GOLD));
+        content.add(header).colspan(3).left().padTop(18).padBottom(8);
+        content.row();
+        String status = shopManager.isRemovePurchased() ? "已使用" : shopManager.getRemoveCost() + " 金币";
+        content.add(new Label("移除一张卡牌  ·  " + status,
+                new Label.LabelStyle(game.getFont(), com.badlogic.gdx.graphics.Color.WHITE))).width(240).left().pad(6);
+        content.add(new Label("从牌组中选择一张卡牌移除。",
+                new Label.LabelStyle(game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY))).width(470).left().pad(6);
+        TextButton button = new TextButton(shopManager.isRemovePurchased() ? "已使用" : "选择卡牌",
+                UiStyles.buttonStyle(game));
+        button.setDisabled(shopManager.isRemovePurchased());
+        button.addListener(new ClickListener() {
+            @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                feedbackLabel.setText("弃牌选择界面将在下一步接入；当前服务尚不能购买。");
+            }
+        });
+        content.add(button).width(120).height(38).pad(6);
+        content.row();
+    }
+
+    private void purchaseItem(int index, ShopManager.ShopItem item) {
+        if (player.getGold() < item.getPrice()) {
+            feedbackLabel.setText("金币不足：还需要 " + (item.getPrice() - player.getGold()) + " 金币。");
+            return;
+        }
+        if (item.getType() == ShopManager.ShopItem.ItemType.POTION
+                && player.getPotions().size() >= player.getMaxPotionSlots()) {
+            feedbackLabel.setText("药水栏已满，无法购买药水。");
+            return;
+        }
+        if (shopManager.purchase(index)) {
+            goldLabel.setText("金币: " + player.getGold());
+            feedbackLabel.setText("已购买：" + item.getName());
+            game.autosaveCurrentRun();
+            renderItems();
+        } else {
+            feedbackLabel.setText("购买失败，请检查商品状态。");
+        }
     }
 
     @Override
@@ -163,7 +214,7 @@ public class ShopScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             toggleEscapeMenu();
         }
-        Gdx.gl.glClearColor(0.12f, 0.1f, 0.08f, 1);
+        Gdx.gl.glClearColor(UiTheme.BATTLE_HAND.r, UiTheme.BATTLE_HAND.g, UiTheme.BATTLE_HAND.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         stage.act(delta);
