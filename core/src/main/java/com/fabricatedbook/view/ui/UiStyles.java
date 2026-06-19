@@ -15,6 +15,9 @@ public final class UiStyles {
     private static NinePatchDrawable buttonUp;
     private static NinePatchDrawable buttonOver;
     private static NinePatchDrawable buttonDown;
+    private static Texture buttonUpTexture;
+    private static Texture buttonOverTexture;
+    private static Texture buttonDownTexture;
 
     private UiStyles() {}
 
@@ -37,23 +40,41 @@ public final class UiStyles {
 
     private static void ensureButtonDrawables() {
         if (buttonUp != null) return;
-        buttonUp = buttonDrawable(0.36f, 0.36f, 0.36f, 1f);
-        buttonOver = buttonDrawable(0.46f, 0.46f, 0.46f, 1f);
-        buttonDown = buttonDrawable(0.24f, 0.24f, 0.24f, 1f);
+        buttonUpTexture = buttonTexture(UiTheme.BUTTON_UP);
+        buttonOverTexture = buttonTexture(UiTheme.BUTTON_OVER);
+        buttonDownTexture = buttonTexture(UiTheme.BUTTON_DOWN);
+        buttonUp = new NinePatchDrawable(new NinePatch(buttonUpTexture, 1, 1, 1, 1));
+        buttonOver = new NinePatchDrawable(new NinePatch(buttonOverTexture, 1, 1, 1, 1));
+        buttonDown = new NinePatchDrawable(new NinePatch(buttonDownTexture, 1, 1, 1, 1));
+        buttonUp.setMinWidth(8);
+        buttonUp.setMinHeight(8);
+        buttonOver.setMinWidth(8);
+        buttonOver.setMinHeight(8);
+        buttonDown.setMinWidth(8);
+        buttonDown.setMinHeight(8);
     }
 
-    private static NinePatchDrawable buttonDrawable(float r, float g, float b, float a) {
+    /** Releases globally cached generated textures during application shutdown. */
+    public static void dispose() {
+        if (buttonUpTexture != null) buttonUpTexture.dispose();
+        if (buttonOverTexture != null) buttonOverTexture.dispose();
+        if (buttonDownTexture != null) buttonDownTexture.dispose();
+        buttonUpTexture = null;
+        buttonOverTexture = null;
+        buttonDownTexture = null;
+        buttonUp = null;
+        buttonOver = null;
+        buttonDown = null;
+    }
+
+    private static Texture buttonTexture(Color color) {
         Pixmap pixmap = new Pixmap(8, 8, Pixmap.Format.RGBA8888);
-        pixmap.setColor(r, g, b, a);
+        pixmap.setColor(color);
         pixmap.fill();
-        pixmap.setColor(0.08f, 0.08f, 0.08f, 1f);
+        pixmap.setColor(UiTheme.BUTTON_BORDER);
         pixmap.drawRectangle(0, 0, 8, 8);
         Texture texture = new Texture(pixmap);
         pixmap.dispose();
-        NinePatchDrawable drawable = new NinePatchDrawable(new NinePatch(texture,
-                1, 1, 1, 1));
-        drawable.setMinWidth(8);
-        drawable.setMinHeight(8);
-        return drawable;
+        return texture;
     }
 }

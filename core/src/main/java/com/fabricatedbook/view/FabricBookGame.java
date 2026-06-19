@@ -27,6 +27,7 @@ import com.fabricatedbook.view.screen.FontDebugScreen;
 import com.fabricatedbook.view.screen.MapScreen;
 import com.fabricatedbook.view.screen.ShopScreen;
 import com.fabricatedbook.view.screen.TitleScreen;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.HashMap;
 import java.util.List;
@@ -127,6 +128,10 @@ public class FabricBookGame extends Game {
     @Override
     public void dispose() {
         autosaveCurrentRun();
+        if (getScreen() != null) {
+            getScreen().dispose();
+        }
+        UiStyles.dispose();
         batch.dispose();
         for (BitmapFont cachedFont : fontsBySize.values()) {
             cachedFont.dispose();
@@ -134,9 +139,6 @@ public class FabricBookGame extends Game {
         fontsBySize.clear();
         if (fontGenerator != null) {
             fontGenerator.dispose();
-        }
-        if (getScreen() != null) {
-            getScreen().dispose();
         }
     }
 
