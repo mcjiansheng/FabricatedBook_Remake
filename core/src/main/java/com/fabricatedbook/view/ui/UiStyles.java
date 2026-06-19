@@ -18,6 +18,10 @@ public final class UiStyles {
     private static Texture buttonUpTexture;
     private static Texture buttonOverTexture;
     private static Texture buttonDownTexture;
+    private static NinePatchDrawable panelSurface;
+    private static NinePatchDrawable modalBackdrop;
+    private static Texture panelSurfaceTexture;
+    private static Texture modalBackdropTexture;
 
     private UiStyles() {}
 
@@ -38,6 +42,16 @@ public final class UiStyles {
         return style;
     }
 
+    public static NinePatchDrawable panelSurface() {
+        ensureSurfaces();
+        return panelSurface;
+    }
+
+    public static NinePatchDrawable modalBackdrop() {
+        ensureSurfaces();
+        return modalBackdrop;
+    }
+
     private static void ensureButtonDrawables() {
         if (buttonUp != null) return;
         buttonUpTexture = buttonTexture(UiTheme.BUTTON_UP);
@@ -54,25 +68,49 @@ public final class UiStyles {
         buttonDown.setMinHeight(8);
     }
 
+    private static void ensureSurfaces() {
+        if (panelSurface != null) return;
+        panelSurfaceTexture = solidTexture(UiTheme.BATTLE_SURFACE);
+        modalBackdropTexture = solidTexture(new Color(0f, 0f, 0f, 0.70f));
+        panelSurface = new NinePatchDrawable(new NinePatch(panelSurfaceTexture, 1, 1, 1, 1));
+        modalBackdrop = new NinePatchDrawable(new NinePatch(modalBackdropTexture, 1, 1, 1, 1));
+    }
+
     /** Releases globally cached generated textures during application shutdown. */
     public static void dispose() {
         if (buttonUpTexture != null) buttonUpTexture.dispose();
         if (buttonOverTexture != null) buttonOverTexture.dispose();
         if (buttonDownTexture != null) buttonDownTexture.dispose();
+        if (panelSurfaceTexture != null) panelSurfaceTexture.dispose();
+        if (modalBackdropTexture != null) modalBackdropTexture.dispose();
         buttonUpTexture = null;
         buttonOverTexture = null;
         buttonDownTexture = null;
+        panelSurfaceTexture = null;
+        modalBackdropTexture = null;
         buttonUp = null;
         buttonOver = null;
         buttonDown = null;
+        panelSurface = null;
+        modalBackdrop = null;
     }
 
     private static Texture buttonTexture(Color color) {
+        return solidTexture(color, true);
+    }
+
+    private static Texture solidTexture(Color color) {
+        return solidTexture(color, false);
+    }
+
+    private static Texture solidTexture(Color color, boolean border) {
         Pixmap pixmap = new Pixmap(8, 8, Pixmap.Format.RGBA8888);
         pixmap.setColor(color);
         pixmap.fill();
-        pixmap.setColor(UiTheme.BUTTON_BORDER);
-        pixmap.drawRectangle(0, 0, 8, 8);
+        if (border) {
+            pixmap.setColor(UiTheme.BUTTON_BORDER);
+            pixmap.drawRectangle(0, 0, 8, 8);
+        }
         Texture texture = new Texture(pixmap);
         pixmap.dispose();
         return texture;

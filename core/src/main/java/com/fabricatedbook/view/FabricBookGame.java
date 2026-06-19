@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.fabricatedbook.core.card.CardPool;
+import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.engine.CombatEngine;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.EntityFactory;
@@ -227,6 +228,12 @@ public class FabricBookGame extends Game {
     private Player createDebugPlayer() {
         Player player = new Player("debug-player", "调试战士", Profession.WARRIOR);
         player.setGold(99);
+        // 前端调试场景必须包含可展示、可移除的牌组，避免商店/总览只覆盖空状态。
+        List<com.fabricatedbook.core.card.Card> cards = CardPool.getCardsByProfession("warrior");
+        for (int i = 0; i < Math.min(10, cards.size()); i++) {
+            player.getDrawPile().add(CardFactory.createFromTemplate(cards.get(i)));
+        }
+        player.setCardCount(player.getDrawPile().size());
         List<Potion> potions = new DataLoader().loadPotions();
         for (int i = 0; i < potions.size() && i < 3; i++) {
             player.addPotion(potions.get(i).copy());
