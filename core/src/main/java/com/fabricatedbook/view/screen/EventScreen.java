@@ -182,10 +182,12 @@ public class EventScreen implements Screen {
                             player.takeDamage(-result.hpChange);
                         }
                     }
+                    String acquiredRelicName = null;
                     if (result.relicId != null && !result.relicId.isBlank()) {
                         Relic relic = RelicFactory.createById(result.relicId, player);
                         if (relic != null) {
                             new RelicManager(player).addRelic(relic);
+                            acquiredRelicName = relic.getName();
                         }
                     }
 
@@ -194,7 +196,7 @@ public class EventScreen implements Screen {
                     if (showEndingIfNeeded(result)) {
                         return;
                     }
-                    showResult(result.description);
+                    showResult(result, acquiredRelicName);
                 }
             });
             optionTable.add(btn).width(480).height(OPTION_HEIGHT)
@@ -206,17 +208,27 @@ public class EventScreen implements Screen {
     /**
      * 显示事件结果并添加返回按钮。
      *
-     * @param resultDescription 结果描述
+     * @param result 已结算的事件结果
+     * @param acquiredRelicName 本次获得的藏品名；无则为 null
      */
-    private void showResult(String resultDescription) {
+    private void showResult(EventHandler.EventResult result, String acquiredRelicName) {
         optionTable.clear();
 
-        Label resultLabel = new Label(resultDescription, new Label.LabelStyle(
+        Label resultLabel = new Label(result.description, new Label.LabelStyle(
                 game.getFont(), Color.WHITE));
         resultLabel.setWrap(true);
         resultLabel.setAlignment(Align.left);
-        optionTable.add(resultLabel).width(480).left().padBottom(34);
+        optionTable.add(resultLabel).width(480).left().padBottom(20);
         optionTable.row();
+
+        String summary = resultSummary(result, acquiredRelicName);
+        if (!summary.isBlank()) {
+            Label summaryLabel = new Label(summary, new Label.LabelStyle(game.getFont(), UiTheme.ACCENT_GOLD));
+            summaryLabel.setWrap(true);
+            summaryLabel.setAlignment(Align.left);
+            optionTable.add(summaryLabel).width(480).left().padBottom(28);
+            optionTable.row();
+        }
 
         TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
         TextButton backBtn = new TextButton("继续前进", buttonStyle);
@@ -231,6 +243,24 @@ public class EventScreen implements Screen {
             }
         });
         optionTable.add(backBtn).width(260).height(56).left();
+    }
+
+    private String resultSummary(EventHandler.EventResult result, String relicName) {
+        StringBuilder summary = new StringBuilder();
+        if (result.goldChange != 0) {
+            summary.append(result.goldChange > 0 ? "金币 +" : "金币 ")
+                    .append(result.goldChange);
+        }
+        if (result.hpChange != 0) {
+            if (summary.length() > 0) summary.append("   ");
+            summary.append(result.hpChange >= 9999 ? "生命回满" : result.hpChange > 0
+                    ? "生命 +" + result.hpChange : "生命 " + result.hpChange);
+        }
+        if (relicName != null && !relicName.isBlank()) {
+            if (summary.length() > 0) summary.append("   ");
+            summary.append("获得藏品：").append(relicName);
+        }
+        return summary.toString();
     }
 
     private boolean showEndingIfNeeded(EventHandler.EventResult result) {
