@@ -59,11 +59,43 @@ public final class EscapeMenu {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
-                game.abandonCurrentRun();
-                game.setScreen(new TitleScreen(game));
+                showAbandonConfirmation(stage, game);
             }
         });
         table.add(abandon).width(240).height(54);
         return modal;
+    }
+
+    private static void showAbandonConfirmation(Stage stage, FabricBookGame game) {
+        Group confirmation = UiModal.open(stage);
+        Table panel = UiModal.panel(460, 270);
+        panel.pad(UiLayout.PANEL_PADDING);
+        confirmation.addActor(panel);
+
+        Label title = new Label("放弃本次对局？", new Label.LabelStyle(
+                game.getFontForScale(1.45f), Color.GOLD));
+        panel.add(title).padBottom(18);
+        panel.row();
+        Label detail = new Label("当前进度将被清除，且无法恢复。",
+                new Label.LabelStyle(game.getFont(), Color.WHITE));
+        panel.add(detail).padBottom(24);
+        panel.row();
+
+        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
+        TextButton cancel = new TextButton("取消", style);
+        cancel.addListener(new ClickListener() {
+            @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                UiModal.close(confirmation);
+            }
+        });
+        TextButton confirm = new TextButton("确认放弃", style);
+        confirm.addListener(new ClickListener() {
+            @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                game.abandonCurrentRun();
+                game.setScreen(new TitleScreen(game));
+            }
+        });
+        panel.add(cancel).width(160).height(UiLayout.BUTTON_HEIGHT).padRight(12);
+        panel.add(confirm).width(160).height(UiLayout.BUTTON_HEIGHT);
     }
 }
