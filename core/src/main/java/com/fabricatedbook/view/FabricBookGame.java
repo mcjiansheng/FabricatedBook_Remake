@@ -25,6 +25,7 @@ import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.screen.BattleScreen;
 import com.fabricatedbook.view.screen.CharacterSelectScreen;
 import com.fabricatedbook.view.screen.EventScreen;
+import com.fabricatedbook.view.screen.EndingScreen;
 import com.fabricatedbook.view.screen.FontDebugScreen;
 import com.fabricatedbook.view.screen.InventoryScreen;
 import com.fabricatedbook.view.screen.MapScreen;
@@ -239,6 +240,9 @@ public class FabricBookGame extends Game {
                 break;
             case INVENTORY:
                 setScreen(new InventoryScreen(this, player, null));
+                break;
+            case ENDING:
+                setScreen(new EndingScreen(this, EndingScreen.EndingType.NORMAL));
                 break;
             case TITLE:
             default:

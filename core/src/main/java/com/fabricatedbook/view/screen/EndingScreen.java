@@ -41,21 +41,25 @@ public class EndingScreen implements Screen {
 
         Table root = new Table();
         root.setFillParent(true);
-        root.pad(90, 170, 90, 170);
         stage.addActor(root);
+
+        Table panel = new Table();
+        panel.setBackground(UiStyles.panelSurface());
+        panel.pad(40);
+        root.add(panel).width(900).height(500);
 
         Label title = new Label(titleText(), new Label.LabelStyle(
                 game.getFontForScale(2.0f), Color.GOLD));
         title.setAlignment(Align.center);
-        root.add(title).width(880).padBottom(48);
-        root.row();
+        panel.add(title).width(800).padBottom(48);
+        panel.row();
 
         Label body = new Label(bodyText(), new Label.LabelStyle(
                 game.getFontForScale(1.05f), Color.WHITE));
         body.setWrap(true);
         body.setAlignment(Align.center);
-        root.add(body).width(880).padBottom(54);
-        root.row();
+        panel.add(body).width(800).padBottom(54);
+        panel.row();
 
         TextButton back = new TextButton("返回标题", UiStyles.buttonStyle(game));
         back.addListener(new ClickListener() {
@@ -66,7 +70,7 @@ public class EndingScreen implements Screen {
                 game.setScreen(new TitleScreen(game));
             }
         });
-        root.add(back).width(220).height(56);
+        panel.add(back).width(220).height(56);
     }
 
     private String titleText() {
