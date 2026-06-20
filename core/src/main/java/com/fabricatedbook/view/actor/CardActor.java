@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.math.Vector2;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.view.FabricBookGame;
+import com.fabricatedbook.view.ui.UiStyles;
 
 /**
  * CardActor — 卡牌 Actor
@@ -218,31 +219,16 @@ public class CardActor extends Actor {
         float drawX = getX() - (visualWidth - CARD_WIDTH) / 2f;
         float drawY = getY() - (visualHeight - CARD_HEIGHT) / 2f;
 
-        batch.end();
-
-        // 绘制背景圆角矩形
-        shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(BG_COLOR);
-        shapeRenderer.rect(drawX, drawY, visualWidth, visualHeight);
+        // Keep card chrome inside the Stage batch so dragging does not split rendering.
+        drawRect(batch, BG_COLOR, drawX, drawY, visualWidth, visualHeight);
         if (unavailableReason != null && !unavailableReason.isBlank()) {
-            shapeRenderer.setColor(0.08f, 0.08f, 0.08f, 0.52f);
-            shapeRenderer.rect(drawX, drawY, visualWidth, visualHeight);
+            drawRect(batch, new Color(0.08f, 0.08f, 0.08f, 0.52f), drawX, drawY, visualWidth, visualHeight);
         }
         if (dragging) {
-            shapeRenderer.setColor(SELECTED_COLOR);
-            shapeRenderer.rect(drawX - 3, drawY - 3, visualWidth + 6, visualHeight + 6);
+            drawFrame(batch, SELECTED_COLOR, drawX - 3, drawY - 3, visualWidth + 6, visualHeight + 6, 3);
         }
-        shapeRenderer.end();
-
-        // 绘制边框
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(borderColor());
-        shapeRenderer.rect(drawX, drawY, visualWidth, visualHeight);
-        shapeRenderer.rect(drawX + 3, drawY + 3, visualWidth - 6, visualHeight - 6);
-        shapeRenderer.end();
-
-        batch.begin();
+        drawFrame(batch, borderColor(), drawX, drawY, visualWidth, visualHeight, 1);
+        drawFrame(batch, borderColor(), drawX + 3, drawY + 3, visualWidth - 6, visualHeight - 6, 1);
         Color oldColor = font.getColor().cpy();
         float oldScaleX = font.getData().scaleX;
         float oldScaleY = font.getData().scaleY;
@@ -285,6 +271,20 @@ public class CardActor extends Actor {
         }
         font.setColor(oldColor);
         font.getData().setScale(oldScaleX, oldScaleY);
+    }
+
+    private void drawRect(Batch batch, Color color, float x, float y, float width, float height) {
+        Color old = batch.getColor().cpy();
+        batch.setColor(color);
+        batch.draw(UiStyles.pixelTexture(), x, y, width, height);
+        batch.setColor(old);
+    }
+
+    private void drawFrame(Batch batch, Color color, float x, float y, float width, float height, float line) {
+        drawRect(batch, color, x, y, width, line);
+        drawRect(batch, color, x, y + height - line, width, line);
+        drawRect(batch, color, x, y, line, height);
+        drawRect(batch, color, x + width - line, y, line, height);
     }
 
     private String[] wrapLines(String text, float maxWidth, int maxLines) {

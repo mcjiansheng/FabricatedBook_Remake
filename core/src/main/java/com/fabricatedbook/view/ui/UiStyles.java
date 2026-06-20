@@ -28,6 +28,7 @@ public final class UiStyles {
     private static Texture lightPanelSurfaceTexture;
     private static Texture modalBackdropTexture;
     private static Texture statusBarSurfaceTexture;
+    private static Texture pixelTexture;
 
     private UiStyles() {}
 
@@ -69,6 +70,12 @@ public final class UiStyles {
     public static NinePatchDrawable statusBarSurface() {
         ensureSurfaces();
         return statusBarSurface;
+    }
+
+    /** Shared white pixel for batch-only primitives in legacy Scene2D actors. */
+    public static Texture pixelTexture() {
+        if (pixelTexture == null) pixelTexture = solidTexture(Color.WHITE);
+        return pixelTexture;
     }
 
     private static void ensureButtonDrawables() {
@@ -113,6 +120,7 @@ public final class UiStyles {
         if (lightPanelSurfaceTexture != null) lightPanelSurfaceTexture.dispose();
         if (modalBackdropTexture != null) modalBackdropTexture.dispose();
         if (statusBarSurfaceTexture != null) statusBarSurfaceTexture.dispose();
+        if (pixelTexture != null) pixelTexture.dispose();
         buttonUpTexture = null;
         buttonOverTexture = null;
         buttonDownTexture = null;
@@ -121,6 +129,7 @@ public final class UiStyles {
         lightPanelSurfaceTexture = null;
         modalBackdropTexture = null;
         statusBarSurfaceTexture = null;
+        pixelTexture = null;
         buttonUp = null;
         buttonOver = null;
         buttonDown = null;
