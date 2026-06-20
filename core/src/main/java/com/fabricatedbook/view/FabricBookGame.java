@@ -30,6 +30,7 @@ import com.fabricatedbook.view.screen.FontDebugScreen;
 import com.fabricatedbook.view.screen.InventoryScreen;
 import com.fabricatedbook.view.screen.MapScreen;
 import com.fabricatedbook.view.screen.ShopScreen;
+import com.fabricatedbook.view.screen.SafeHouseScreen;
 import com.fabricatedbook.view.screen.TitleScreen;
 import com.fabricatedbook.view.ui.UiStyles;
 
@@ -243,6 +244,9 @@ public class FabricBookGame extends Game {
                 break;
             case ENDING:
                 setScreen(new EndingScreen(this, EndingScreen.EndingType.NORMAL));
+                break;
+            case SAFE_HOUSE:
+                setScreen(new SafeHouseScreen(this, player, null));
                 break;
             case TITLE:
             default:

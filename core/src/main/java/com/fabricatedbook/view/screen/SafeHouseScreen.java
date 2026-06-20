@@ -54,10 +54,13 @@ public class SafeHouseScreen implements Screen {
         Gdx.input.setInputProcessor(stage);
 
         content = new Table();
-        content.setFillParent(true);
-        content.top().padTop(UiLayout.PAGE_TOP_AFTER_HUD)
-                .padLeft(UiLayout.PAGE_SIDE_PADDING).padRight(UiLayout.PAGE_SIDE_PADDING);
-        stage.addActor(content);
+        content.setBackground(UiStyles.panelSurface());
+        content.pad(UiLayout.PANEL_PADDING);
+        Table root = new Table();
+        root.setFillParent(true);
+        root.top().padTop(UiLayout.PAGE_TOP_AFTER_HUD);
+        root.add(content).width(880).height(560).top();
+        stage.addActor(root);
         new GameHud(stage, game, player,
                 () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
                 () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.CARDS)),

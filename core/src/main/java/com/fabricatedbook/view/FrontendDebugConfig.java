@@ -14,7 +14,8 @@ public class FrontendDebugConfig {
         SHOP,
         EVENT,
         INVENTORY,
-        ENDING
+        ENDING,
+        SAFE_HOUSE
     }
 
     private final ScreenKind screenKind;
@@ -67,6 +68,10 @@ public class FrontendDebugConfig {
         return new FrontendDebugConfig(ScreenKind.ENDING, 1, null);
     }
 
+    public static FrontendDebugConfig safeHouse() {
+        return new FrontendDebugConfig(ScreenKind.SAFE_HOUSE, 1, null);
+    }
+
     public static FrontendDebugConfig parse(String[] args) {
         if (args == null || args.length == 0) return title();
         String screen = null;
@@ -104,6 +109,7 @@ public class FrontendDebugConfig {
             case "event" -> event(eventName);
             case "inventory", "deck" -> inventory();
             case "ending", "end" -> ending();
+            case "safe-house", "safehouse", "rest" -> safeHouse();
             default -> title();
         };
     }
