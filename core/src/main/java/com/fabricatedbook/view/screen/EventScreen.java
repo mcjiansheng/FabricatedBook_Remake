@@ -149,14 +149,17 @@ public class EventScreen implements Screen {
             EventHandler.EventOption option = options.get(i);
 
             TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
-            TextButton btn = new TextButton(cleanLabel(option.label) + "\n" + option.description,
+            String detail = option.enabled ? option.description
+                    : option.description + "\n[锁定] " + option.disabledReason;
+            TextButton btn = new TextButton(cleanLabel(option.label) + "\n" + detail,
                     buttonStyle);
             btn.getLabel().setAlignment(Align.left);
             btn.getLabelCell().padLeft(28).padRight(24);
+            btn.setDisabled(!option.enabled);
             btn.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    if (resolved) return;
+                    if (resolved || !option.enabled) return;
                     resolved = true;
 
                     EventHandler.EventResult result =

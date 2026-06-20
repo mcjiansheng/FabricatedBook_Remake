@@ -39,10 +39,18 @@ public class EventHandler {
     public static class EventOption {
         public final String label;
         public final String description;
+        public final boolean enabled;
+        public final String disabledReason;
 
         public EventOption(String label, String description) {
+            this(label, description, true, "");
+        }
+
+        public EventOption(String label, String description, boolean enabled, String disabledReason) {
             this.label = label;
             this.description = description;
+            this.enabled = enabled;
+            this.disabledReason = disabledReason == null ? "" : disabledReason;
         }
     }
 
@@ -156,10 +164,10 @@ public class EventHandler {
                         "绝对的集权，皇权至高无上。获得藏品「集权」"));
                 options.add(new EventOption("我要财富",
                         "为了利益无所不用其极。获得藏品「寡头」"));
-                if (canChooseBabelTower(player)) {
-                    options.add(new EventOption("没有你，对我很重要",
-                            "凡人联合起来对神的挑战。获得藏品「巴别塔」"));
-                }
+                boolean babelAvailable = canChooseBabelTower(player);
+                options.add(new EventOption("没有你，对我很重要",
+                        "凡人联合起来对神的挑战。获得藏品「巴别塔」",
+                        babelAvailable, "需要持有「背叛」或「仇恨」"));
                 return options;
             }
             case "相遇":
