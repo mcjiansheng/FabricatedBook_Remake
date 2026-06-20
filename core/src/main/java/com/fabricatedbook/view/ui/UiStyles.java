@@ -15,9 +15,11 @@ public final class UiStyles {
     private static NinePatchDrawable buttonUp;
     private static NinePatchDrawable buttonOver;
     private static NinePatchDrawable buttonDown;
+    private static NinePatchDrawable buttonDisabled;
     private static Texture buttonUpTexture;
     private static Texture buttonOverTexture;
     private static Texture buttonDownTexture;
+    private static Texture buttonDisabledTexture;
     private static NinePatchDrawable panelSurface;
     private static NinePatchDrawable modalBackdrop;
     private static NinePatchDrawable statusBarSurface;
@@ -41,6 +43,7 @@ public final class UiStyles {
         style.up = buttonUp;
         style.over = buttonOver;
         style.down = buttonDown;
+        style.disabled = buttonDisabled;
         return style;
     }
 
@@ -65,15 +68,19 @@ public final class UiStyles {
         buttonUpTexture = buttonTexture(UiTheme.BUTTON_UP);
         buttonOverTexture = buttonTexture(UiTheme.BUTTON_OVER);
         buttonDownTexture = buttonTexture(UiTheme.BUTTON_DOWN);
+        buttonDisabledTexture = buttonTexture(new Color(0.25f, 0.25f, 0.25f, 1f));
         buttonUp = new NinePatchDrawable(new NinePatch(buttonUpTexture, 1, 1, 1, 1));
         buttonOver = new NinePatchDrawable(new NinePatch(buttonOverTexture, 1, 1, 1, 1));
         buttonDown = new NinePatchDrawable(new NinePatch(buttonDownTexture, 1, 1, 1, 1));
+        buttonDisabled = new NinePatchDrawable(new NinePatch(buttonDisabledTexture, 1, 1, 1, 1));
         buttonUp.setMinWidth(8);
         buttonUp.setMinHeight(8);
         buttonOver.setMinWidth(8);
         buttonOver.setMinHeight(8);
         buttonDown.setMinWidth(8);
         buttonDown.setMinHeight(8);
+        buttonDisabled.setMinWidth(8);
+        buttonDisabled.setMinHeight(8);
     }
 
     private static void ensureSurfaces() {
@@ -91,18 +98,21 @@ public final class UiStyles {
         if (buttonUpTexture != null) buttonUpTexture.dispose();
         if (buttonOverTexture != null) buttonOverTexture.dispose();
         if (buttonDownTexture != null) buttonDownTexture.dispose();
+        if (buttonDisabledTexture != null) buttonDisabledTexture.dispose();
         if (panelSurfaceTexture != null) panelSurfaceTexture.dispose();
         if (modalBackdropTexture != null) modalBackdropTexture.dispose();
         if (statusBarSurfaceTexture != null) statusBarSurfaceTexture.dispose();
         buttonUpTexture = null;
         buttonOverTexture = null;
         buttonDownTexture = null;
+        buttonDisabledTexture = null;
         panelSurfaceTexture = null;
         modalBackdropTexture = null;
         statusBarSurfaceTexture = null;
         buttonUp = null;
         buttonOver = null;
         buttonDown = null;
+        buttonDisabled = null;
         panelSurface = null;
         modalBackdrop = null;
         statusBarSurface = null;

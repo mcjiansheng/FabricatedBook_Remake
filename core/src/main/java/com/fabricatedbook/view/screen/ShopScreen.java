@@ -110,7 +110,10 @@ public class ShopScreen implements Screen {
                 () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
                 () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.CARDS)),
                 () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.RELICS)),
-                false, null, () -> feedbackLabel.setText("药水栏已更新。"));
+                false, null, () -> {
+                    feedbackLabel.setText("药水栏已更新。");
+                    renderItems();
+                });
     }
 
     /**
@@ -147,6 +150,9 @@ public class ShopScreen implements Screen {
 
     private void addItemRow(Table content, ShopManager.ShopItem item, int index) {
         boolean sold = item.isPurchased();
+        boolean unaffordable = player.getGold() < item.getPrice();
+        boolean potionFull = item.getType() == ShopManager.ShopItem.ItemType.POTION
+                && !player.canAddPotion();
         Label name = new Label(item.getName() + "  ·  " + item.getPrice() + " 金币"
                 + (sold ? "  [已购]" : ""), new Label.LabelStyle(game.getFont(),
                 sold ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.WHITE));
@@ -155,9 +161,11 @@ public class ShopScreen implements Screen {
         description.setWrap(true);
         content.add(name).width(240).left().pad(6);
         content.add(description).width(470).left().pad(6);
-        if (sold) {
-            content.add(new Label("已售罄", new Label.LabelStyle(game.getFont(),
-                    com.badlogic.gdx.graphics.Color.GRAY))).width(120).pad(6);
+        if (sold || unaffordable || potionFull) {
+            String reason = sold ? "已售罄" : potionFull ? "药水栏满" : "金币不足";
+            TextButton unavailable = new TextButton(reason, UiStyles.buttonStyle(game));
+            unavailable.setDisabled(true);
+            content.add(unavailable).width(120).height(38).pad(6);
         } else {
             TextButton buy = new TextButton("购买", UiStyles.buttonStyle(game));
             buy.addListener(new ClickListener() {
@@ -179,9 +187,13 @@ public class ShopScreen implements Screen {
                 new Label.LabelStyle(game.getFont(), com.badlogic.gdx.graphics.Color.WHITE))).width(240).left().pad(6);
         content.add(new Label("从牌组中选择一张卡牌移除。",
                 new Label.LabelStyle(game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY))).width(470).left().pad(6);
-        TextButton button = new TextButton(shopManager.isRemovePurchased() ? "已使用" : "选择卡牌",
+        boolean cannotAfford = player.getGold() < shopManager.getRemoveCost();
+        boolean emptyDeck = player.getDrawPile().isEmpty();
+        String action = shopManager.isRemovePurchased() ? "已使用"
+                : cannotAfford ? "金币不足" : emptyDeck ? "牌组为空" : "选择卡牌";
+        TextButton button = new TextButton(action,
                 UiStyles.buttonStyle(game));
-        button.setDisabled(shopManager.isRemovePurchased());
+        button.setDisabled(shopManager.isRemovePurchased() || cannotAfford || emptyDeck);
         button.addListener(new ClickListener() {
             @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
                 if (player.getGold() < shopManager.getRemoveCost()) {
