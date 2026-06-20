@@ -16,6 +16,7 @@ import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
+import com.fabricatedbook.view.ui.PotionDiscardMenu;
 
 import java.util.List;
 
@@ -113,6 +114,15 @@ public class ShopScreen implements Screen {
             }
         });
         stage.addActor(backBtn);
+        TextButton discardPotions = new TextButton("丢弃药水", UiStyles.buttonStyle(game));
+        discardPotions.setPosition(20, 30);
+        discardPotions.setSize(150, 50);
+        discardPotions.addListener(new ClickListener() {
+            @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                PotionDiscardMenu.show(stage, game, player, () -> feedbackLabel.setText("药水栏已更新。"));
+            }
+        });
+        stage.addActor(discardPotions);
     }
 
     /**

@@ -33,6 +33,7 @@ import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.TopStatusBar;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.PotionDiscardMenu;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -407,6 +408,14 @@ public class MapScreen implements Screen {
         });
         uiStage.addActor(cards);
         uiStage.addActor(relics);
+        TextButton potions = new TextButton("丢弃药水", UiStyles.buttonStyle(game));
+        potions.setBounds(590, FabricBookGame.SCREEN_HEIGHT - TopStatusBar.BUTTON_H - 5, 130, TopStatusBar.BUTTON_H);
+        potions.addListener(new ClickListener() {
+            @Override public void clicked(InputEvent event, float x, float y) {
+                PotionDiscardMenu.show(uiStage, game, player, null);
+            }
+        });
+        uiStage.addActor(potions);
     }
 
     /** 更新当前可访问节点 */

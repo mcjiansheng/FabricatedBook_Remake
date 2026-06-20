@@ -25,6 +25,7 @@ import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.TopStatusBar;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
+import com.fabricatedbook.view.ui.PotionDiscardMenu;
 
 import java.util.List;
 import java.util.Random;
@@ -131,6 +132,16 @@ public class EventScreen implements Screen {
 
         root.add(eventText).width(EVENT_TEXT_WIDTH).top().left().padRight(COLUMN_GAP);
         root.add(optionTable).width(OPTION_WIDTH).top().left();
+
+        TextButton discardPotions = new TextButton("丢弃药水", UiStyles.buttonStyle(game));
+        discardPotions.setPosition(24, 24);
+        discardPotions.setSize(150, 48);
+        discardPotions.addListener(new ClickListener() {
+            @Override public void clicked(InputEvent event, float x, float y) {
+                PotionDiscardMenu.show(stage, game, player, null);
+            }
+        });
+        stage.addActor(discardPotions);
     }
 
     /**
