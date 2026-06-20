@@ -1,11 +1,11 @@
 package com.fabricatedbook.view.ui;
 
-import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.view.FabricBookGame;
@@ -19,6 +19,7 @@ public final class PotionActionBar extends Table {
     private final boolean canUse;
     private final PotionUseHandler useHandler;
     private final Runnable onChanged;
+    private Table actionMenu;
 
     public PotionActionBar(Stage stage, FabricBookGame game, Player player, boolean canUse,
                            PotionUseHandler useHandler, Runnable onChanged) {
@@ -31,21 +32,67 @@ public final class PotionActionBar extends Table {
         for (int i = 0; i < player.getPotions().size(); i++) {
             final int index = i;
             TextButton button = new TextButton(player.getPotions().get(i).getName(), UiStyles.buttonStyle(game));
-            button.addListener(new ClickListener() { @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e, float x, float y) { showActions(index); }});
+            button.addListener(new ClickListener() {
+                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e, float x, float y) {
+                    showActions(index, button);
+                }
+            });
             add(button).width(118).height(34).padRight(6);
         }
     }
-    private void showActions(int index) {
+
+    private void showActions(int index, TextButton anchor) {
         if (index < 0 || index >= player.getPotions().size()) return;
-        Potion potion = player.getPotions().get(index);
-        Group modal = new Group(); modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT); stage.addActor(modal);
-        Table backdrop = new Table(); backdrop.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT); backdrop.setBackground(UiStyles.modalBackdrop()); modal.addActor(backdrop);
-        Table panel = new Table(); panel.setBackground(UiStyles.panelSurface()); panel.setSize(360, canUse ? 220 : 165); panel.setPosition(460, 280); panel.pad(20); modal.addActor(panel);
-        panel.add(new Label(potion.getName(), new Label.LabelStyle(game.getFontForScale(1.3f), UiTheme.ACCENT_GOLD))).padBottom(14); panel.row();
-        if (canUse) { TextButton use = new TextButton("使用", UiStyles.buttonStyle(game)); use.addListener(new ClickListener(){@Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e,float x,float y){ Potion p=player.removePotion(index); if(p!=null && useHandler!=null) useHandler.use(p); modal.remove(); changed(); }}); panel.add(use).width(220).height(40).padBottom(8); panel.row(); }
-        TextButton discard = new TextButton("丢弃", UiStyles.buttonStyle(game)); discard.addListener(new ClickListener(){@Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e,float x,float y){ player.removePotion(index); game.autosaveCurrentRun(); modal.remove(); changed(); }}); panel.add(discard).width(220).height(40).padBottom(8); panel.row();
-        TextButton cancel = new TextButton("取消", UiStyles.buttonStyle(game)); cancel.addListener(new ClickListener(){@Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e,float x,float y){modal.remove();}}); panel.add(cancel).width(180).height(36);
-        modal.toFront();
+        closeActions();
+        actionMenu = new Table();
+        actionMenu.setBackground(UiStyles.panelSurface());
+        actionMenu.pad(6);
+        if (canUse) {
+            TextButton use = new TextButton("使用", UiStyles.buttonStyle(game));
+            use.addListener(new ClickListener() {
+                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e, float x, float y) {
+                    Potion potion = player.removePotion(index);
+                    if (potion != null && useHandler != null) useHandler.use(potion);
+                    closeActions();
+                    changed();
+                }
+            });
+            actionMenu.add(use).width(116).height(30).padBottom(4);
+            actionMenu.row();
+        }
+        TextButton discard = new TextButton("丢弃", UiStyles.buttonStyle(game));
+        discard.addListener(new ClickListener() {
+            @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e, float x, float y) {
+                player.removePotion(index);
+                game.autosaveCurrentRun();
+                closeActions();
+                changed();
+            }
+        });
+        actionMenu.add(discard).width(116).height(30).padBottom(4);
+        actionMenu.row();
+        TextButton cancel = new TextButton("取消", UiStyles.buttonStyle(game));
+        cancel.addListener(new ClickListener() {
+            @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e, float x, float y) {
+                closeActions();
+            }
+        });
+        actionMenu.add(cancel).width(116).height(26);
+        actionMenu.pack();
+
+        Vector2 position = anchor.localToStageCoordinates(new Vector2(0, 0));
+        float x = MathUtils.clamp(position.x, 4, stage.getWidth() - actionMenu.getWidth() - 4);
+        float y = position.y - actionMenu.getHeight() - 6;
+        if (y < 4) y = position.y + anchor.getHeight() + 6;
+        actionMenu.setPosition(x, y);
+        stage.addActor(actionMenu);
+        actionMenu.toFront();
     }
-    private void changed(){ rebuild(); if(onChanged!=null) onChanged.run(); }
+
+    private void closeActions() {
+        if (actionMenu != null) actionMenu.remove();
+        actionMenu = null;
+    }
+
+    private void changed() { rebuild(); if (onChanged != null) onChanged.run(); }
 }

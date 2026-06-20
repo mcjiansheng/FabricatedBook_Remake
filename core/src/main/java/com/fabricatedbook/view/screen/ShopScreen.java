@@ -16,7 +16,7 @@ import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
-import com.fabricatedbook.view.ui.PotionActionBar;
+import com.fabricatedbook.view.ui.GameHud;
 
 import java.util.List;
 
@@ -37,7 +37,6 @@ public class ShopScreen implements Screen {
     private Stage stage;
     private OrthographicCamera camera;
     private Table itemTable;
-    private Label goldLabel;
     private Label feedbackLabel;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
     private Group removeModal;
@@ -75,25 +74,18 @@ public class ShopScreen implements Screen {
         Label titleLabel = new Label("诡异行商", new Label.LabelStyle(
                 game.getFontForScale(2.0f), UiTheme.ACCENT_GOLD));
         titleLabel.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 80,
-                FabricBookGame.SCREEN_HEIGHT - 60);
+                FabricBookGame.SCREEN_HEIGHT - 112);
         stage.addActor(titleLabel);
-
-        // 金币显示
-        goldLabel = new Label("金币: " + player.getGold(),
-                new Label.LabelStyle(game.getFont(),
-                        com.badlogic.gdx.graphics.Color.WHITE));
-        goldLabel.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 60);
-        stage.addActor(goldLabel);
 
         feedbackLabel = new Label("选择商品购买。", new Label.LabelStyle(
                 game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
-        feedbackLabel.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 88);
+        feedbackLabel.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 116);
         stage.addActor(feedbackLabel);
 
         // 商品列表
         itemTable = new Table();
         itemTable.setFillParent(true);
-        itemTable.top().padTop(100);
+        itemTable.top().padTop(142);
         renderItems();
         stage.addActor(itemTable);
 
@@ -114,10 +106,11 @@ public class ShopScreen implements Screen {
             }
         });
         stage.addActor(backBtn);
-        PotionActionBar potions = new PotionActionBar(stage, game, player, false, null,
-                () -> feedbackLabel.setText("药水栏已更新。"));
-        potions.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 128);
-        stage.addActor(potions);
+        new GameHud(stage, game, player,
+                () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.CARDS)),
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.RELICS)),
+                false, null, () -> feedbackLabel.setText("药水栏已更新。"));
     }
 
     /**
@@ -216,7 +209,6 @@ public class ShopScreen implements Screen {
             return;
         }
         if (shopManager.purchase(index)) {
-            goldLabel.setText("金币: " + player.getGold());
             feedbackLabel.setText("已购买：" + item.getName());
             game.autosaveCurrentRun();
             renderItems();
@@ -292,7 +284,6 @@ public class ShopScreen implements Screen {
                 if (selectedRemoveIndex < 0) return;
                 Card selected = player.getDrawPile().get(selectedRemoveIndex);
                 if (shopManager.purchaseRemove(selectedRemoveIndex)) {
-                    goldLabel.setText("金币: " + player.getGold());
                     feedbackLabel.setText("已移除：" + selected.getName());
                     game.autosaveCurrentRun();
                     renderItems();

@@ -44,7 +44,7 @@ import com.fabricatedbook.view.ui.EnergyBar;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
-import com.fabricatedbook.view.ui.PotionActionBar;
+import com.fabricatedbook.view.ui.GameHud;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +81,6 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private List<EnemyActor> enemyActors;
     private Label statusLabel;
     private Label turnLabel;
-    private PotionActionBar potionTable;
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
     private boolean battleInitialized;
@@ -187,13 +186,12 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 FabricBookGame.SCREEN_HEIGHT - 62);
         stage.addActor(turnLabel);
 
-        potionTable = new PotionActionBar(stage, game, player, true,
-                potion -> potion.use(player, enemies, relicManager),
+        new GameHud(stage, game, player,
+                () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.CARDS)),
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.RELICS)),
+                true, potion -> potion.use(player, enemies, relicManager),
                 () -> statusLabel.setText("药水栏已更新。"));
-        potionTable.left();
-        potionTable.setPosition(24, FabricBookGame.SCREEN_HEIGHT - 182);
-        stage.addActor(potionTable);
-        renderPotionButtons();
 
         if (!battleInitialized) {
             relicManager = new RelicManager(player);
@@ -350,10 +348,6 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     public CombatEngine getCombatEngine() { return combatEngine; }
     public Player getPlayer() { return player; }
     public List<Enemy> getEnemies() { return enemies; }
-
-    private void renderPotionButtons() {
-        potionTable.rebuild();
-    }
 
     private void updateTargetHighlight(CardActor actor, float stageX, float stageY) {
         clearTargetHighlight();

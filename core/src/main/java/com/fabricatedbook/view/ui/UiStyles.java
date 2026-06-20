@@ -20,8 +20,10 @@ public final class UiStyles {
     private static Texture buttonDownTexture;
     private static NinePatchDrawable panelSurface;
     private static NinePatchDrawable modalBackdrop;
+    private static NinePatchDrawable statusBarSurface;
     private static Texture panelSurfaceTexture;
     private static Texture modalBackdropTexture;
+    private static Texture statusBarSurfaceTexture;
 
     private UiStyles() {}
 
@@ -52,6 +54,12 @@ public final class UiStyles {
         return modalBackdrop;
     }
 
+    /** Light, unobtrusive surface reserved for the always-visible game HUD. */
+    public static NinePatchDrawable statusBarSurface() {
+        ensureSurfaces();
+        return statusBarSurface;
+    }
+
     private static void ensureButtonDrawables() {
         if (buttonUp != null) return;
         buttonUpTexture = buttonTexture(UiTheme.BUTTON_UP);
@@ -72,8 +80,10 @@ public final class UiStyles {
         if (panelSurface != null) return;
         panelSurfaceTexture = solidTexture(UiTheme.BATTLE_SURFACE);
         modalBackdropTexture = solidTexture(new Color(0f, 0f, 0f, 0.70f));
+        statusBarSurfaceTexture = solidTexture(new Color(0.86f, 0.86f, 0.86f, 1f));
         panelSurface = new NinePatchDrawable(new NinePatch(panelSurfaceTexture, 1, 1, 1, 1));
         modalBackdrop = new NinePatchDrawable(new NinePatch(modalBackdropTexture, 1, 1, 1, 1));
+        statusBarSurface = new NinePatchDrawable(new NinePatch(statusBarSurfaceTexture, 1, 1, 1, 1));
     }
 
     /** Releases globally cached generated textures during application shutdown. */
@@ -83,16 +93,19 @@ public final class UiStyles {
         if (buttonDownTexture != null) buttonDownTexture.dispose();
         if (panelSurfaceTexture != null) panelSurfaceTexture.dispose();
         if (modalBackdropTexture != null) modalBackdropTexture.dispose();
+        if (statusBarSurfaceTexture != null) statusBarSurfaceTexture.dispose();
         buttonUpTexture = null;
         buttonOverTexture = null;
         buttonDownTexture = null;
         panelSurfaceTexture = null;
         modalBackdropTexture = null;
+        statusBarSurfaceTexture = null;
         buttonUp = null;
         buttonOver = null;
         buttonDown = null;
         panelSurface = null;
         modalBackdrop = null;
+        statusBarSurface = null;
     }
 
     private static Texture buttonTexture(Color color) {

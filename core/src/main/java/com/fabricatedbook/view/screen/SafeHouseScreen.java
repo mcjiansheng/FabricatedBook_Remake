@@ -17,6 +17,7 @@ import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.GameHud;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +54,13 @@ public class SafeHouseScreen implements Screen {
 
         content = new Table();
         content.setFillParent(true);
-        content.top().padTop(72).padLeft(90).padRight(90);
+        content.top().padTop(92).padLeft(90).padRight(90);
         stage.addActor(content);
+        new GameHud(stage, game, player,
+                () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.CARDS)),
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.RELICS)),
+                false, null, null);
         renderMainOptions();
     }
 

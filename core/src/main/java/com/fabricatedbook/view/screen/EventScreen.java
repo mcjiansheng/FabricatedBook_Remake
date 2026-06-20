@@ -22,10 +22,9 @@ import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
-import com.fabricatedbook.view.ui.TopStatusBar;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
-import com.fabricatedbook.view.ui.PotionActionBar;
+import com.fabricatedbook.view.ui.GameHud;
 
 import java.util.List;
 import java.util.Random;
@@ -50,7 +49,6 @@ public class EventScreen implements Screen {
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
     private BitmapFont font;
-    private TopStatusBar topStatusBar;
     private Table optionTable;
     private boolean resolved;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
@@ -100,7 +98,6 @@ public class EventScreen implements Screen {
         shapeRenderer = new ShapeRenderer();
         batch = game.getBatch();
         font = game.getFont();
-        topStatusBar = new TopStatusBar(player, font);
 
         Table root = new Table();
         root.setFillParent(true);
@@ -133,9 +130,11 @@ public class EventScreen implements Screen {
         root.add(eventText).width(EVENT_TEXT_WIDTH).top().left().padRight(COLUMN_GAP);
         root.add(optionTable).width(OPTION_WIDTH).top().left();
 
-        PotionActionBar potions = new PotionActionBar(stage, game, player, false, null, null);
-        potions.setPosition(24, FabricBookGame.SCREEN_HEIGHT - 128);
-        stage.addActor(potions);
+        new GameHud(stage, game, player,
+                () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.CARDS)),
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.RELICS)),
+                false, null, null);
     }
 
     /**
@@ -257,16 +256,8 @@ public class EventScreen implements Screen {
                 UiTheme.MAP_BACKGROUND.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        drawTopBar();
-
         stage.act(delta);
         stage.draw();
-    }
-
-    private void drawTopBar() {
-        String layerText = returnMap != null ? returnMap.currentLayerStatusText() : "";
-        topStatusBar.draw(batch, shapeRenderer, camera, layerText,
-                false, new Vector2());
     }
 
     @Override public void resize(int width, int height) {

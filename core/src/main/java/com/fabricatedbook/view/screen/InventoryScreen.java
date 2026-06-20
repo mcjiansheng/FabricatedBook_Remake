@@ -18,6 +18,7 @@ import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
+import com.fabricatedbook.view.ui.GameHud;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,8 +55,14 @@ public class InventoryScreen implements Screen {
 
         Table root = new Table();
         root.setFillParent(true);
-        root.top().pad(36, 90, 36, 90);
+        root.top().pad(92, 90, 36, 90);
         stage.addActor(root);
+
+        new GameHud(stage, game, player,
+                () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, Tab.CARDS)),
+                () -> game.setScreen(new InventoryScreen(game, player, returnMap, Tab.RELICS)),
+                false, null, null);
 
         String titleText = selectedTab == Tab.CARDS ? "卡牌" : "藏品";
         Label title = new Label(titleText, new Label.LabelStyle(

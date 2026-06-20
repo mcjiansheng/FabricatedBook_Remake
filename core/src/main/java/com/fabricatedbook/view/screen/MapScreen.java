@@ -15,7 +15,6 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.fabricatedbook.core.engine.CombatEngine;
@@ -31,9 +30,7 @@ import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
-import com.fabricatedbook.view.ui.TopStatusBar;
-import com.fabricatedbook.view.ui.UiStyles;
-import com.fabricatedbook.view.ui.PotionActionBar;
+import com.fabricatedbook.view.ui.GameHud;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -126,8 +123,8 @@ public class MapScreen implements Screen {
     private SpriteBatch batch;
     private BitmapFont font;
     private GlyphLayout glyphLayout;
-    private TopStatusBar topStatusBar;
     private Stage uiStage;
+    private GameHud gameHud;
     private Random random;
 
     // 贴图资源
@@ -375,7 +372,6 @@ public class MapScreen implements Screen {
         font = game.getFont();
         glyphLayout = new GlyphLayout();
         shapeRenderer = new ShapeRenderer();
-        topStatusBar = new TopStatusBar(player, font);
         uiStage = new Stage(viewport);
         Gdx.input.setInputProcessor(uiStage);
         addTopBarButtons();
@@ -386,31 +382,11 @@ public class MapScreen implements Screen {
     }
 
     private void addTopBarButtons() {
-        TextButton cards = new TextButton("卡牌", UiStyles.buttonStyle(game));
-        cards.setBounds(FabricBookGame.SCREEN_WIDTH - 330,
-                FabricBookGame.SCREEN_HEIGHT - TopStatusBar.BUTTON_H - 5,
-                TopStatusBar.BUTTON_W, TopStatusBar.BUTTON_H);
-        cards.addListener(new ClickListener() {
-            @Override public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new InventoryScreen(game, player, MapScreen.this,
-                        InventoryScreen.Tab.CARDS));
-            }
-        });
-        TextButton relics = new TextButton("藏品", UiStyles.buttonStyle(game));
-        relics.setBounds(FabricBookGame.SCREEN_WIDTH - 170,
-                FabricBookGame.SCREEN_HEIGHT - TopStatusBar.BUTTON_H - 5,
-                TopStatusBar.BUTTON_W, TopStatusBar.BUTTON_H);
-        relics.addListener(new ClickListener() {
-            @Override public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new InventoryScreen(game, player, MapScreen.this,
-                        InventoryScreen.Tab.RELICS));
-            }
-        });
-        uiStage.addActor(cards);
-        uiStage.addActor(relics);
-        PotionActionBar potions = new PotionActionBar(uiStage, game, player, false, null, null);
-        potions.setPosition(455, FabricBookGame.SCREEN_HEIGHT - TopStatusBar.BUTTON_H - 1);
-        uiStage.addActor(potions);
+        gameHud = new GameHud(uiStage, game, player, this::currentLayerStatusText,
+                () -> game.setScreen(new InventoryScreen(game, player, MapScreen.this,
+                        InventoryScreen.Tab.CARDS)),
+                () -> game.setScreen(new InventoryScreen(game, player, MapScreen.this,
+                        InventoryScreen.Tab.RELICS)), false, null, null);
     }
 
     /** 更新当前可访问节点 */
@@ -470,10 +446,9 @@ public class MapScreen implements Screen {
         // 绘制可选/已访问节点边框
         drawNodeFrames();
 
-        // 绘制顶栏（在 batch.end() 后绘制，使用 shapeRenderer + batch）
-        drawTopBar();
         drawLayerIntro();
         if (uiStage != null) {
+            if (gameHud != null) gameHud.setVisible(layerIntroTimer <= 0);
             uiStage.act(delta);
             uiStage.draw();
         }
@@ -1088,12 +1063,6 @@ public class MapScreen implements Screen {
         if (tex == null) return NODE_HEIGHT;
         float scale = Math.min(NODE_WIDTH / tex.getWidth(), NODE_HEIGHT / tex.getHeight());
         return tex.getHeight() * scale;
-    }
-
-    /** 绘制顶部状态栏 */
-    private void drawTopBar() {
-        topStatusBar.draw(batch, shapeRenderer, camera, currentLayerStatusText(),
-                false, null);
     }
 
     public String currentLayerStatusText() {
