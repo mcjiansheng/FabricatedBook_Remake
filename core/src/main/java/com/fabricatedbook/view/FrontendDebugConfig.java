@@ -5,6 +5,7 @@ public class FrontendDebugConfig {
 
     public enum ScreenKind {
         TITLE,
+        CHARACTER_SELECT,
         FONT_DEBUG,
         MAP,
         BATTLE,
@@ -27,6 +28,10 @@ public class FrontendDebugConfig {
 
     public static FrontendDebugConfig title() {
         return new FrontendDebugConfig(ScreenKind.TITLE, 1, null);
+    }
+
+    public static FrontendDebugConfig characterSelect() {
+        return new FrontendDebugConfig(ScreenKind.CHARACTER_SELECT, 1, null);
     }
 
     public static FrontendDebugConfig fontDebug() {
@@ -84,6 +89,7 @@ public class FrontendDebugConfig {
         }
         return switch (normalized) {
             case "title" -> title();
+            case "character-select", "characters", "select" -> characterSelect();
             case "font", "fonts", "fontdebug", "font-debug" -> fontDebug();
             case "map" -> map(layer);
             case "battle", "fight" -> battle();

@@ -19,6 +19,8 @@ import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.UiTheme;
+import com.fabricatedbook.view.ui.UiLayout;
 
 import java.util.List;
 
@@ -50,11 +52,11 @@ public class CharacterSelectScreen implements Screen {
 
         Table root = new Table();
         root.setFillParent(true);
-        root.top().padTop(36);
+        root.top().padTop(42);
         stage.addActor(root);
 
         Label title = new Label("角色选择", new Label.LabelStyle(
-                game.getFontForScale(2.2f), com.badlogic.gdx.graphics.Color.WHITE));
+                game.getFontForScale(2.2f), UiTheme.ACCENT_GOLD));
         root.add(title).colspan(3).padBottom(24);
         root.row();
 
@@ -81,7 +83,9 @@ public class CharacterSelectScreen implements Screen {
     private void addProfession(Table root, Profession profession, Texture texture,
                                String name, String description) {
         Table card = new Table();
+        card.setBackground(UiStyles.panelSurface());
         card.defaults().pad(6);
+        card.pad(UiLayout.PANEL_PADDING / 2f);
 
         if (texture != null) {
             Image image = new Image(texture);
@@ -96,7 +100,8 @@ public class CharacterSelectScreen implements Screen {
 
         Label desc = new Label(description, new Label.LabelStyle(
                 game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
-        card.add(desc);
+        desc.setWrap(true);
+        card.add(desc).width(230);
         card.row();
 
         TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
@@ -113,9 +118,9 @@ public class CharacterSelectScreen implements Screen {
                 game.setScreen(new MapScreen(game, runState));
             }
         });
-        card.add(choose).width(150).height(44).padTop(8);
+        card.add(choose).width(210).height(UiLayout.BUTTON_HEIGHT).padTop(8);
 
-        root.add(card).width(300).height(420).pad(18);
+        root.add(card).width(300).height(440).pad(18);
     }
 
     private void giveDebugStartingPotions(Player player) {

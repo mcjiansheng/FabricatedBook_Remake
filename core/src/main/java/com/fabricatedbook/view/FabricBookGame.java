@@ -23,6 +23,7 @@ import com.fabricatedbook.core.shop.ShopManager;
 import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.screen.BattleScreen;
+import com.fabricatedbook.view.screen.CharacterSelectScreen;
 import com.fabricatedbook.view.screen.EventScreen;
 import com.fabricatedbook.view.screen.FontDebugScreen;
 import com.fabricatedbook.view.screen.InventoryScreen;
@@ -194,6 +195,9 @@ public class FabricBookGame extends Game {
     private void setInitialScreen() {
         Player player = createDebugPlayer();
         switch (debugConfig.getScreenKind()) {
+            case CHARACTER_SELECT:
+                setScreen(new CharacterSelectScreen(this));
+                break;
             case FONT_DEBUG:
                 setScreen(new FontDebugScreen(this));
                 break;
