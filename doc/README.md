@@ -24,6 +24,7 @@
 2. [original_frontend_design_and_comparison.md](original_frontend_design_and_comparison.md) - 原版 C + SDL2 前端结构，以及与重制版的差异。
 3. [frontend_debug_cli.md](frontend_debug_cli.md) - 通过命令行直接进入标题、字体、地图、战斗、商店、事件等调试界面。
 4. [computer_use_app_capture.md](computer_use_app_capture.md) - macOS 上打包并用 Computer Use 抓取/操作 LibGDX 调试窗口。
+5. [frontend_ui_acceptance.md](frontend_ui_acceptance.md) - P1 前端状态、窗口边界和截图验收矩阵。
 
 ### 准备做地图系统
 
@@ -68,6 +69,7 @@
 | [original_frontend_design_and_comparison.md](original_frontend_design_and_comparison.md) | 原版前端源码阅读结果，以及原版与重制版差异和还原建议 | 需要贴近原版体验或判断设计取舍时 |
 | [frontend_debug_cli.md](frontend_debug_cli.md) | 前端命令行入口和可用调试 screen | 快速打开特定界面复现 UI 问题 |
 | [computer_use_app_capture.md](computer_use_app_capture.md) | Computer Use 调试 app 打包、启动和抓取流程 | 需要屏幕控制、截图或自动化点按 LibGDX 窗口时 |
+| [frontend_ui_acceptance.md](frontend_ui_acceptance.md) | 前端状态矩阵、通过标准与截图记录约定 | 验收 UI 改动或补复杂调试状态时 |
 
 ### 后端调试、种子和存档
 
