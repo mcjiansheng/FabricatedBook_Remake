@@ -641,33 +641,10 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             rewardModal.remove();
         }
 
-        Group modal = new Group();
+        Group modal = UiModal.open(stage);
         rewardModal = modal;
-        modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        stage.addActor(modal);
-
-        Actor backdrop = new Actor() {
-            @Override
-            public void draw(com.badlogic.gdx.graphics.g2d.Batch batch,
-                             float parentAlpha) {
-                batch.end();
-                shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                shapeRenderer.setColor(0f, 0f, 0f, 0.62f);
-                shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH,
-                        FabricBookGame.SCREEN_HEIGHT);
-                shapeRenderer.setColor(0.78f, 0.78f, 0.78f, 1f);
-                shapeRenderer.rect(170, 80, 940, 560);
-                shapeRenderer.end();
-                batch.begin();
-            }
-        };
-        backdrop.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        modal.addActor(backdrop);
-
-        Table table = new Table();
-        table.setFillParent(true);
-        table.top().padTop(125);
+        Table table = UiModal.panel(940, 560, UiStyles.lightPanelSurface());
+        table.top().padTop(45);
         modal.addActor(table);
 
         Label title = new Label("胜利", new Label.LabelStyle(
@@ -736,30 +713,9 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             rewardModal = null;
         }
 
-        Group modal = new Group();
-        modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        stage.addActor(modal);
-
-        Actor backdrop = new Actor() {
-            @Override
-            public void draw(com.badlogic.gdx.graphics.g2d.Batch batch,
-                             float parentAlpha) {
-                batch.end();
-                shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                shapeRenderer.setColor(0.78f, 0.78f, 0.78f, 1f);
-                shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH,
-                        FabricBookGame.SCREEN_HEIGHT);
-                shapeRenderer.end();
-                batch.begin();
-            }
-        };
-        backdrop.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        modal.addActor(backdrop);
-
-        Table table = new Table();
-        table.setFillParent(true);
-        table.top().padTop(85);
+        Group modal = UiModal.open(stage);
+        Table table = UiModal.panel(1100, 600, UiStyles.lightPanelSurface());
+        table.top().padTop(38);
         modal.addActor(table);
 
         Label title = new Label("请选择想要的卡牌", new Label.LabelStyle(
@@ -828,13 +784,11 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private void showPotionDiscardSelection(RewardEntry entry) {
         // Kept in the reward flow so a full potion bar never silently loses a reward.
         if (rewardModal != null) rewardModal.remove();
-        Group modal = new Group();
+        Group modal = UiModal.open(stage);
         rewardModal = modal;
-        modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        stage.addActor(modal);
-        Table table = new Table();
-        table.setFillParent(true);
-        table.center();
+        float panelHeight = 210 + player.getPotions().size() * 56f;
+        Table table = UiModal.panel(480, panelHeight);
+        table.top().padTop(28);
         modal.addActor(table);
         table.add(new Label("药水栏已满：选择一瓶丢弃", new Label.LabelStyle(
                 game.getFontForScale(1.4f), Color.GOLD))).padBottom(20);

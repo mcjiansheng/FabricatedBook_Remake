@@ -21,9 +21,11 @@ public final class UiStyles {
     private static Texture buttonDownTexture;
     private static Texture buttonDisabledTexture;
     private static NinePatchDrawable panelSurface;
+    private static NinePatchDrawable lightPanelSurface;
     private static NinePatchDrawable modalBackdrop;
     private static NinePatchDrawable statusBarSurface;
     private static Texture panelSurfaceTexture;
+    private static Texture lightPanelSurfaceTexture;
     private static Texture modalBackdropTexture;
     private static Texture statusBarSurfaceTexture;
 
@@ -50,6 +52,12 @@ public final class UiStyles {
     public static NinePatchDrawable panelSurface() {
         ensureSurfaces();
         return panelSurface;
+    }
+
+    /** Light content surface for map-like reward and selection panels. */
+    public static NinePatchDrawable lightPanelSurface() {
+        ensureSurfaces();
+        return lightPanelSurface;
     }
 
     public static NinePatchDrawable modalBackdrop() {
@@ -86,9 +94,11 @@ public final class UiStyles {
     private static void ensureSurfaces() {
         if (panelSurface != null) return;
         panelSurfaceTexture = solidTexture(UiTheme.BATTLE_SURFACE);
+        lightPanelSurfaceTexture = solidTexture(UiTheme.MAP_BACKGROUND);
         modalBackdropTexture = solidTexture(new Color(0f, 0f, 0f, 0.70f));
         statusBarSurfaceTexture = solidTexture(new Color(0.86f, 0.86f, 0.86f, 1f));
         panelSurface = new NinePatchDrawable(new NinePatch(panelSurfaceTexture, 1, 1, 1, 1));
+        lightPanelSurface = new NinePatchDrawable(new NinePatch(lightPanelSurfaceTexture, 1, 1, 1, 1));
         modalBackdrop = new NinePatchDrawable(new NinePatch(modalBackdropTexture, 1, 1, 1, 1));
         statusBarSurface = new NinePatchDrawable(new NinePatch(statusBarSurfaceTexture, 1, 1, 1, 1));
     }
@@ -100,6 +110,7 @@ public final class UiStyles {
         if (buttonDownTexture != null) buttonDownTexture.dispose();
         if (buttonDisabledTexture != null) buttonDisabledTexture.dispose();
         if (panelSurfaceTexture != null) panelSurfaceTexture.dispose();
+        if (lightPanelSurfaceTexture != null) lightPanelSurfaceTexture.dispose();
         if (modalBackdropTexture != null) modalBackdropTexture.dispose();
         if (statusBarSurfaceTexture != null) statusBarSurfaceTexture.dispose();
         buttonUpTexture = null;
@@ -107,6 +118,7 @@ public final class UiStyles {
         buttonDownTexture = null;
         buttonDisabledTexture = null;
         panelSurfaceTexture = null;
+        lightPanelSurfaceTexture = null;
         modalBackdropTexture = null;
         statusBarSurfaceTexture = null;
         buttonUp = null;
@@ -114,6 +126,7 @@ public final class UiStyles {
         buttonDown = null;
         buttonDisabled = null;
         panelSurface = null;
+        lightPanelSurface = null;
         modalBackdrop = null;
         statusBarSurface = null;
     }
