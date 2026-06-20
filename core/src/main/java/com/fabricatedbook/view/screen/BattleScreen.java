@@ -188,7 +188,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         potionTable = new Table();
         potionTable.left();
-        potionTable.setPosition(24, FabricBookGame.SCREEN_HEIGHT - 138);
+        potionTable.setPosition(24, FabricBookGame.SCREEN_HEIGHT - 182);
         stage.addActor(potionTable);
         renderPotionButtons();
 
@@ -351,12 +351,12 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private void renderPotionButtons() {
         potionTable.clear();
         TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
-        int buttonsPerRow = Math.max(1, Math.min(6, player.getMaxPotionSlots()));
+        int potionsPerRow = Math.max(1, Math.min(4, player.getMaxPotionSlots()));
         for (int i = 0; i < player.getPotions().size(); i++) {
             final int index = i;
             Potion potion = player.getPotions().get(i);
-            TextButton button = new TextButton(potion.getName(), style);
-            button.addListener(new ClickListener() {
+            TextButton useButton = new TextButton("使用 " + potion.getName(), style);
+            useButton.addListener(new ClickListener() {
                 @Override
                 public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                     float x, float y) {
@@ -368,8 +368,19 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                     }
                 }
             });
-            potionTable.add(button).width(126).height(34).padRight(8);
-            if ((i + 1) % buttonsPerRow == 0) {
+            TextButton discardButton = new TextButton("丢弃", style);
+            discardButton.addListener(new ClickListener() {
+                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    Potion discarded = player.removePotion(index);
+                    if (discarded != null) {
+                        statusLabel.setText("丢弃药水：" + discarded.getName());
+                        renderPotionButtons();
+                    }
+                }
+            });
+            potionTable.add(useButton).width(118).height(34).padRight(4);
+            potionTable.add(discardButton).width(58).height(34).padRight(10);
+            if ((i + 1) % potionsPerRow == 0) {
                 potionTable.row().padTop(6);
             }
         }
