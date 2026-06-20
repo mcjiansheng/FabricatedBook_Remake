@@ -1,12 +1,14 @@
 package com.fabricatedbook.view.actor;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.fabricatedbook.core.buff.BuffHook;
 import com.fabricatedbook.core.entity.Player;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,47 +83,27 @@ public class PlayerActor extends Actor {
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        batch.end();
-
-        // 绘制生命条
-        shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         if (highlighted) {
-            shapeRenderer.setColor(0.3f, 0.65f, 1f, 0.35f);
-            shapeRenderer.rect(getX() - 12, getY() - 12,
+            rect(batch, new Color(0.3f, 0.65f, 1f, 0.35f), getX() - 12, getY() - 12,
                     PLAYER_WIDTH + 24, PLAYER_HEIGHT + 24);
         }
         float hpRatio = (float) player.getHp() / player.getMaxHp();
         float hpBarWidth = PLAYER_WIDTH - 20;
         // 背景
-        shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 1f);
-        shapeRenderer.rect(getX() + 10, getY() + 5, hpBarWidth, 10);
+        rect(batch, new Color(0.3f, 0.3f, 0.3f, 1f), getX() + 10, getY() + 5, hpBarWidth, 10);
         // 血量
         if (hpRatio > 0.5f) {
-            shapeRenderer.setColor(0.2f, 0.8f, 0.2f, 1f);
+            rect(batch, new Color(0.2f, 0.8f, 0.2f, 1f), getX() + 10, getY() + 5, hpBarWidth * hpRatio, 10);
         } else if (hpRatio > 0.25f) {
-            shapeRenderer.setColor(0.8f, 0.8f, 0.2f, 1f);
+            rect(batch, new Color(0.8f, 0.8f, 0.2f, 1f), getX() + 10, getY() + 5, hpBarWidth * hpRatio, 10);
         } else {
-            shapeRenderer.setColor(0.8f, 0.2f, 0.2f, 1f);
+            rect(batch, new Color(0.8f, 0.2f, 0.2f, 1f), getX() + 10, getY() + 5, hpBarWidth * hpRatio, 10);
         }
-        shapeRenderer.rect(getX() + 10, getY() + 5, hpBarWidth * hpRatio, 10);
 
         // 格挡条
         if (player.getBlock() > 0) {
-            shapeRenderer.setColor(0.3f, 0.5f, 0.9f, 1f);
-            shapeRenderer.rect(getX() + 10, getY() + 18, Math.min(hpBarWidth, player.getBlock() * 5), 5);
+            rect(batch, new Color(0.3f, 0.5f, 0.9f, 1f), getX() + 10, getY() + 18, Math.min(hpBarWidth, player.getBlock() * 5), 5);
         }
-        shapeRenderer.end();
-
-        if (highlighted) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.setColor(0.65f, 0.90f, 1f, 1f);
-            shapeRenderer.rect(getX() - 12, getY() - 12,
-                    PLAYER_WIDTH + 24, PLAYER_HEIGHT + 24);
-            shapeRenderer.end();
-        }
-
-        batch.begin();
 
         // 绘制角色立绘
         if (sprite != null) {
@@ -139,6 +121,13 @@ public class PlayerActor extends Actor {
                     getX() + 42, getY() + 31);
         }
         drawBuffs(batch);
+    }
+
+    private void rect(Batch batch, Color color, float x, float y, float width, float height) {
+        Color old = batch.getColor().cpy();
+        batch.setColor(color);
+        batch.draw(UiStyles.pixelTexture(), x, y, width, height);
+        batch.setColor(old);
     }
 
     private void drawBuffs(Batch batch) {
