@@ -8,6 +8,7 @@ public class FrontendDebugConfig {
         FONT_DEBUG,
         MAP,
         BATTLE,
+        REWARD_POTION,
         SHOP,
         EVENT
     }
@@ -76,6 +77,7 @@ public class FrontendDebugConfig {
             case "font", "fonts", "fontdebug", "font-debug" -> fontDebug();
             case "map" -> map(layer);
             case "battle", "fight" -> battle();
+            case "reward-potion" -> new FrontendDebugConfig(ScreenKind.REWARD_POTION, 1, null);
             case "shop" -> shop();
             case "event" -> event(eventName);
             default -> title();

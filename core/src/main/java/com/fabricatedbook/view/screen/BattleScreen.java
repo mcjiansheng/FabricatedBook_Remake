@@ -640,6 +640,17 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         }
     }
 
+    /** Frontend-only preview for the reward flow when the potion bar is full. */
+    public void showDebugPotionReward() {
+        pendingRewards.clear();
+        List<Potion> potions = new com.fabricatedbook.data.DataLoader().loadPotions();
+        if (potions.isEmpty()) return;
+        Potion potion = potions.get(0).copy();
+        pendingRewards.add(new RewardEntry("药水：" + potion.getName(), Color.BLACK,
+                () -> player.addPotion(potion), false, potion));
+        showRewardClaimModal();
+    }
+
     private void showRewardClaimModal() {
         if (rewardModal != null) {
             rewardModal.remove();
