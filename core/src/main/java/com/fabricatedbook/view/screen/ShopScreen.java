@@ -18,6 +18,7 @@ import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
 import com.fabricatedbook.view.ui.GameHud;
 import com.fabricatedbook.view.ui.UiModal;
+import com.fabricatedbook.view.ui.UiFeedback;
 
 import java.util.List;
 
@@ -38,7 +39,7 @@ public class ShopScreen implements Screen {
     private Stage stage;
     private OrthographicCamera camera;
     private Table itemTable;
-    private Label feedbackLabel;
+    private UiFeedback feedbackLabel;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
     private Group removeModal;
     private int selectedRemoveIndex = -1;
@@ -78,10 +79,10 @@ public class ShopScreen implements Screen {
                 FabricBookGame.SCREEN_HEIGHT - 112);
         stage.addActor(titleLabel);
 
-        feedbackLabel = new Label("选择商品购买。", new Label.LabelStyle(
-                game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
+        feedbackLabel = new UiFeedback(game);
         feedbackLabel.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 116);
         stage.addActor(feedbackLabel);
+        feedbackLabel.show("选择商品购买。", UiFeedback.Tone.INFO);
 
         // 商品列表
         itemTable = new Table();
@@ -112,7 +113,7 @@ public class ShopScreen implements Screen {
                 () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.CARDS)),
                 () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.RELICS)),
                 false, null, () -> {
-                    feedbackLabel.setText("药水栏已更新。");
+                    feedbackLabel.show("药水栏已更新。", UiFeedback.Tone.INFO);
                     renderItems();
                 });
     }
@@ -198,10 +199,10 @@ public class ShopScreen implements Screen {
         button.addListener(new ClickListener() {
             @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
                 if (player.getGold() < shopManager.getRemoveCost()) {
-                    feedbackLabel.setText("金币不足：还需要 "
-                            + (shopManager.getRemoveCost() - player.getGold()) + " 金币。");
+                    feedbackLabel.show("金币不足：还需要 "
+                            + (shopManager.getRemoveCost() - player.getGold()) + " 金币。", UiFeedback.Tone.WARNING);
                 } else if (player.getDrawPile().isEmpty()) {
-                    feedbackLabel.setText("牌组为空，无法移除卡牌。");
+                    feedbackLabel.show("牌组为空，无法移除卡牌。", UiFeedback.Tone.WARNING);
                 } else {
                     showRemoveModal();
                 }
@@ -213,20 +214,20 @@ public class ShopScreen implements Screen {
 
     private void purchaseItem(int index, ShopManager.ShopItem item) {
         if (player.getGold() < item.getPrice()) {
-            feedbackLabel.setText("金币不足：还需要 " + (item.getPrice() - player.getGold()) + " 金币。");
+            feedbackLabel.show("金币不足：还需要 " + (item.getPrice() - player.getGold()) + " 金币。", UiFeedback.Tone.WARNING);
             return;
         }
         if (item.getType() == ShopManager.ShopItem.ItemType.POTION
                 && player.getPotions().size() >= player.getMaxPotionSlots()) {
-            feedbackLabel.setText("药水栏已满，无法购买药水。");
+            feedbackLabel.show("药水栏已满，无法购买药水。", UiFeedback.Tone.WARNING);
             return;
         }
         if (shopManager.purchase(index)) {
-            feedbackLabel.setText("已购买：" + item.getName());
+            feedbackLabel.show("已购买：" + item.getName(), UiFeedback.Tone.SUCCESS);
             game.autosaveCurrentRun();
             renderItems();
         } else {
-            feedbackLabel.setText("购买失败，请检查商品状态。");
+            feedbackLabel.show("购买失败，请检查商品状态。", UiFeedback.Tone.ERROR);
         }
     }
 
@@ -285,11 +286,11 @@ public class ShopScreen implements Screen {
                 if (selectedRemoveIndex < 0) return;
                 Card selected = player.getDrawPile().get(selectedRemoveIndex);
                 if (shopManager.purchaseRemove(selectedRemoveIndex)) {
-                    feedbackLabel.setText("已移除：" + selected.getName());
+                    feedbackLabel.show("已移除：" + selected.getName(), UiFeedback.Tone.SUCCESS);
                     game.autosaveCurrentRun();
                     renderItems();
                 } else {
-                    feedbackLabel.setText("移除失败，请检查金币与牌组状态。");
+                    feedbackLabel.show("移除失败，请检查金币与牌组状态。", UiFeedback.Tone.ERROR);
                 }
                 selectedRemoveIndex = -1;
                 UiModal.close(removeModal);
