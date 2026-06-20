@@ -19,12 +19,8 @@ public final class EscapeMenu {
     private EscapeMenu() {}
 
     public static Group show(Stage stage, FabricBookGame game, Runnable onClose) {
-        Group modal = new Group();
-        modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        stage.addActor(modal);
-
-        Table table = new Table();
-        table.setFillParent(true);
+        Group modal = UiModal.open(stage);
+        Table table = UiModal.panel(360, 330);
         table.center();
         modal.addActor(table);
 
@@ -39,7 +35,7 @@ public final class EscapeMenu {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
-                modal.remove();
+                UiModal.close(modal);
                 if (onClose != null) onClose.run();
             }
         });
@@ -68,7 +64,6 @@ public final class EscapeMenu {
             }
         });
         table.add(abandon).width(240).height(54);
-        modal.toFront();
         return modal;
     }
 }
