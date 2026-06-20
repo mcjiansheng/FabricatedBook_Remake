@@ -142,33 +142,49 @@ public class ShopScreen implements Screen {
                             ShopManager.ShopItem.ItemType type) {
         Label header = new Label(title, new Label.LabelStyle(
                 game.getFontForScale(1.25f), UiTheme.ACCENT_GOLD));
-        content.add(header).colspan(3).left().padTop(14).padBottom(8);
+        content.add(header).width(920).left().padTop(14).padBottom(4);
         content.row();
+        Table grid = new Table();
+        grid.top().left();
+        int column = 0;
         for (int index = 0; index < items.size(); index++) {
             ShopManager.ShopItem item = items.get(index);
             if (item.getType() != type) continue;
-            addItemRow(content, item, index);
+            grid.add(createItemCard(item, index)).width(446).height(122).pad(5);
+            if (++column % 2 == 0) grid.row();
         }
+        content.add(grid).width(920).left().padBottom(10);
+        content.row();
     }
 
-    private void addItemRow(Table content, ShopManager.ShopItem item, int index) {
+    private Table createItemCard(ShopManager.ShopItem item, int index) {
+        Table card = new Table();
+        card.setBackground(UiStyles.panelSurface());
+        card.pad(12);
         boolean sold = item.isPurchased();
         boolean unaffordable = player.getGold() < item.getPrice();
         boolean potionFull = item.getType() == ShopManager.ShopItem.ItemType.POTION
                 && !player.canAddPotion();
-        Label name = new Label(item.getName() + "  ·  " + item.getPrice() + " 金币"
-                + (sold ? "  [已购]" : ""), new Label.LabelStyle(game.getFont(),
+        Label name = new Label(item.getName(), new Label.LabelStyle(game.getFont(),
                 sold ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.WHITE));
+        Label price = new Label(item.getPrice() + " 金币", new Label.LabelStyle(game.getFont(),
+                sold ? com.badlogic.gdx.graphics.Color.GRAY : UiTheme.ACCENT_GOLD));
         Label description = new Label(item.getDescription(), new Label.LabelStyle(game.getFont(),
                 sold ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
         description.setWrap(true);
-        content.add(name).width(240).left().pad(6);
-        content.add(description).width(470).left().pad(6);
+
+        Table header = new Table();
+        header.add(name).expandX().left();
+        header.add(price).right();
+        card.add(header).expandX().fillX().left().padBottom(6);
+        card.row();
+        card.add(description).width(410).height(38).left();
+        card.row();
         if (sold || unaffordable || potionFull) {
             String reason = sold ? "已售罄" : potionFull ? "药水栏满" : "金币不足";
             TextButton unavailable = new TextButton(reason, UiStyles.buttonStyle(game));
             unavailable.setDisabled(true);
-            content.add(unavailable).width(120).height(38).pad(6);
+            card.add(unavailable).width(150).height(32).right().padTop(6);
         } else {
             TextButton buy = new TextButton("购买", UiStyles.buttonStyle(game));
             buy.addListener(new ClickListener() {
@@ -176,9 +192,9 @@ public class ShopScreen implements Screen {
                     purchaseItem(index, item);
                 }
             });
-            content.add(buy).width(120).height(38).pad(6);
+            card.add(buy).width(150).height(32).right().padTop(6);
         }
-        content.row();
+        return card;
     }
 
     private void addRemoveService(Table content) {
