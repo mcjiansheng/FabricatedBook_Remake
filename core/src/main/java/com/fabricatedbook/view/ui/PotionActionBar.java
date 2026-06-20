@@ -31,7 +31,9 @@ public final class PotionActionBar extends Table {
         clear();
         for (int i = 0; i < player.getPotions().size(); i++) {
             final int index = i;
-            TextButton button = new TextButton(player.getPotions().get(i).getName(), UiStyles.buttonStyle(game));
+            Potion potion = player.getPotions().get(i);
+            TextButton button = new TextButton(potion.getName(), UiStyles.buttonStyle(game));
+            UiTooltip.bind(button, stage, game, potion::getDescription);
             button.addListener(new ClickListener() {
                 @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e, float x, float y) {
                     showActions(index, button);
