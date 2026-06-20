@@ -44,6 +44,7 @@ import com.fabricatedbook.view.ui.EnergyBar;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.PotionActionBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +81,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private List<EnemyActor> enemyActors;
     private Label statusLabel;
     private Label turnLabel;
-    private Table potionTable;
+    private PotionActionBar potionTable;
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
     private boolean battleInitialized;
@@ -186,7 +187,9 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 FabricBookGame.SCREEN_HEIGHT - 62);
         stage.addActor(turnLabel);
 
-        potionTable = new Table();
+        potionTable = new PotionActionBar(stage, game, player, true,
+                potion -> potion.use(player, enemies, relicManager),
+                () -> statusLabel.setText("药水栏已更新。"));
         potionTable.left();
         potionTable.setPosition(24, FabricBookGame.SCREEN_HEIGHT - 182);
         stage.addActor(potionTable);
@@ -349,41 +352,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     public List<Enemy> getEnemies() { return enemies; }
 
     private void renderPotionButtons() {
-        potionTable.clear();
-        TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
-        int potionsPerRow = Math.max(1, Math.min(4, player.getMaxPotionSlots()));
-        for (int i = 0; i < player.getPotions().size(); i++) {
-            final int index = i;
-            Potion potion = player.getPotions().get(i);
-            TextButton useButton = new TextButton("使用 " + potion.getName(), style);
-            useButton.addListener(new ClickListener() {
-                @Override
-                public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
-                                    float x, float y) {
-                    if (!combatEngine.isInBattle()) return;
-                Potion used = player.removePotion(index);
-                if (used != null && used.use(player, enemies, relicManager)) {
-                    statusLabel.setText("使用药水：" + used.getName());
-                    renderPotionButtons();
-                    }
-                }
-            });
-            TextButton discardButton = new TextButton("丢弃", style);
-            discardButton.addListener(new ClickListener() {
-                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                    Potion discarded = player.removePotion(index);
-                    if (discarded != null) {
-                        statusLabel.setText("丢弃药水：" + discarded.getName());
-                        renderPotionButtons();
-                    }
-                }
-            });
-            potionTable.add(useButton).width(118).height(34).padRight(4);
-            potionTable.add(discardButton).width(58).height(34).padRight(10);
-            if ((i + 1) % potionsPerRow == 0) {
-                potionTable.row().padTop(6);
-            }
-        }
+        potionTable.rebuild();
     }
 
     private void updateTargetHighlight(CardActor actor, float stageX, float stageY) {
