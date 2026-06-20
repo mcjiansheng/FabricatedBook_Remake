@@ -20,6 +20,7 @@ import com.fabricatedbook.view.ui.GameHud;
 import com.fabricatedbook.view.ui.UiModal;
 import com.fabricatedbook.view.ui.UiFeedback;
 import com.fabricatedbook.view.ui.UiLayout;
+import com.fabricatedbook.view.ui.UiScrollPane;
 
 import java.util.List;
 
@@ -132,7 +133,7 @@ public class ShopScreen implements Screen {
         addSection(content, "药水", items, ShopManager.ShopItem.ItemType.POTION);
         addRemoveService(content);
 
-        ScrollPane scroll = new ScrollPane(content);
+        ScrollPane scroll = UiScrollPane.vertical(content);
         scroll.setFadeScrollBars(false);
         scroll.setScrollingDisabled(true, false);
         itemTable.add(scroll).width(920).height(540).top();
@@ -281,7 +282,7 @@ public class ShopScreen implements Screen {
             cards.add(choose).width(360).height(64).pad(5);
             if ((i + 1) % 2 == 0) cards.row();
         }
-        ScrollPane scroll = new ScrollPane(cards);
+        ScrollPane scroll = UiScrollPane.vertical(cards);
         scroll.setFadeScrollBars(false);
         scroll.setScrollingDisabled(true, false);
         panel.add(scroll).width(760).height(300).padBottom(14);

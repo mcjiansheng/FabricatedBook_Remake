@@ -19,6 +19,7 @@ import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.GameHud;
 import com.fabricatedbook.view.ui.UiLayout;
+import com.fabricatedbook.view.ui.UiScrollPane;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +144,7 @@ public class SafeHouseScreen implements Screen {
             cardTable.add(button).width(760).height(54).padBottom(10).row();
         }
 
-        ScrollPane scrollPane = new ScrollPane(cardTable);
+        ScrollPane scrollPane = UiScrollPane.vertical(cardTable);
         content.add(scrollPane).width(820).height(430).padBottom(18).row();
         TextButton back = new TextButton("返回", style);
         back.addListener(new ClickListener() {

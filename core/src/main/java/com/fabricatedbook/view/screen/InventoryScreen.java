@@ -20,6 +20,7 @@ import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
 import com.fabricatedbook.view.ui.GameHud;
 import com.fabricatedbook.view.ui.UiLayout;
+import com.fabricatedbook.view.ui.UiScrollPane;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +78,7 @@ public class InventoryScreen implements Screen {
         entries.setBackground(UiStyles.panelSurface());
         if (selectedTab == Tab.CARDS) buildCardGrid(entries);
         else buildRelicGrid(entries);
-        ScrollPane scroll = new ScrollPane(entries);
+        ScrollPane scroll = UiScrollPane.vertical(entries);
         scroll.setFadeScrollBars(false);
         scroll.setScrollingDisabled(true, false);
         Table detail = new Table();
