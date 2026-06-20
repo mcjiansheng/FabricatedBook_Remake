@@ -205,6 +205,8 @@
 
 代码位置：`core/src/main/java/com/fabricatedbook/view/screen/TitleScreen.java`
 
+- “继续游戏”在没有有效存档或存档读取失败时，在按钮区下方显示可见反馈，不再静默停留在标题页。
+
 ### 3.1 背景
 
 - 清屏颜色：`(0.08, 0.08, 0.12, 1)`

@@ -14,6 +14,7 @@ import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.UiFeedback;
 
 /**
  * TitleScreen — 标题画面
@@ -29,6 +30,7 @@ public class TitleScreen implements Screen {
     private Stage stage;
     private OrthographicCamera camera;
     private Texture background;
+    private UiFeedback feedback;
 
     public TitleScreen(FabricBookGame game) {
         this.game = game;
@@ -82,12 +84,16 @@ public class TitleScreen implements Screen {
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
                 SaveManager saveManager = game.getSaveManager();
-                if (saveManager.hasSave()) {
-                    var runState = saveManager.loadRun();
-                    if (runState != null) {
-                        game.setCurrentRun(runState);
-                        game.setScreen(new MapScreen(game, runState));
-                    }
+                if (!saveManager.hasSave()) {
+                    feedback.show("没有可继续的存档。", UiFeedback.Tone.WARNING);
+                    return;
+                }
+                var runState = saveManager.loadRun();
+                if (runState != null) {
+                    game.setCurrentRun(runState);
+                    game.setScreen(new MapScreen(game, runState));
+                } else {
+                    feedback.show("存档读取失败，请开始新游戏。", UiFeedback.Tone.ERROR);
                 }
             }
         });
@@ -104,6 +110,10 @@ public class TitleScreen implements Screen {
             }
         });
         table.add(exitBtn).width(250).height(50);
+
+        feedback = new UiFeedback(game);
+        feedback.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 150, 110);
+        stage.addActor(feedback);
     }
 
     @Override
