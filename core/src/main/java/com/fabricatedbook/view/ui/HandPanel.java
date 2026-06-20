@@ -107,6 +107,11 @@ public class HandPanel extends Group {
             Card card = hand.get(i);
             CardActor actor = new CardActor(card, font, shapeRenderer);
             actor.setInteractionHandler(battleScreen);
+            if (card.isUnplayable()) {
+                actor.setUnavailableReason("无法打出");
+            } else if (card.getCost() >= 0 && card.getCost() > player.getEnergy()) {
+                actor.setUnavailableReason("能量不足");
+            }
 
             actor.setPosition(startX + i * (CardActor.CARD_WIDTH + gap),
                     PANEL_Y);

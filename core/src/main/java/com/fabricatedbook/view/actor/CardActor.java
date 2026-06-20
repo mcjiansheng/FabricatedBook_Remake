@@ -33,6 +33,7 @@ public class CardActor extends Actor {
     private boolean dragging;
     private boolean draggingEnabled;
     private String previewDescription;
+    private String unavailableReason;
     private float homeX;
     private float homeY;
     private CardInteractionHandler interactionHandler;
@@ -62,6 +63,7 @@ public class CardActor extends Actor {
         setSize(CARD_WIDTH, CARD_HEIGHT);
         draggingEnabled = true;
         previewDescription = null;
+        unavailableReason = null;
 
         // 根据卡牌类型加载图标
         String iconFile = "img/ukn.png";
@@ -161,6 +163,12 @@ public class CardActor extends Actor {
         this.draggingEnabled = draggingEnabled;
     }
 
+    /** Updates the card's visual and input state without embedding combat rules in the actor. */
+    public void setUnavailableReason(String unavailableReason) {
+        this.unavailableReason = unavailableReason;
+        setDraggingEnabled(unavailableReason == null || unavailableReason.isBlank());
+    }
+
     /** 获取卡牌数据 */
     public Card getCard() { return card; }
 
@@ -217,6 +225,10 @@ public class CardActor extends Actor {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(BG_COLOR);
         shapeRenderer.rect(drawX, drawY, visualWidth, visualHeight);
+        if (unavailableReason != null && !unavailableReason.isBlank()) {
+            shapeRenderer.setColor(0.08f, 0.08f, 0.08f, 0.52f);
+            shapeRenderer.rect(drawX, drawY, visualWidth, visualHeight);
+        }
         if (dragging) {
             shapeRenderer.setColor(SELECTED_COLOR);
             shapeRenderer.rect(drawX - 3, drawY - 3, visualWidth + 6, visualHeight + 6);
@@ -246,6 +258,11 @@ public class CardActor extends Actor {
         // 绘制卡牌名称
         font.draw(batch, card.getName(), drawX + 32 * scale, drawY + visualHeight - 10 * scale);
 
+        font.getData().setScale(FabricBookGame.uiFontScale(0.60f * scale));
+        font.draw(batch, typeLabel(card.getType()) + " · " + rarityLabel(card.getRarity()),
+                drawX + 32 * scale, drawY + visualHeight - 27 * scale);
+        font.getData().setScale(FabricBookGame.uiFontScale(0.78f * scale));
+
         // 绘制消耗
         font.draw(batch, "用 " + (card.getCost() < 0 ? "X" : card.getCost()), drawX + 8 * scale,
                 drawY + visualHeight - 42 * scale);
@@ -253,17 +270,18 @@ public class CardActor extends Actor {
         // 绘制描述
         String desc = previewDescription != null ? previewDescription : card.getDescription();
         if (desc != null) {
-            float lineY = drawY + visualHeight - 70 * scale;
-            for (String line : wrapLines(desc, (CARD_WIDTH - 16) * scale, 5)) {
+            float lineY = drawY + visualHeight - 72 * scale;
+            for (String line : wrapLines(desc, (CARD_WIDTH - 16) * scale, 4)) {
                 font.draw(batch, line, drawX + 8 * scale, lineY);
                 lineY -= 18 * scale;
             }
         }
 
-        // 绘制价值/稀有度
-        if (card.getValue() > 0) {
-            font.draw(batch, "值 " + card.getValue(), drawX + 8 * scale,
-                    drawY + 14 * scale);
+        if (unavailableReason != null && !unavailableReason.isBlank()) {
+            font.setColor(Color.LIGHT_GRAY);
+            font.draw(batch, unavailableReason, drawX + 8 * scale, drawY + 14 * scale);
+        } else if (card.getValue() > 0) {
+            font.draw(batch, "值 " + card.getValue(), drawX + 8 * scale, drawY + 14 * scale);
         }
         font.setColor(oldColor);
         font.getData().setScale(oldScaleX, oldScaleY);
@@ -317,6 +335,30 @@ public class CardActor extends Actor {
             case STATUS -> Color.GRAY;
             case CURSE -> Color.PURPLE;
             case TASK -> Color.CYAN;
+        };
+    }
+
+    private String typeLabel(Card.CardType type) {
+        return switch (type) {
+            case ATTACK -> "攻击";
+            case DEFENSE -> "防御";
+            case SKILL -> "技能";
+            case ABILITY -> "能力";
+            case EQUIP -> "装备";
+            case STATUS -> "状态";
+            case CURSE -> "诅咒";
+            case TASK -> "任务";
+        };
+    }
+
+    private String rarityLabel(Card.Rarity rarity) {
+        return switch (rarity) {
+            case BASIC -> "基础";
+            case COMMON -> "普通";
+            case UNCOMMON -> "罕见";
+            case RARE -> "稀有";
+            case EPIC -> "史诗";
+            case LEGENDARY -> "传说";
         };
     }
 
