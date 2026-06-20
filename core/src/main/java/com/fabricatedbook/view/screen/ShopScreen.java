@@ -17,6 +17,7 @@ import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
 import com.fabricatedbook.view.ui.GameHud;
+import com.fabricatedbook.view.ui.UiModal;
 
 import java.util.List;
 
@@ -231,20 +232,8 @@ public class ShopScreen implements Screen {
 
     private void showRemoveModal() {
         if (removeModal != null) removeModal.remove();
-        removeModal = new Group();
-        removeModal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        stage.addActor(removeModal);
-
-        Table backdrop = new Table();
-        backdrop.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        backdrop.setBackground(UiStyles.modalBackdrop());
-        removeModal.addActor(backdrop);
-
-        Table panel = new Table();
-        panel.setBackground(UiStyles.panelSurface());
-        panel.setSize(840, 470);
-        panel.setPosition((FabricBookGame.SCREEN_WIDTH - panel.getWidth()) / 2f,
-                (FabricBookGame.SCREEN_HEIGHT - panel.getHeight()) / 2f);
+        removeModal = UiModal.open(stage);
+        Table panel = UiModal.panel(840, 470);
         panel.pad(24);
         removeModal.addActor(panel);
 
@@ -285,7 +274,7 @@ public class ShopScreen implements Screen {
         cancel.addListener(new ClickListener() {
             @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
                 selectedRemoveIndex = -1;
-                removeModal.remove();
+                UiModal.close(removeModal);
                 removeModal = null;
             }
         });
@@ -303,7 +292,7 @@ public class ShopScreen implements Screen {
                     feedbackLabel.setText("移除失败，请检查金币与牌组状态。");
                 }
                 selectedRemoveIndex = -1;
-                removeModal.remove();
+                UiModal.close(removeModal);
                 removeModal = null;
             }
         });
