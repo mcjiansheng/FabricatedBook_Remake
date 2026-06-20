@@ -57,11 +57,6 @@ public class TopStatusBar {
         font.draw(batch, "药水 " + player.getPotions().size() + "/"
                         + player.getMaxPotionSlots(),
                 360, FabricBookGame.SCREEN_HEIGHT - 10);
-        for (int i = 0; i < player.getPotions().size(); i++) {
-            font.draw(batch, player.getPotions().get(i).getName(),
-                    455 + i * 88, FabricBookGame.SCREEN_HEIGHT - 10);
-        }
-
         if (showInventoryButtons) {
             font.setColor(Color.WHITE);
             font.draw(batch, "卡牌", FabricBookGame.SCREEN_WIDTH - 282,
@@ -72,7 +67,7 @@ public class TopStatusBar {
 
         if (layerText != null && !layerText.isBlank()) {
             font.setColor(Color.BLACK);
-            font.draw(batch, layerText, 740, FabricBookGame.SCREEN_HEIGHT - 10);
+            font.draw(batch, layerText, 835, FabricBookGame.SCREEN_HEIGHT - 10);
         }
         font.setColor(old);
 

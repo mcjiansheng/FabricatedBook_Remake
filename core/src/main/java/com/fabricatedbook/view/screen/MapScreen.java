@@ -33,7 +33,7 @@ import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.TopStatusBar;
 import com.fabricatedbook.view.ui.UiStyles;
-import com.fabricatedbook.view.ui.PotionDiscardMenu;
+import com.fabricatedbook.view.ui.PotionActionBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -408,13 +408,8 @@ public class MapScreen implements Screen {
         });
         uiStage.addActor(cards);
         uiStage.addActor(relics);
-        TextButton potions = new TextButton("丢弃药水", UiStyles.buttonStyle(game));
-        potions.setBounds(590, FabricBookGame.SCREEN_HEIGHT - TopStatusBar.BUTTON_H - 5, 130, TopStatusBar.BUTTON_H);
-        potions.addListener(new ClickListener() {
-            @Override public void clicked(InputEvent event, float x, float y) {
-                PotionDiscardMenu.show(uiStage, game, player, null);
-            }
-        });
+        PotionActionBar potions = new PotionActionBar(uiStage, game, player, false, null, null);
+        potions.setPosition(455, FabricBookGame.SCREEN_HEIGHT - TopStatusBar.BUTTON_H - 1);
         uiStage.addActor(potions);
     }
 
