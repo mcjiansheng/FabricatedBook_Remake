@@ -138,6 +138,17 @@ public class EnemyActor extends Actor {
         this.intentPreviewProvider = intentPreviewProvider;
     }
 
+    /** Compact tooltip text for the enemy's currently active buffs. */
+    public String buffSummary() {
+        StringBuilder summary = new StringBuilder();
+        for (BuffHook buff : enemy.getBuffs()) {
+            if (buff.getStack() <= 0) continue;
+            if (summary.length() > 0) summary.append('\n');
+            summary.append(buffLabel(buff.getBuffName())).append("：").append(buff.getStack());
+        }
+        return summary.toString();
+    }
+
     public interface IntentPreviewProvider {
         EnemyIntentPreview getIntentPreview(Enemy enemy);
     }

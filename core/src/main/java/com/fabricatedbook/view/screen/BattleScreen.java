@@ -46,6 +46,7 @@ import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiModal;
 import com.fabricatedbook.view.ui.GameHud;
+import com.fabricatedbook.view.ui.UiTooltip;
 
 import java.util.ArrayList;
 import java.util.ArrayDeque;
@@ -153,6 +154,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         playerActor = new PlayerActor(player, font, shapeRenderer);
         playerActor.setPosition(150, 230);
         stage.addActor(playerActor);
+        UiTooltip.bind(playerActor, stage, game, playerActor::buffSummary);
 
         // 敌人角色
         float enemyY = 245;
@@ -165,6 +167,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             actor.setIntentPreviewProvider(this::previewEnemyIntentDetail);
             actor.setPosition(enemyX + i * enemyGap, enemyY);
             stage.addActor(actor);
+            UiTooltip.bind(actor, stage, game, actor::buffSummary);
             enemyActors.add(actor);
         }
 

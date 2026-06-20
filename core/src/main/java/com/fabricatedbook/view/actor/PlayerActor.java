@@ -67,6 +67,17 @@ public class PlayerActor extends Actor {
         this.highlighted = highlighted;
     }
 
+    /** Compact tooltip text for the player's currently active buffs. */
+    public String buffSummary() {
+        StringBuilder summary = new StringBuilder();
+        for (BuffHook buff : player.getBuffs()) {
+            if (buff.getStack() <= 0) continue;
+            if (summary.length() > 0) summary.append('\n');
+            summary.append(buffLabel(buff.getBuffName())).append("：").append(buff.getStack());
+        }
+        return summary.toString();
+    }
+
     /** 根据职业加载对应角色立绘 */
     private void loadSprite() {
         String fileName = switch (player.getProfession()) {
