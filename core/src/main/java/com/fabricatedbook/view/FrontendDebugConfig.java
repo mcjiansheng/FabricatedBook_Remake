@@ -8,6 +8,7 @@ public class FrontendDebugConfig {
         FONT_DEBUG,
         MAP,
         BATTLE,
+        BATTLE_DEFEAT,
         REWARD_POTION,
         SHOP,
         EVENT,
@@ -38,6 +39,10 @@ public class FrontendDebugConfig {
 
     public static FrontendDebugConfig battle() {
         return new FrontendDebugConfig(ScreenKind.BATTLE, 1, null);
+    }
+
+    public static FrontendDebugConfig battleDefeat() {
+        return new FrontendDebugConfig(ScreenKind.BATTLE_DEFEAT, 1, null);
     }
 
     public static FrontendDebugConfig shop() {
@@ -82,6 +87,7 @@ public class FrontendDebugConfig {
             case "font", "fonts", "fontdebug", "font-debug" -> fontDebug();
             case "map" -> map(layer);
             case "battle", "fight" -> battle();
+            case "battle-defeat", "defeat" -> battleDefeat();
             case "reward-potion" -> new FrontendDebugConfig(ScreenKind.REWARD_POTION, 1, null);
             case "shop" -> shop();
             case "event" -> event(eventName);

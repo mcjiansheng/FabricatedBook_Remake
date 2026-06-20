@@ -207,6 +207,13 @@ public class FabricBookGame extends Game {
                 engine.setRelicManager(new RelicManager(player));
                 setScreen(new BattleScreen(this, engine, player, createDebugEnemies()));
                 break;
+            case BATTLE_DEFEAT:
+                CombatEngine defeatEngine = new CombatEngine();
+                defeatEngine.setRelicManager(new RelicManager(player));
+                BattleScreen defeatScreen = new BattleScreen(this, defeatEngine, player, createDebugEnemies());
+                setScreen(defeatScreen);
+                defeatScreen.showDebugDefeat();
+                break;
             case REWARD_POTION:
                 CombatEngine rewardEngine = new CombatEngine();
                 rewardEngine.setRelicManager(new RelicManager(player));

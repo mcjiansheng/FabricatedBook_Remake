@@ -602,6 +602,11 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         showRewardClaimModal();
     }
 
+    /** Opens the defeat modal without mutating run data; used only by frontend QA. */
+    public void showDebugDefeat() {
+        showDefeatModal();
+    }
+
     private void showRewardClaimModal() {
         if (rewardModal != null) {
             rewardModal.remove();
