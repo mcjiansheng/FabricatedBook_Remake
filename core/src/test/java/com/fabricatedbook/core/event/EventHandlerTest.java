@@ -28,19 +28,16 @@ class EventHandlerTest {
     }
 
     @Test
-    void secondDecisionShowsLockedBabelTowerWithoutEncounterRelic() {
+    void secondDecisionHidesBabelTowerWithoutEncounterRelic() {
         EventHandler handler = new EventHandler(new Random(1));
         Player player = player();
 
         List<EventHandler.EventOption> options = handler.getOptions("命运抉择2", player);
         EventHandler.EventResult result = handler.executeEvent("命运抉择2", 2, player);
 
-        assertEquals(3, options.size());
+        assertEquals(2, options.size());
         assertEquals("我要权力", options.get(0).label);
         assertEquals("我要财富", options.get(1).label);
-        assertEquals("没有你，对我很重要", options.get(2).label);
-        assertFalse(options.get(2).enabled);
-        assertEquals("需要持有「背叛」或「仇恨」", options.get(2).disabledReason);
         assertNull(result.relicId);
     }
 
