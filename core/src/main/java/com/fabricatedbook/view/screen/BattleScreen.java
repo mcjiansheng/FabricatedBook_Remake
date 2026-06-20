@@ -48,6 +48,8 @@ import com.fabricatedbook.view.ui.UiModal;
 import com.fabricatedbook.view.ui.GameHud;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -82,6 +84,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private List<EnemyActor> enemyActors;
     private Label statusLabel;
     private Label turnLabel;
+    private Label combatLogLabel;
+    private final Deque<String> combatLogEntries;
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
     private boolean battleInitialized;
@@ -129,6 +133,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         this.relicManager = null;
         this.rewardModal = null;
         this.pendingRewards = new ArrayList<>();
+        this.combatLogEntries = new ArrayDeque<>();
 
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
@@ -180,6 +185,16 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 FabricBookGame.SCREEN_HEIGHT - 142);
         stage.addActor(statusLabel);
 
+        Table logPanel = new Table();
+        logPanel.setBackground(UiStyles.panelSurface());
+        logPanel.pad(10);
+        logPanel.setSize(350, 92);
+        logPanel.setPosition(20, 530);
+        combatLogLabel = new Label("", new Label.LabelStyle(game.getFont(), Color.LIGHT_GRAY));
+        combatLogLabel.setWrap(true);
+        logPanel.add(combatLogLabel).width(330).left().top();
+        stage.addActor(logPanel);
+
         // 回合信息
         turnLabel = new Label("回合 1", new Label.LabelStyle(
                 game.getFontForScale(1.5f), com.badlogic.gdx.graphics.Color.WHITE));
@@ -229,11 +244,13 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     public void onBattleStart(AbstractEntity playerEntity,
                               List<AbstractEntity> enemyEntities) {
         statusLabel.setText("战斗开始！");
+        recordCombatLog("战斗开始");
     }
 
     @Override
     public void onActionExecuted(CombatAction action) {
         statusLabel.setText(action.getDescription());
+        recordCombatLog(action.getDescription());
         if (action instanceof DamageAction damageAction) {
             showDamageNumbers(damageAction);
         }
@@ -243,9 +260,11 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     public void onBattleEnd(boolean victory, String reward) {
         if (victory) {
             statusLabel.setText("胜利！" + (reward != null ? reward : ""));
+            recordCombatLog("战斗胜利");
             showRewardModal(reward);
         } else {
             statusLabel.setText("失败...");
+            recordCombatLog("战斗失败");
             showDefeatModal();
         }
     }
@@ -470,6 +489,16 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             }
         }
         return null;
+    }
+
+    private void recordCombatLog(String message) {
+        if (message == null || message.isBlank()) return;
+        String line = message.length() > 46 ? message.substring(0, 43) + "..." : message;
+        combatLogEntries.addFirst("· " + line);
+        while (combatLogEntries.size() > 3) combatLogEntries.removeLast();
+        if (combatLogLabel != null) {
+            combatLogLabel.setText(String.join("\n", combatLogEntries));
+        }
     }
 
     private void drawBackground() {
