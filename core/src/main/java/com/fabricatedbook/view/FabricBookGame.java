@@ -25,6 +25,7 @@ import com.fabricatedbook.data.SaveManager;
 import com.fabricatedbook.view.screen.BattleScreen;
 import com.fabricatedbook.view.screen.EventScreen;
 import com.fabricatedbook.view.screen.FontDebugScreen;
+import com.fabricatedbook.view.screen.InventoryScreen;
 import com.fabricatedbook.view.screen.MapScreen;
 import com.fabricatedbook.view.screen.ShopScreen;
 import com.fabricatedbook.view.screen.TitleScreen;
@@ -224,6 +225,9 @@ public class FabricBookGame extends Game {
                     eventName = "投资";
                 }
                 setScreen(new EventScreen(this, player, eventName));
+                break;
+            case INVENTORY:
+                setScreen(new InventoryScreen(this, player, null));
                 break;
             case TITLE:
             default:

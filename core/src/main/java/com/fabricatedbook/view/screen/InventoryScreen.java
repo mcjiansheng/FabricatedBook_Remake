@@ -35,6 +35,8 @@ public class InventoryScreen implements Screen {
     private final MapScreen returnMap;
     private final Tab selectedTab;
     private Stage stage;
+    private Label detailTitle;
+    private Label detailBody;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
     public InventoryScreen(FabricBookGame game, Player player, MapScreen returnMap) {
@@ -70,20 +72,25 @@ public class InventoryScreen implements Screen {
         root.add(title).padBottom(22);
         root.row();
         Table entries = new Table();
-        entries.top().left().pad(20);
+        entries.top().left().pad(14);
         entries.setBackground(UiStyles.panelSurface());
-        if (selectedTab == Tab.CARDS) {
-            for (Card card : allCards()) addEntry(entries, card.getName() + "  ·  用 "
-                    + card.getCost(), card.getDescription());
-        } else if (player.getRelics().isEmpty()) {
-            addEntry(entries, "尚未获得藏品", "在事件、奖励或商店中获得藏品。 ");
-        } else {
-            for (Relic relic : player.getRelics()) addEntry(entries, relic.getName(), relic.getDescription());
-        }
+        if (selectedTab == Tab.CARDS) buildCardGrid(entries);
+        else buildRelicGrid(entries);
         ScrollPane scroll = new ScrollPane(entries);
         scroll.setFadeScrollBars(false);
         scroll.setScrollingDisabled(true, false);
-        root.add(scroll).width(900).height(520);
+        Table detail = new Table();
+        detail.top().left().pad(18);
+        detail.setBackground(UiStyles.panelSurface());
+        detailTitle = new Label("选择一项", new Label.LabelStyle(game.getFontForScale(1.2f), UiTheme.ACCENT_GOLD));
+        detailBody = new Label("点击卡牌或藏品查看完整说明。", new Label.LabelStyle(game.getFont(), Color.LIGHT_GRAY));
+        detailBody.setWrap(true);
+        detail.add(detailTitle).width(250).left().padBottom(14).row();
+        detail.add(detailBody).width(250).top().left();
+        Table body = new Table();
+        body.add(scroll).width(650).height(500).top().left().padRight(18);
+        body.add(detail).width(286).height(500).top().left();
+        root.add(body);
         root.row();
 
         TextButton.TextButtonStyle style = UiStyles.buttonStyle(game);
@@ -98,13 +105,51 @@ public class InventoryScreen implements Screen {
         root.add(back).width(180).height(48).padTop(24);
     }
 
-    private void addEntry(Table table, String title, String description) {
-        Label name = new Label(title, new Label.LabelStyle(game.getFont(), Color.WHITE));
-        Label body = new Label(description, new Label.LabelStyle(game.getFont(), Color.LIGHT_GRAY));
-        body.setWrap(true);
-        table.add(name).width(240).left().pad(8);
-        table.add(body).width(580).left().pad(8);
-        table.row();
+    private void buildCardGrid(Table table) {
+        List<Card> cards = allCards();
+        if (cards.isEmpty()) {
+            table.add(new Label("当前牌组为空。", new Label.LabelStyle(game.getFont(), Color.LIGHT_GRAY))).pad(16);
+            return;
+        }
+        for (int index = 0; index < cards.size(); index++) {
+            Card card = cards.get(index);
+            TextButton tile = new TextButton("[" + card.getCost() + "]  " + card.getName()
+                    + "\n" + card.getType() + " · " + card.getRarity(), UiStyles.buttonStyle(game));
+            tile.addListener(new ClickListener() {
+                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    showDetails(card.getName(), "费用：" + card.getCost() + "\n类型：" + card.getType()
+                            + "\n稀有度：" + card.getRarity() + (card.isUpgraded() ? "\n已升级" : "")
+                            + "\n\n" + card.getDescription());
+                }
+            });
+            table.add(tile).width(195).height(104).pad(5);
+            if ((index + 1) % 3 == 0) table.row();
+        }
+    }
+
+    private void buildRelicGrid(Table table) {
+        List<Relic> relics = player.getRelics();
+        if (relics.isEmpty()) {
+            table.add(new Label("尚未获得藏品\n在事件、奖励或商店中获得藏品。",
+                    new Label.LabelStyle(game.getFont(), Color.LIGHT_GRAY))).pad(16);
+            return;
+        }
+        for (int index = 0; index < relics.size(); index++) {
+            Relic relic = relics.get(index);
+            TextButton tile = new TextButton(relic.getName() + "\n" + relic.getRarity(), UiStyles.buttonStyle(game));
+            tile.addListener(new ClickListener() {
+                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    showDetails(relic.getName(), "稀有度：" + relic.getRarity() + "\n\n" + relic.getDescription());
+                }
+            });
+            table.add(tile).width(195).height(92).pad(5);
+            if ((index + 1) % 3 == 0) table.row();
+        }
+    }
+
+    private void showDetails(String title, String body) {
+        detailTitle.setText(title);
+        detailBody.setText(body);
     }
 
     private List<Card> allCards() {

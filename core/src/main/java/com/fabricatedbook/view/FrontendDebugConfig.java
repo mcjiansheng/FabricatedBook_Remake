@@ -10,7 +10,8 @@ public class FrontendDebugConfig {
         BATTLE,
         REWARD_POTION,
         SHOP,
-        EVENT
+        EVENT,
+        INVENTORY
     }
 
     private final ScreenKind screenKind;
@@ -47,6 +48,10 @@ public class FrontendDebugConfig {
         return new FrontendDebugConfig(ScreenKind.EVENT, 1, eventName);
     }
 
+    public static FrontendDebugConfig inventory() {
+        return new FrontendDebugConfig(ScreenKind.INVENTORY, 1, null);
+    }
+
     public static FrontendDebugConfig parse(String[] args) {
         if (args == null || args.length == 0) return title();
         String screen = null;
@@ -80,6 +85,7 @@ public class FrontendDebugConfig {
             case "reward-potion" -> new FrontendDebugConfig(ScreenKind.REWARD_POTION, 1, null);
             case "shop" -> shop();
             case "event" -> event(eventName);
+            case "inventory", "deck" -> inventory();
             default -> title();
         };
     }
