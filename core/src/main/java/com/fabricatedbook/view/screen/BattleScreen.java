@@ -631,11 +631,11 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         if (rewardRandom("potion-chance").nextFloat() < 0.45f) {
             List<Potion> potions = new com.fabricatedbook.data.DataLoader().loadPotions();
-            if (!potions.isEmpty() && player.canAddPotion()) {
+            if (!potions.isEmpty()) {
                 Potion potion = potions.get(rewardRandom("potion-pick")
                         .nextInt(potions.size())).copy();
                 pendingRewards.add(new RewardEntry("药水：" + potion.getName(), Color.BLACK,
-                        () -> player.addPotion(potion)));
+                        () -> player.addPotion(potion), false, potion));
             }
         }
     }
@@ -687,18 +687,11 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         }
 
         TextButton.TextButtonStyle buttonStyle = UiStyles.buttonStyle(game);
-        boolean allClaimed = allRewardsClaimed();
-        TextButton continueButton = new TextButton(allClaimed ? "继续" : "领取所有奖励后继续",
-                buttonStyle);
-        continueButton.setDisabled(!allClaimed);
+        TextButton continueButton = new TextButton("离开奖励", buttonStyle);
         continueButton.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
-                if (!allRewardsClaimed()) {
-                    statusLabel.setText("请先领取所有奖励");
-                    return;
-                }
                 rewardModal = null;
                 modal.remove();
                 returnToMapAfterReward();
@@ -724,6 +717,10 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 }
                 if (entry.opensCardSelection) {
                     entry.claimAction.run();
+                    return;
+                }
+                if (entry.potionReward != null && !player.canAddPotion()) {
+                    showPotionDiscardSelection(entry);
                     return;
                 }
                 entry.claimAction.run();
@@ -832,6 +829,50 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         return true;
     }
 
+    private void showPotionDiscardSelection(RewardEntry entry) {
+        // Kept in the reward flow so a full potion bar never silently loses a reward.
+        if (rewardModal != null) rewardModal.remove();
+        Group modal = new Group();
+        rewardModal = modal;
+        modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
+        stage.addActor(modal);
+        Table table = new Table();
+        table.setFillParent(true);
+        table.center();
+        modal.addActor(table);
+        table.add(new Label("药水栏已满：选择一瓶丢弃", new Label.LabelStyle(
+                game.getFontForScale(1.4f), Color.GOLD))).padBottom(20);
+        table.row();
+        for (int i = 0; i < player.getPotions().size(); i++) {
+            final int index = i;
+            Potion existing = player.getPotions().get(i);
+            TextButton discard = new TextButton("丢弃 " + existing.getName(), UiStyles.buttonStyle(game));
+            discard.addListener(new ClickListener() {
+                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    player.removePotion(index);
+                    entry.claimAction.run();
+                    entry.claimed = true;
+                    commitRewardPhase();
+                    game.autosaveCurrentRun();
+                    statusLabel.setText("获得：" + entry.label);
+                    showRewardClaimModal();
+                }
+            });
+            table.add(discard).width(250).height(46).padBottom(10);
+            table.row();
+        }
+        TextButton skip = new TextButton("跳过药水", UiStyles.buttonStyle(game));
+        skip.addListener(new ClickListener() {
+            @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                entry.claimed = true;
+                commitRewardPhase();
+                showRewardClaimModal();
+            }
+        });
+        table.add(skip).width(250).height(46).padTop(8);
+        modal.toFront();
+    }
+
     private void returnToMapAfterReward() {
         if (returnMap != null) {
             if (returnMap.isFinalLayer()) {
@@ -896,6 +937,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         private final Color color;
         private final Runnable claimAction;
         private final boolean opensCardSelection;
+        private final Potion potionReward;
         private boolean claimed;
 
         private RewardEntry(String label, Color color, Runnable claimAction) {
@@ -904,10 +946,16 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
         private RewardEntry(String label, Color color, Runnable claimAction,
                             boolean opensCardSelection) {
+            this(label, color, claimAction, opensCardSelection, null);
+        }
+
+        private RewardEntry(String label, Color color, Runnable claimAction,
+                            boolean opensCardSelection, Potion potionReward) {
             this.label = label;
             this.color = color;
             this.claimAction = claimAction;
             this.opensCardSelection = opensCardSelection;
+            this.potionReward = potionReward;
             this.claimed = false;
         }
     }
