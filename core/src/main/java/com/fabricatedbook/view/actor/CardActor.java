@@ -247,6 +247,12 @@ public class CardActor extends Actor {
         font.getData().setScale(FabricBookGame.uiFontScale(0.60f * scale));
         font.draw(batch, typeLabel(card.getType()) + " · " + rarityLabel(card.getRarity()),
                 drawX + 32 * scale, drawY + visualHeight - 27 * scale);
+        if (card.isUpgraded()) {
+            font.setColor(Color.GOLD);
+            font.draw(batch, "已升级", drawX + visualWidth - 48 * scale,
+                    drawY + visualHeight - 10 * scale);
+            font.setColor(0.12f, 0.10f, 0.08f, 1f);
+        }
         font.getData().setScale(FabricBookGame.uiFontScale(0.78f * scale));
 
         // 绘制消耗
