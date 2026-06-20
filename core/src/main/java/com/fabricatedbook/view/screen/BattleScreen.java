@@ -176,14 +176,14 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         statusLabel = new Label("", new Label.LabelStyle(
                 game.getFont(), com.badlogic.gdx.graphics.Color.WHITE));
         statusLabel.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 160,
-                FabricBookGame.SCREEN_HEIGHT - 118);
+                FabricBookGame.SCREEN_HEIGHT - 142);
         stage.addActor(statusLabel);
 
         // 回合信息
         turnLabel = new Label("回合 1", new Label.LabelStyle(
                 game.getFontForScale(1.5f), com.badlogic.gdx.graphics.Color.WHITE));
         turnLabel.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 55,
-                FabricBookGame.SCREEN_HEIGHT - 62);
+                FabricBookGame.SCREEN_HEIGHT - 102);
         stage.addActor(turnLabel);
 
         new GameHud(stage, game, player,
