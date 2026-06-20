@@ -19,6 +19,7 @@ import com.fabricatedbook.view.ui.UiTheme;
 import com.fabricatedbook.view.ui.GameHud;
 import com.fabricatedbook.view.ui.UiModal;
 import com.fabricatedbook.view.ui.UiFeedback;
+import com.fabricatedbook.view.ui.UiLayout;
 
 import java.util.List;
 
@@ -235,7 +236,7 @@ public class ShopScreen implements Screen {
         if (removeModal != null) removeModal.remove();
         removeModal = UiModal.open(stage);
         Table panel = UiModal.panel(840, 470);
-        panel.pad(24);
+        panel.pad(UiLayout.PANEL_PADDING);
         removeModal.addActor(panel);
 
         Label title = new Label("移除一张卡牌", new Label.LabelStyle(

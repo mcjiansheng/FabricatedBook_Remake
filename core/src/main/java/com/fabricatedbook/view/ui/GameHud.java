@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * potion behavior, while layout and live player state remain identical everywhere.
  */
 public final class GameHud extends Group {
-    public static final float HEIGHT = 58f;
+    public static final float HEIGHT = UiLayout.HUD_HEIGHT;
 
     private final Player player;
     private final Supplier<String> layerText;

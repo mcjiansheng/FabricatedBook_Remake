@@ -19,6 +19,7 @@ import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
 import com.fabricatedbook.view.ui.GameHud;
+import com.fabricatedbook.view.ui.UiLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,7 @@ public class InventoryScreen implements Screen {
 
         Table root = new Table();
         root.setFillParent(true);
-        root.top().pad(92, 90, 36, 90);
+        root.top().pad(UiLayout.PAGE_TOP_AFTER_HUD, UiLayout.PAGE_SIDE_PADDING, 36, UiLayout.PAGE_SIDE_PADDING);
         stage.addActor(root);
 
         new GameHud(stage, game, player,
@@ -80,7 +81,7 @@ public class InventoryScreen implements Screen {
         scroll.setFadeScrollBars(false);
         scroll.setScrollingDisabled(true, false);
         Table detail = new Table();
-        detail.top().left().pad(18);
+        detail.top().left().pad(UiLayout.SECTION_GAP);
         detail.setBackground(UiStyles.panelSurface());
         detailTitle = new Label("选择一项", new Label.LabelStyle(game.getFontForScale(1.2f), UiTheme.ACCENT_GOLD));
         detailBody = new Label("点击卡牌或藏品查看完整说明。", new Label.LabelStyle(game.getFont(), Color.LIGHT_GRAY));
@@ -102,7 +103,7 @@ public class InventoryScreen implements Screen {
                 game.setScreen(returnMap);
             }
         });
-        root.add(back).width(180).height(48).padTop(24);
+        root.add(back).width(UiLayout.BUTTON_WIDTH).height(UiLayout.BUTTON_HEIGHT).padTop(UiLayout.PANEL_PADDING);
     }
 
     private void buildCardGrid(Table table) {

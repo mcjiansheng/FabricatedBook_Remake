@@ -18,6 +18,7 @@ import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.GameHud;
+import com.fabricatedbook.view.ui.UiLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +55,8 @@ public class SafeHouseScreen implements Screen {
 
         content = new Table();
         content.setFillParent(true);
-        content.top().padTop(92).padLeft(90).padRight(90);
+        content.top().padTop(UiLayout.PAGE_TOP_AFTER_HUD)
+                .padLeft(UiLayout.PAGE_SIDE_PADDING).padRight(UiLayout.PAGE_SIDE_PADDING);
         stage.addActor(content);
         new GameHud(stage, game, player,
                 () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
@@ -181,7 +183,7 @@ public class SafeHouseScreen implements Screen {
                 finish("离开安全屋。");
             }
         });
-        content.add(leave).width(160).height(48).padTop(18).row();
+        content.add(leave).width(160).height(UiLayout.BUTTON_HEIGHT).padTop(UiLayout.SECTION_GAP).row();
     }
 
     @Override
