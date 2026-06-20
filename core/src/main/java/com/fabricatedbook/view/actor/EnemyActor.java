@@ -1,6 +1,7 @@
 package com.fabricatedbook.view.actor;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -10,6 +11,7 @@ import com.fabricatedbook.core.engine.EnemyIntentPreview;
 import com.fabricatedbook.core.engine.EnemyActionResolver;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.IntentType;
+import com.fabricatedbook.view.ui.UiStyles;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -165,45 +167,25 @@ public class EnemyActor extends Actor {
             return;
         }
 
-        batch.end();
-
-        // 绘制血条背景
-        shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         if (highlighted) {
-            shapeRenderer.setColor(1f, 0.55f, 0.25f, 0.35f);
-            shapeRenderer.rect(getX() - 12, getY() - 12,
+            rect(batch, new Color(1f, 0.55f, 0.25f, 0.35f), getX() - 12, getY() - 12,
                     ENEMY_WIDTH + 24, ENEMY_HEIGHT + 24);
         }
         // 生命值条（红色→绿色根据血量比例）
         float hpRatio = (float) enemy.getHp() / enemy.getMaxHp();
         float hpBarWidth = ENEMY_WIDTH - 28;
-        shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 1f);
-        shapeRenderer.rect(getX() + 14, getY() + 10, hpBarWidth, 10);
+        rect(batch, new Color(0.3f, 0.3f, 0.3f, 1f), getX() + 14, getY() + 10, hpBarWidth, 10);
         if (hpRatio > 0.5f) {
-            shapeRenderer.setColor(0.2f, 0.8f, 0.2f, 1f);
+            rect(batch, new Color(0.2f, 0.8f, 0.2f, 1f), getX() + 14, getY() + 10, hpBarWidth * hpRatio, 10);
         } else if (hpRatio > 0.25f) {
-            shapeRenderer.setColor(0.8f, 0.8f, 0.2f, 1f);
+            rect(batch, new Color(0.8f, 0.8f, 0.2f, 1f), getX() + 14, getY() + 10, hpBarWidth * hpRatio, 10);
         } else {
-            shapeRenderer.setColor(0.8f, 0.2f, 0.2f, 1f);
+            rect(batch, new Color(0.8f, 0.2f, 0.2f, 1f), getX() + 14, getY() + 10, hpBarWidth * hpRatio, 10);
         }
-        shapeRenderer.rect(getX() + 14, getY() + 10, hpBarWidth * hpRatio, 10);
         if (enemy.getBlock() > 0) {
-            shapeRenderer.setColor(0.25f, 0.45f, 0.95f, 1f);
-            shapeRenderer.rect(getX() + 14, getY() + 24,
+            rect(batch, new Color(0.25f, 0.45f, 0.95f, 1f), getX() + 14, getY() + 24,
                     Math.min(hpBarWidth, enemy.getBlock() * 6f), 6);
         }
-        shapeRenderer.end();
-
-        if (highlighted) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.setColor(1f, 0.82f, 0.35f, 1f);
-            shapeRenderer.rect(getX() - 12, getY() - 12,
-                    ENEMY_WIDTH + 24, ENEMY_HEIGHT + 24);
-            shapeRenderer.end();
-        }
-
-        batch.begin();
 
         // 绘制敌人立绘
         if (sprite != null) {
@@ -228,6 +210,13 @@ public class EnemyActor extends Actor {
             font.draw(batch, String.valueOf(enemy.getBlock()), getX() + 44, getY() + 36);
         }
         drawBuffs(batch);
+    }
+
+    private void rect(Batch batch, Color color, float x, float y, float width, float height) {
+        Color old = batch.getColor().cpy();
+        batch.setColor(color);
+        batch.draw(UiStyles.pixelTexture(), x, y, width, height);
+        batch.setColor(old);
     }
 
     private void drawIntent(Batch batch) {

@@ -170,7 +170,7 @@
   - [x] 地图顶栏的“卡牌/藏品”改为 Scene2D 控件或统一 UI 工厂创建的组件，不再由 `MapScreen` 手工绘制和命中测试。
   - [ ] 让布局常量、边距、字体层级、颜色、按钮状态从公共 theme/token 获取，避免散落在 Screen/Actor 中。（颜色与按钮状态已开始迁移到 `UiTheme`；其余 token 待后续组件迁移。）
   - [ ] 为面板、主/次按钮、禁用按钮、提示框、确认弹窗、可滚动列表、Tooltip 建立可复用组件；屏幕只组织页面结构和业务回调。（已收口按钮、面板、禁用态和 `UiModal`；提示框、Tooltip 与滚动列表封装待继续迁移。）
-  - [ ] 收口 `SpriteBatch` / `ShapeRenderer` 的切换边界；不要在单个 Actor 内频繁结束和重开 batch，以免后续动画、遮罩和批处理互相干扰。（奖励主面板、选牌和满药水选择已迁移到 Scene2D 模态；`CardActor` 与 `PlayerActor` 已迁为共享批渲染原语，敌人 Actor 仍待后续组件化。）
+  - [x] 收口 `SpriteBatch` / `ShapeRenderer` 的切换边界；不要在单个 Actor 内频繁结束和重开 batch，以免后续动画、遮罩和批处理互相干扰。（奖励主面板、选牌和满药水选择已迁移到 Scene2D 模态；`CardActor`、`PlayerActor` 与 `EnemyActor` 均使用共享批渲染原语。旧 `ButtonActor` 未被任何 Screen 使用。）
   - [x] 为 `UiStyles` 等运行时生成的纹理建立统一 dispose 入口，明确 Screen 与全局主题各自拥有的资源。
 
 - [ ] 建立构筑游戏所需的信息层级与交互反馈。
