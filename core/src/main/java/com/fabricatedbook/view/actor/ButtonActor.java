@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.fabricatedbook.view.ui.UiStyles;
 
 /**
  * ButtonActor — 自定义按钮 Actor
@@ -82,22 +83,18 @@ public class ButtonActor extends Actor {
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        batch.end();
-
-        // 绘制按钮背景
-        shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        com.badlogic.gdx.graphics.Color color;
         if (pressed) {
-            shapeRenderer.setColor(PRESS_COLOR);
+            color = PRESS_COLOR;
         } else if (hovered) {
-            shapeRenderer.setColor(HOVER_COLOR);
+            color = HOVER_COLOR;
         } else {
-            shapeRenderer.setColor(NORMAL_COLOR);
+            color = NORMAL_COLOR;
         }
-        shapeRenderer.rect(getX(), getY(), getWidth(), getHeight());
-        shapeRenderer.end();
-
-        batch.begin();
+        com.badlogic.gdx.graphics.Color old = batch.getColor().cpy();
+        batch.setColor(color);
+        batch.draw(UiStyles.pixelTexture(), getX(), getY(), getWidth(), getHeight());
+        batch.setColor(old);
 
         // 绘制按钮文本（居中）
         float textWidth = font.draw(batch, label, getX(), getY()).width;
