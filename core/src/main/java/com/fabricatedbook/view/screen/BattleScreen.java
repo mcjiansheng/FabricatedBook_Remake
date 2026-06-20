@@ -44,6 +44,7 @@ import com.fabricatedbook.view.ui.EnergyBar;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.UiModal;
 import com.fabricatedbook.view.ui.GameHud;
 
 import java.util.ArrayList;
@@ -523,31 +524,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         resultShown = true;
         clearTargetHighlight();
 
-        Group modal = new Group();
-        modal.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        stage.addActor(modal);
-
-        Actor backdrop = new Actor() {
-            @Override
-            public void draw(com.badlogic.gdx.graphics.g2d.Batch batch,
-                             float parentAlpha) {
-                batch.end();
-                shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                shapeRenderer.setColor(0f, 0f, 0f, 0.66f);
-                shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH,
-                        FabricBookGame.SCREEN_HEIGHT);
-                shapeRenderer.setColor(0.12f, 0.11f, 0.09f, 0.96f);
-                shapeRenderer.rect(315, 185, 650, 330);
-                shapeRenderer.end();
-                batch.begin();
-            }
-        };
-        backdrop.setSize(FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        modal.addActor(backdrop);
-
-        Table table = new Table();
-        table.setFillParent(true);
+        Group modal = UiModal.open(stage);
+        Table table = UiModal.panel(650, 330);
         table.center();
         modal.addActor(table);
 
@@ -567,7 +545,6 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             }
         });
         table.add(restart).width(220).height(54);
-        modal.toFront();
     }
 
     private void showRewardModal(String rewardText) {
