@@ -168,6 +168,8 @@ public class ShopScreen implements Screen {
                 && !player.canAddPotion();
         Label name = new Label(item.getName(), new Label.LabelStyle(game.getFont(),
                 sold ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.WHITE));
+        Label type = new Label(itemTypeLabel(item.getType()), new Label.LabelStyle(game.getFontForScale(0.75f),
+                sold ? com.badlogic.gdx.graphics.Color.GRAY : UiTheme.ACCENT_GOLD));
         Label price = new Label(item.getPrice() + " 金币", new Label.LabelStyle(game.getFont(),
                 sold ? com.badlogic.gdx.graphics.Color.GRAY : UiTheme.ACCENT_GOLD));
         Label description = new Label(item.getDescription(), new Label.LabelStyle(game.getFont(),
@@ -176,6 +178,7 @@ public class ShopScreen implements Screen {
 
         Table header = new Table();
         header.add(name).expandX().left();
+        header.add(type).padRight(12);
         header.add(price).right();
         card.add(header).expandX().fillX().left().padBottom(6);
         card.row();
@@ -196,6 +199,14 @@ public class ShopScreen implements Screen {
             card.add(buy).width(150).height(32).right().padTop(6);
         }
         return card;
+    }
+
+    private String itemTypeLabel(ShopManager.ShopItem.ItemType type) {
+        return switch (type) {
+            case CARD -> "卡牌";
+            case RELIC -> "藏品";
+            case POTION -> "药水";
+        };
     }
 
     private void addRemoveService(Table content) {
