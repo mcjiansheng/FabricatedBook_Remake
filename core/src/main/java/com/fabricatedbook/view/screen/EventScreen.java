@@ -25,6 +25,7 @@ import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
 import com.fabricatedbook.view.ui.GameHud;
+import com.fabricatedbook.view.ui.UiLayout;
 
 import java.util.List;
 import java.util.Random;
@@ -53,9 +54,6 @@ public class EventScreen implements Screen {
     private boolean resolved;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
-    private static final float CONTENT_TOP_PAD = 138f;
-    private static final float CONTENT_LEFT_PAD = 72f;
-    private static final float CONTENT_RIGHT_PAD = 72f;
     private static final float EVENT_TEXT_WIDTH = 480f;
     private static final float COLUMN_GAP = 48f;
     private static final float OPTION_WIDTH = 528f;
@@ -102,13 +100,14 @@ public class EventScreen implements Screen {
         Table root = new Table();
         root.setFillParent(true);
         root.top().left();
-        root.pad(CONTENT_TOP_PAD, CONTENT_LEFT_PAD, 70, CONTENT_RIGHT_PAD);
+        root.pad(UiLayout.PAGE_TOP_AFTER_HUD, UiLayout.PAGE_SIDE_PADDING,
+                UiLayout.PANEL_PADDING, UiLayout.PAGE_SIDE_PADDING);
         stage.addActor(root);
 
         Table eventText = new Table();
         eventText.top().left();
         eventText.setBackground(UiStyles.panelSurface());
-        eventText.pad(32);
+        eventText.pad(UiLayout.PANEL_PADDING);
 
         Label titleLabel = new Label(eventName, new Label.LabelStyle(
                 game.getFontForScale(1.7f), UiTheme.ACCENT_GOLD));
@@ -124,10 +123,10 @@ public class EventScreen implements Screen {
         optionTable = new Table();
         optionTable.top().left();
         optionTable.setBackground(UiStyles.panelSurface());
-        optionTable.pad(24);
+        optionTable.pad(UiLayout.PANEL_PADDING);
         renderOptions();
 
-        root.add(eventText).width(EVENT_TEXT_WIDTH).top().left().padRight(COLUMN_GAP);
+        root.add(eventText).width(EVENT_TEXT_WIDTH).top().left().padRight(UiLayout.SECTION_GAP * 2f);
         root.add(optionTable).width(OPTION_WIDTH).top().left();
 
         new GameHud(stage, game, player,
