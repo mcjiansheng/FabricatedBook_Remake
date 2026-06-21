@@ -13,6 +13,9 @@ public final class UiTheme {
     public static final Color BATTLE_BACKGROUND = new Color(0.10f, 0.10f, 0.12f, 1f);
     public static final Color BATTLE_SURFACE = new Color(0.13f, 0.13f, 0.17f, 1f);
     public static final Color BATTLE_HAND = new Color(0.08f, 0.08f, 0.11f, 1f);
+    public static final Color TITLE_BACKGROUND = new Color(0.08f, 0.08f, 0.12f, 1f);
+    public static final Color TITLE_BACKGROUND_TINT = new Color(0.34f, 0.34f, 0.38f, 1f);
+    public static final Color BATTLE_DIVIDER = new Color(0.18f, 0.18f, 0.22f, 1f);
     public static final Color MAP_BACKGROUND = new Color(0.78f, 0.78f, 0.78f, 1f);
     public static final Color MAP_TOP_BAR = new Color(0.86f, 0.86f, 0.86f, 1f);
     public static final Color ACCENT_GOLD = new Color(0.95f, 0.82f, 0f, 1f);

@@ -47,6 +47,7 @@ import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiModal;
 import com.fabricatedbook.view.ui.GameHud;
 import com.fabricatedbook.view.ui.UiTooltip;
+import com.fabricatedbook.view.ui.UiTheme;
 
 import java.util.ArrayList;
 import java.util.ArrayDeque;
@@ -172,7 +173,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         }
 
         // 手牌面板（底部）
-        handPanel = new HandPanel(game, combatEngine, this);
+        handPanel = new HandPanel(game, combatEngine, this, stage);
         handPanel.setPosition(0, 0);
         stage.addActor(handPanel);
 
@@ -226,7 +227,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             toggleEscapeMenu();
         }
-        Gdx.gl.glClearColor(0.1f, 0.1f, 0.12f, 1);
+        Gdx.gl.glClearColor(UiTheme.BATTLE_BACKGROUND.r, UiTheme.BATTLE_BACKGROUND.g,
+                UiTheme.BATTLE_BACKGROUND.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         stage.getViewport().apply();
@@ -507,14 +509,14 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private void drawBackground() {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0.13f, 0.13f, 0.17f, 1f);
+        shapeRenderer.setColor(UiTheme.BATTLE_SURFACE);
         shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH, FabricBookGame.SCREEN_HEIGHT);
-        shapeRenderer.setColor(0.08f, 0.08f, 0.11f, 1f);
+        shapeRenderer.setColor(UiTheme.BATTLE_HAND);
         shapeRenderer.rect(0, 0, FabricBookGame.SCREEN_WIDTH, 205);
-        shapeRenderer.setColor(0.07f, 0.07f, 0.10f, 1f);
+        shapeRenderer.setColor(UiTheme.BATTLE_BACKGROUND);
         shapeRenderer.rect(0, FabricBookGame.SCREEN_HEIGHT - 90,
                 FabricBookGame.SCREEN_WIDTH, 90);
-        shapeRenderer.setColor(0.18f, 0.18f, 0.22f, 1f);
+        shapeRenderer.setColor(UiTheme.BATTLE_DIVIDER);
         shapeRenderer.rect(80, 205, FabricBookGame.SCREEN_WIDTH - 160, 4);
         shapeRenderer.end();
     }

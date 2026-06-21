@@ -20,6 +20,7 @@ import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiTheme;
+import com.fabricatedbook.view.ui.UiTheme;
 import com.fabricatedbook.view.ui.UiLayout;
 
 import java.util.List;
@@ -140,7 +141,8 @@ public class CharacterSelectScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.08f, 0.08f, 0.12f, 1);
+        Gdx.gl.glClearColor(UiTheme.TITLE_BACKGROUND.r, UiTheme.TITLE_BACKGROUND.g,
+                UiTheme.TITLE_BACKGROUND.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         SpriteBatch batch = game.getBatch();

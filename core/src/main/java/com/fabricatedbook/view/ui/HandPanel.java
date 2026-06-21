@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.fabricatedbook.core.card.Card;
@@ -29,6 +30,7 @@ public class HandPanel extends Group {
     private final FabricBookGame game;
     private final CombatEngine combatEngine;
     private final BattleScreen battleScreen;
+    private final Stage stage;
     private final List<CardActor> cardActors;
     private CardActor selectedCard;
     private TextButton endTurnBtn;
@@ -48,10 +50,11 @@ public class HandPanel extends Group {
      * @param battleScreen  战斗画面
      */
     public HandPanel(FabricBookGame game, CombatEngine combatEngine,
-                     BattleScreen battleScreen) {
+                     BattleScreen battleScreen, Stage stage) {
         this.game = game;
         this.combatEngine = combatEngine;
         this.battleScreen = battleScreen;
+        this.stage = stage;
         this.font = game.getFont();
         this.shapeRenderer = new ShapeRenderer();
         this.cardActors = new ArrayList<>();
@@ -107,6 +110,7 @@ public class HandPanel extends Group {
             Card card = hand.get(i);
             CardActor actor = new CardActor(card, font, shapeRenderer);
             actor.setInteractionHandler(battleScreen);
+            UiTooltip.bind(actor, stage, game, () -> UiGlossary.cardDetails(card));
             if (card.isUnplayable()) {
                 actor.setUnavailableReason("无法打出");
             } else if (card.getCost() >= 0 && card.getCost() > player.getEnergy()) {

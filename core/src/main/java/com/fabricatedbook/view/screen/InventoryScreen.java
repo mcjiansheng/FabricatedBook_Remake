@@ -21,6 +21,8 @@ import com.fabricatedbook.view.ui.UiTheme;
 import com.fabricatedbook.view.ui.GameHud;
 import com.fabricatedbook.view.ui.UiLayout;
 import com.fabricatedbook.view.ui.UiScrollPane;
+import com.fabricatedbook.view.ui.UiTooltip;
+import com.fabricatedbook.view.ui.UiGlossary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -124,6 +126,7 @@ public class InventoryScreen implements Screen {
                             + "\n\n" + card.getDescription());
                 }
             });
+            UiTooltip.bind(tile, stage, game, () -> UiGlossary.cardDetails(card));
             table.add(tile).width(195).height(104).pad(5);
             if ((index + 1) % 3 == 0) table.row();
         }

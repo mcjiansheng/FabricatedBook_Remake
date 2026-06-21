@@ -20,6 +20,9 @@ import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.GameHud;
 import com.fabricatedbook.view.ui.UiLayout;
 import com.fabricatedbook.view.ui.UiScrollPane;
+import com.fabricatedbook.view.ui.UiTheme;
+import com.fabricatedbook.view.ui.UiTooltip;
+import com.fabricatedbook.view.ui.UiGlossary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,6 +144,7 @@ public class SafeHouseScreen implements Screen {
                     }
                 }
             });
+            UiTooltip.bind(button, stage, game, () -> UiGlossary.cardDetails(card));
             cardTable.add(button).width(760).height(54).padBottom(10).row();
         }
 
@@ -195,7 +199,8 @@ public class SafeHouseScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             toggleEscapeMenu();
         }
-        Gdx.gl.glClearColor(0.10f, 0.11f, 0.12f, 1f);
+        Gdx.gl.glClearColor(UiTheme.BATTLE_BACKGROUND.r, UiTheme.BATTLE_BACKGROUND.g,
+                UiTheme.BATTLE_BACKGROUND.b, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();

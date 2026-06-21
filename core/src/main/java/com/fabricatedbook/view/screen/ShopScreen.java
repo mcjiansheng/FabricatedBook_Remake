@@ -21,8 +21,12 @@ import com.fabricatedbook.view.ui.UiModal;
 import com.fabricatedbook.view.ui.UiFeedback;
 import com.fabricatedbook.view.ui.UiLayout;
 import com.fabricatedbook.view.ui.UiScrollPane;
+import com.fabricatedbook.view.ui.UiTooltip;
+import com.fabricatedbook.view.ui.UiGlossary;
+import com.fabricatedbook.view.actor.CardActor;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * ShopScreen — 商店画面
@@ -41,6 +45,9 @@ public class ShopScreen implements Screen {
     private Stage stage;
     private OrthographicCamera camera;
     private Table itemTable;
+    private ScrollPane itemScroll;
+    private float itemScrollPosition;
+    private final List<CardActor> itemCardPreviews = new ArrayList<>();
     private UiFeedback feedbackLabel;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
     private Group removeModal;
@@ -124,6 +131,8 @@ public class ShopScreen implements Screen {
      * 渲染商品列表。
      */
     private void renderItems() {
+        for (CardActor preview : itemCardPreviews) preview.dispose();
+        itemCardPreviews.clear();
         itemTable.clear();
         List<ShopManager.ShopItem> items = shopManager.getItems();
         Table content = new Table();
@@ -133,17 +142,19 @@ public class ShopScreen implements Screen {
         addSection(content, "药水", items, ShopManager.ShopItem.ItemType.POTION);
         addRemoveService(content);
 
-        ScrollPane scroll = UiScrollPane.vertical(content);
-        scroll.setFadeScrollBars(false);
-        scroll.setScrollingDisabled(true, false);
-        itemTable.add(scroll).width(920).height(540).top();
+        itemScroll = UiScrollPane.vertical(content);
+        itemScroll.setFadeScrollBars(false);
+        itemScroll.setScrollingDisabled(true, false);
+        itemTable.add(itemScroll).width(UiLayout.SHOP_CONTENT_WIDTH).height(540).top();
+        itemScroll.layout();
+        itemScroll.setScrollY(itemScrollPosition);
     }
 
     private void addSection(Table content, String title, List<ShopManager.ShopItem> items,
                             ShopManager.ShopItem.ItemType type) {
         Label header = new Label(title, new Label.LabelStyle(
                 game.getFontForScale(1.25f), UiTheme.ACCENT_GOLD));
-        content.add(header).width(920).left().padTop(14).padBottom(4);
+        content.add(header).width(UiLayout.SHOP_CONTENT_WIDTH).left().padTop(14).padBottom(4);
         content.row();
         Table grid = new Table();
         grid.top().left();
@@ -151,10 +162,11 @@ public class ShopScreen implements Screen {
         for (int index = 0; index < items.size(); index++) {
             ShopManager.ShopItem item = items.get(index);
             if (item.getType() != type) continue;
-            grid.add(createItemCard(item, index)).width(446).height(122).pad(5);
+            grid.add(createItemCard(item, index)).width(UiLayout.SHOP_ITEM_WIDTH)
+                    .height(item.getType() == ShopManager.ShopItem.ItemType.CARD ? 178 : 122).pad(5);
             if (++column % 2 == 0) grid.row();
         }
-        content.add(grid).width(920).left().padBottom(10);
+        content.add(grid).width(UiLayout.SHOP_CONTENT_WIDTH).left().padBottom(10);
         content.row();
     }
 
@@ -180,9 +192,23 @@ public class ShopScreen implements Screen {
         header.add(name).expandX().left();
         header.add(type).padRight(12);
         header.add(price).right();
-        card.add(header).expandX().fillX().left().padBottom(6);
-        card.row();
-        card.add(description).width(410).height(38).left();
+        if (item.getType() == ShopManager.ShopItem.ItemType.CARD
+                && item.getData() instanceof Card shopCard) {
+            CardActor preview = new CardActor(shopCard, game.getFont(), null);
+            preview.setDraggingEnabled(false);
+            itemCardPreviews.add(preview);
+            UiTooltip.bind(preview, stage, game, () -> UiGlossary.cardDetails(shopCard));
+            Table details = new Table();
+            details.add(header).expandX().fillX().left().padBottom(6);
+            details.row();
+            details.add(description).width(268).height(68).left().top();
+            card.add(preview).width(CardActor.CARD_WIDTH).height(CardActor.CARD_HEIGHT).padRight(12);
+            card.add(details).width(278).height(132).top();
+        } else {
+            card.add(header).expandX().fillX().left().padBottom(6);
+            card.row();
+            card.add(description).width(410).height(38).left();
+        }
         card.row();
         if (sold || unaffordable || potionFull) {
             String reason = sold ? "已售罄" : potionFull ? "药水栏满" : "金币不足";
@@ -198,7 +224,21 @@ public class ShopScreen implements Screen {
             });
             card.add(buy).width(150).height(32).right().padTop(6);
         }
+        UiTooltip.bind(card, stage, game, () -> itemDetails(item));
         return card;
+    }
+
+    private String itemDetails(ShopManager.ShopItem item) {
+        String status = item.isPurchased() ? "已售罄"
+                : player.getGold() < item.getPrice() ? "金币不足"
+                : item.getType() == ShopManager.ShopItem.ItemType.POTION && !player.canAddPotion()
+                ? "药水栏满" : "可购买";
+        String detail = itemTypeLabel(item.getType()) + " · " + item.getPrice() + " 金币\n"
+                + item.getDescription() + "\n状态：" + status;
+        if (item.getType() == ShopManager.ShopItem.ItemType.POTION) {
+            return UiGlossary.potionDetails(item.getName(), detail);
+        }
+        return detail;
     }
 
     private String itemTypeLabel(ShopManager.ShopItem.ItemType type) {
@@ -254,6 +294,7 @@ public class ShopScreen implements Screen {
         if (shopManager.purchase(index)) {
             feedbackLabel.show("已购买：" + item.getName(), UiFeedback.Tone.SUCCESS);
             game.autosaveCurrentRun();
+            rememberItemScroll();
             renderItems();
         } else {
             feedbackLabel.show("购买失败，请检查商品状态。", UiFeedback.Tone.ERROR);
@@ -317,6 +358,7 @@ public class ShopScreen implements Screen {
                 if (shopManager.purchaseRemove(selectedRemoveIndex)) {
                     feedbackLabel.show("已移除：" + selected.getName(), UiFeedback.Tone.SUCCESS);
                     game.autosaveCurrentRun();
+                    rememberItemScroll();
                     renderItems();
                 } else {
                     feedbackLabel.show("移除失败，请检查金币与牌组状态。", UiFeedback.Tone.ERROR);
@@ -335,6 +377,12 @@ public class ShopScreen implements Screen {
     @Override
     public void render(float delta) {
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+            if (removeModal != null && removeModal.hasParent()) {
+                selectedRemoveIndex = -1;
+                UiModal.close(removeModal);
+                removeModal = null;
+                return;
+            }
             toggleEscapeMenu();
         }
         Gdx.gl.glClearColor(UiTheme.BATTLE_HAND.r, UiTheme.BATTLE_HAND.g, UiTheme.BATTLE_HAND.b, 1);
@@ -354,6 +402,8 @@ public class ShopScreen implements Screen {
         Gdx.input.setInputProcessor(null);
     }
     @Override public void dispose() {
+        for (CardActor preview : itemCardPreviews) preview.dispose();
+        itemCardPreviews.clear();
         stage.dispose();
     }
 
@@ -364,5 +414,9 @@ public class ShopScreen implements Screen {
             return;
         }
         escapeMenu = EscapeMenu.show(stage, game, () -> escapeMenu = null);
+    }
+
+    private void rememberItemScroll() {
+        if (itemScroll != null) itemScrollPosition = itemScroll.getScrollY();
     }
 }

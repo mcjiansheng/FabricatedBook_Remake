@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.Align;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
+import com.fabricatedbook.view.ui.UiTheme;
 
 /**
  * EndingScreen — 结局界面。
@@ -91,7 +92,8 @@ public class EndingScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.08f, 0.08f, 0.12f, 1);
+        Gdx.gl.glClearColor(UiTheme.TITLE_BACKGROUND.r, UiTheme.TITLE_BACKGROUND.g,
+                UiTheme.TITLE_BACKGROUND.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();

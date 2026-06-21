@@ -31,6 +31,7 @@ import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
 import com.fabricatedbook.view.ui.GameHud;
+import com.fabricatedbook.view.ui.UiTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -417,7 +418,8 @@ public class MapScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.78f, 0.78f, 0.78f, 1);
+        Gdx.gl.glClearColor(UiTheme.MAP_BACKGROUND.r, UiTheme.MAP_BACKGROUND.g,
+                UiTheme.MAP_BACKGROUND.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         viewport.apply();

@@ -9,6 +9,9 @@ public final class UiLayout {
     public static final float BUTTON_HEIGHT = 48f;
     public static final float BUTTON_WIDTH = 180f;
     public static final float SECTION_GAP = 18f;
+    public static final float PAGE_BOTTOM_PADDING = 24f;
+    public static final float SHOP_CONTENT_WIDTH = 920f;
+    public static final float SHOP_ITEM_WIDTH = 446f;
 
     private UiLayout() {}
 }

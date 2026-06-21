@@ -15,6 +15,8 @@ import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.UiStyles;
 import com.fabricatedbook.view.ui.UiFeedback;
+import com.fabricatedbook.view.ui.UiTheme;
+import com.fabricatedbook.view.ui.UiLayout;
 
 /**
  * TitleScreen — 标题画面
@@ -52,14 +54,14 @@ public class TitleScreen implements Screen {
         // 创建UI — 所有元素放入同一个 Table，由 scene2d 管理布局避免重叠
         Table table = new Table();
         table.setFillParent(true);
-        table.center().padTop(90);
+        table.center().padTop(UiLayout.PAGE_TOP_AFTER_HUD);
         stage.addActor(table);
 
         // 标题大字
         Label titleLabel = new Label("Fabricated Book",
                 new Label.LabelStyle(game.getFontForScale(3.0f), com.badlogic.gdx.graphics.Color.WHITE));
         titleLabel.setAlignment(Align.center);
-        table.add(titleLabel).width(FabricBookGame.SCREEN_WIDTH).padBottom(50);
+        table.add(titleLabel).width(FabricBookGame.SCREEN_WIDTH).padBottom(UiLayout.SECTION_GAP * 3f);
         table.row();
 
         // 按钮样式
@@ -74,7 +76,7 @@ public class TitleScreen implements Screen {
                 game.setScreen(new CharacterSelectScreen(game));
             }
         });
-        table.add(newGameBtn).width(250).height(50).padBottom(20);
+        table.add(newGameBtn).width(250).height(UiLayout.BUTTON_HEIGHT).padBottom(UiLayout.SECTION_GAP);
         table.row();
 
         // 继续游戏按钮
@@ -97,7 +99,7 @@ public class TitleScreen implements Screen {
                 }
             }
         });
-        table.add(continueBtn).width(250).height(50).padBottom(20);
+        table.add(continueBtn).width(250).height(UiLayout.BUTTON_HEIGHT).padBottom(UiLayout.SECTION_GAP);
         table.row();
 
         // 退出按钮
@@ -109,7 +111,7 @@ public class TitleScreen implements Screen {
                 Gdx.app.exit();
             }
         });
-        table.add(exitBtn).width(250).height(50);
+        table.add(exitBtn).width(250).height(UiLayout.BUTTON_HEIGHT);
 
         feedback = new UiFeedback(game);
         feedback.setPosition(FabricBookGame.SCREEN_WIDTH / 2f - 150, 110);
@@ -118,7 +120,7 @@ public class TitleScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.08f, 0.08f, 0.12f, 1);
+        Gdx.gl.glClearColor(UiTheme.TITLE_BACKGROUND.r, UiTheme.TITLE_BACKGROUND.g, UiTheme.TITLE_BACKGROUND.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         SpriteBatch batch = game.getBatch();
@@ -126,7 +128,7 @@ public class TitleScreen implements Screen {
         batch.setProjectionMatrix(stage.getCamera().combined);
         batch.begin();
         if (background != null) {
-            batch.setColor(0.34f, 0.34f, 0.38f, 1f);
+            batch.setColor(UiTheme.TITLE_BACKGROUND_TINT);
             batch.draw(background, 0, 0, FabricBookGame.SCREEN_WIDTH,
                     FabricBookGame.SCREEN_HEIGHT);
             batch.setColor(1f, 1f, 1f, 1f);
