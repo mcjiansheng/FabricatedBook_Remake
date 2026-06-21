@@ -6,6 +6,9 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.fabricatedbook.core.entity.Player;
@@ -48,6 +51,7 @@ public class ShopScreen implements Screen {
     private ScrollPane itemScroll;
     private float itemScrollPosition;
     private final List<CardActor> itemCardPreviews = new ArrayList<>();
+    private Label itemDetailsLabel;
     private UiFeedback feedbackLabel;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
     private Group removeModal;
@@ -123,6 +127,7 @@ public class ShopScreen implements Screen {
                 () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.RELICS)),
                 false, null, () -> {
                     feedbackLabel.show("药水栏已更新。", UiFeedback.Tone.INFO);
+                    rememberItemScroll();
                     renderItems();
                 });
     }
@@ -137,10 +142,28 @@ public class ShopScreen implements Screen {
         List<ShopManager.ShopItem> items = shopManager.getItems();
         Table content = new Table();
         content.top().left();
-        addSection(content, "卡牌", items, ShopManager.ShopItem.ItemType.CARD);
-        addSection(content, "藏品", items, ShopManager.ShopItem.ItemType.RELIC);
-        addSection(content, "药水", items, ShopManager.ShopItem.ItemType.POTION);
-        addRemoveService(content);
+        itemDetailsLabel = new Label("悬停或点击商品查看完整说明。",
+                new Label.LabelStyle(game.getFont(), com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
+        itemDetailsLabel.setWrap(true);
+
+        Table products = new Table();
+        products.top().left();
+        addCardSection(products, items);
+        addRemoveService(products);
+
+        Table detailPanel = new Table();
+        detailPanel.top().left().pad(14);
+        detailPanel.setBackground(UiStyles.panelSurface());
+        detailPanel.add(new Label("商品说明", new Label.LabelStyle(
+                game.getFontForScale(1.08f), UiTheme.ACCENT_GOLD))).left().padBottom(10);
+        detailPanel.row();
+        detailPanel.add(itemDetailsLabel).width(220).top().left();
+
+        Table body = new Table();
+        body.top().left();
+        body.add(products).width(900).top().left().padRight(14);
+        body.add(detailPanel).width(248).height(500).top();
+        content.add(body).width(UiLayout.SHOP_CONTENT_WIDTH).top().left();
 
         itemScroll = UiScrollPane.vertical(content);
         itemScroll.setFadeScrollBars(false);
@@ -150,89 +173,155 @@ public class ShopScreen implements Screen {
         itemScroll.setScrollY(itemScrollPosition);
     }
 
-    private void addSection(Table content, String title, List<ShopManager.ShopItem> items,
-                            ShopManager.ShopItem.ItemType type) {
-        Label header = new Label(title, new Label.LabelStyle(
-                game.getFontForScale(1.25f), UiTheme.ACCENT_GOLD));
-        content.add(header).width(UiLayout.SHOP_CONTENT_WIDTH).left().padTop(14).padBottom(4);
+    /** Card goods deliberately use their real card faces; price and action stay beneath each face. */
+    private void addCardSection(Table content, List<ShopManager.ShopItem> items) {
+        addSectionHeader(content, "卡牌");
+        Table firstRow = new Table();
+        firstRow.top().left();
+        Table secondRowCards = new Table();
+        secondRowCards.top().left();
+        Table itemShelf = new Table();
+        itemShelf.top().left();
+        int cardCount = 0;
+        for (int index = 0; index < items.size(); index++) {
+            ShopManager.ShopItem item = items.get(index);
+            if (item.getType() != ShopManager.ShopItem.ItemType.CARD) continue;
+            Table target = cardCount++ < 5 ? firstRow : secondRowCards;
+            target.add(createCardDisplay(item, index)).width(120).height(218).pad(3);
+        }
+        content.add(firstRow).width(900).left();
         content.row();
-        Table grid = new Table();
-        grid.top().left();
-        int column = 0;
+        addCompactRow(itemShelf, "藏品", items, ShopManager.ShopItem.ItemType.RELIC);
+        addCompactRow(itemShelf, "药水", items, ShopManager.ShopItem.ItemType.POTION);
+        Table secondRow = new Table();
+        secondRow.top().left();
+        secondRow.add(secondRowCards).width(252).top().left().padRight(14);
+        secondRow.add(itemShelf).width(530).top().left();
+        content.add(secondRow).width(900).left().padBottom(8);
+        content.row();
+    }
+
+    /** The small items deliberately occupy the space beside the second card row, like the reference shop. */
+    private void addCompactRow(Table shelf, String title, List<ShopManager.ShopItem> items,
+                               ShopManager.ShopItem.ItemType type) {
+        shelf.add(new Label(title, new Label.LabelStyle(game.getFontForScale(0.84f), UiTheme.ACCENT_GOLD)))
+                .width(48).left();
         for (int index = 0; index < items.size(); index++) {
             ShopManager.ShopItem item = items.get(index);
             if (item.getType() != type) continue;
-            grid.add(createItemCard(item, index)).width(UiLayout.SHOP_ITEM_WIDTH)
-                    .height(item.getType() == ShopManager.ShopItem.ItemType.CARD ? 178 : 122).pad(5);
-            if (++column % 2 == 0) grid.row();
+            shelf.add(createCompactItemTile(item, index)).width(146).height(90).pad(2);
         }
-        content.add(grid).width(UiLayout.SHOP_CONTENT_WIDTH).left().padBottom(10);
+        shelf.row();
+    }
+
+    private void addSectionHeader(Table content, String title) {
+        content.add(new Label(title, new Label.LabelStyle(
+                game.getFontForScale(1.25f), UiTheme.ACCENT_GOLD))).width(900).left().padTop(6).padBottom(3);
         content.row();
     }
 
-    private Table createItemCard(ShopManager.ShopItem item, int index) {
-        Table card = new Table();
-        card.setBackground(UiStyles.panelSurface());
-        card.pad(12);
-        boolean sold = item.isPurchased();
-        boolean unaffordable = player.getGold() < item.getPrice();
-        boolean potionFull = item.getType() == ShopManager.ShopItem.ItemType.POTION
-                && !player.canAddPotion();
-        Label name = new Label(item.getName(), new Label.LabelStyle(game.getFont(),
-                sold ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.WHITE));
-        Label type = new Label(itemTypeLabel(item.getType()), new Label.LabelStyle(game.getFontForScale(0.75f),
-                sold ? com.badlogic.gdx.graphics.Color.GRAY : UiTheme.ACCENT_GOLD));
-        Label price = new Label(item.getPrice() + " 金币", new Label.LabelStyle(game.getFont(),
-                sold ? com.badlogic.gdx.graphics.Color.GRAY : UiTheme.ACCENT_GOLD));
-        Label description = new Label(item.getDescription(), new Label.LabelStyle(game.getFont(),
-                sold ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.LIGHT_GRAY));
-        description.setWrap(true);
+    private Table createCardDisplay(ShopManager.ShopItem item, int index) {
+        Table display = new Table();
+        display.top();
+        CardActor preview = new CardActor((Card) item.getData(), game.getFont(), null);
+        preview.setDraggingEnabled(false);
+        String status = itemStatus(item);
+        if (!"可购买".equals(status)) preview.setUnavailableReason(status);
+        itemCardPreviews.add(preview);
+        display.add(preview).width(CardActor.CARD_WIDTH).height(CardActor.CARD_HEIGHT);
+        display.row();
+        display.add(priceLabel(item)).height(21);
+        display.row();
+        display.add(statusLabel(item)).height(18);
+        bindPurchase(preview, item, index);
+        bindItemDetails(display, item);
+        UiTooltip.bind(preview, stage, game, () -> itemDetails(item));
+        return display;
+    }
 
-        Table header = new Table();
-        header.add(name).expandX().left();
-        header.add(type).padRight(12);
-        header.add(price).right();
-        if (item.getType() == ShopManager.ShopItem.ItemType.CARD
-                && item.getData() instanceof Card shopCard) {
-            CardActor preview = new CardActor(shopCard, game.getFont(), null);
-            preview.setDraggingEnabled(false);
-            itemCardPreviews.add(preview);
-            UiTooltip.bind(preview, stage, game, () -> UiGlossary.cardDetails(shopCard));
-            Table details = new Table();
-            details.add(header).expandX().fillX().left().padBottom(6);
-            details.row();
-            details.add(description).width(268).height(68).left().top();
-            card.add(preview).width(CardActor.CARD_WIDTH).height(CardActor.CARD_HEIGHT).padRight(12);
-            card.add(details).width(278).height(132).top();
-        } else {
-            card.add(header).expandX().fillX().left().padBottom(6);
-            card.row();
-            card.add(description).width(410).height(38).left();
-        }
-        card.row();
-        if (sold || unaffordable || potionFull) {
-            String reason = sold ? "已售罄" : potionFull ? "药水栏满" : "金币不足";
-            TextButton unavailable = new TextButton(reason, UiStyles.buttonStyle(game));
-            unavailable.setDisabled(true);
-            card.add(unavailable).width(150).height(32).right().padTop(6);
-        } else {
-            TextButton buy = new TextButton("购买", UiStyles.buttonStyle(game));
-            buy.addListener(new ClickListener() {
-                @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+    private Table createCompactItemTile(ShopManager.ShopItem item, int index) {
+        Table tile = new Table();
+        tile.setBackground(UiStyles.panelSurface());
+        tile.pad(5);
+        String status = itemStatus(item);
+        com.badlogic.gdx.graphics.Color textColor = "已售罄".equals(status)
+                ? com.badlogic.gdx.graphics.Color.GRAY : com.badlogic.gdx.graphics.Color.WHITE;
+        Label icon = new Label(item.getType() == ShopManager.ShopItem.ItemType.RELIC ? "藏" : "药",
+                new Label.LabelStyle(game.getFontForScale(1.15f),
+                        "已售罄".equals(status) ? com.badlogic.gdx.graphics.Color.GRAY : UiTheme.ACCENT_GOLD));
+        Table iconFrame = new Table();
+        iconFrame.setBackground(UiStyles.lightPanelSurface());
+        iconFrame.add(icon);
+        Table information = new Table();
+        information.top().left();
+        Label name = new Label(item.getName(), new Label.LabelStyle(game.getFont(), textColor));
+        name.setEllipsis(true);
+        information.add(name).width(78).left();
+        information.row();
+        information.add(priceLabel(item)).left().padTop(2);
+        information.row();
+        information.add(new Label(status, new Label.LabelStyle(game.getFontForScale(0.76f),
+                "可购买".equals(status) ? com.badlogic.gdx.graphics.Color.LIGHT_GRAY : UiTheme.ACCENT_GOLD)))
+                .left().padTop(2);
+        tile.add(iconFrame).width(36).height(36).top().padRight(5);
+        tile.add(information).width(88).top().left();
+        bindPurchase(tile, item, index);
+        bindItemDetails(tile, item);
+        UiTooltip.bind(tile, stage, game, () -> itemDetails(item));
+        return tile;
+    }
+
+    private Label priceLabel(ShopManager.ShopItem item) {
+        return new Label("金币 " + item.getPrice(), new Label.LabelStyle(game.getFont(),
+                item.isPurchased() ? com.badlogic.gdx.graphics.Color.GRAY : UiTheme.ACCENT_GOLD));
+    }
+
+    private Label statusLabel(ShopManager.ShopItem item) {
+        String status = itemStatus(item);
+        return new Label("可购买".equals(status) ? "点击购买" : status,
+                new Label.LabelStyle(game.getFontForScale(0.72f),
+                        "可购买".equals(status) ? com.badlogic.gdx.graphics.Color.LIGHT_GRAY : UiTheme.ACCENT_GOLD));
+    }
+
+    /** Product actors are the purchase controls; no separate action row competes with the merchandise. */
+    private void bindPurchase(Actor actor, ShopManager.ShopItem item, int index) {
+        actor.addListener(new ClickListener() {
+            @Override public void clicked(InputEvent event, float x, float y) {
+                if (item.isPurchased()) {
+                    feedbackLabel.show("该商品已售罄。", UiFeedback.Tone.INFO);
+                } else {
                     purchaseItem(index, item);
                 }
-            });
-            card.add(buy).width(150).height(32).right().padTop(6);
-        }
-        UiTooltip.bind(card, stage, game, () -> itemDetails(item));
-        return card;
+            }
+        });
+    }
+
+    private String itemStatus(ShopManager.ShopItem item) {
+        if (item.isPurchased()) return "已售罄";
+        if (player.getGold() < item.getPrice()) return "金币不足";
+        if (item.getType() == ShopManager.ShopItem.ItemType.POTION && !player.canAddPotion()) return "药水栏满";
+        return "可购买";
+    }
+
+    private void bindItemDetails(Actor actor, ShopManager.ShopItem item) {
+        actor.addListener(new InputListener() {
+            @Override public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                showItemDetails(item);
+            }
+
+            @Override public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                showItemDetails(item);
+                return false;
+            }
+        });
+    }
+
+    private void showItemDetails(ShopManager.ShopItem item) {
+        if (itemDetailsLabel != null) itemDetailsLabel.setText(itemDetails(item));
     }
 
     private String itemDetails(ShopManager.ShopItem item) {
-        String status = item.isPurchased() ? "已售罄"
-                : player.getGold() < item.getPrice() ? "金币不足"
-                : item.getType() == ShopManager.ShopItem.ItemType.POTION && !player.canAddPotion()
-                ? "药水栏满" : "可购买";
+        String status = itemStatus(item);
         String detail = itemTypeLabel(item.getType()) + " · " + item.getPrice() + " 金币\n"
                 + item.getDescription() + "\n状态：" + status;
         if (item.getType() == ShopManager.ShopItem.ItemType.POTION) {
