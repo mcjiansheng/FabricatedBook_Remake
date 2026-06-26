@@ -2,6 +2,8 @@ package com.fabricatedbook.desktop;
 
 import com.fabricatedbook.core.action.CombatAction;
 import com.fabricatedbook.core.card.Card;
+import com.fabricatedbook.core.engine.CardEffect;
+import com.fabricatedbook.core.engine.CardEffectParser;
 import com.fabricatedbook.core.engine.CombatEngine;
 import com.fabricatedbook.core.engine.ViewNotifier;
 import com.fabricatedbook.core.entity.AbstractEntity;
@@ -838,6 +840,7 @@ public class BackendDebugLauncher {
 
         List<Card> cards = loader.loadCards("warrior");
         ok &= assertCheck(!cards.isEmpty(), "战士 JSON 卡牌可加载: " + cards.size());
+        ok &= assertCheck(cardEffectsAreKnown(cards), "战士 JSON 卡牌 effect 均为已知 DSL");
 
         List<Potion> potions = loader.loadPotions();
         ok &= assertCheck(!potions.isEmpty(), "药水可加载: " + potions.size());
@@ -884,6 +887,20 @@ public class BackendDebugLauncher {
                 "命令行战斗从 JSON 怪物池创建敌人");
 
         println(ok ? "SELFTEST PASS" : "SELFTEST FAIL");
+    }
+
+    private boolean cardEffectsAreKnown(List<Card> cards) {
+        boolean ok = true;
+        for (Card card : cards) {
+            for (CardEffect effect : CardEffectParser.parse(card.getEffects())) {
+                if (!CardEffectParser.isKnownType(effect.getType())) {
+                    println("[SELFTEST] 未知卡牌 effect: " + card.getId()
+                            + " -> " + effect.getRaw());
+                    ok = false;
+                }
+            }
+        }
+        return ok;
     }
 
     private void runSeedTest(long seed) {

@@ -25,4 +25,11 @@ class CardEffectParserTest {
         assertEquals("damage", effects.get(0).getType());
         assertNull(CardEffectParser.parse((String) null));
     }
+
+    @Test
+    void knownTypesIncludePlayableAndStatusEffects() {
+        assertTrue(CardEffectParser.isKnownType("damage"));
+        assertTrue(CardEffectParser.isKnownType("end_turn_damage"));
+        assertFalse(CardEffectParser.isKnownType("mystery_effect"));
+    }
 }
