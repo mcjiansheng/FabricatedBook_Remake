@@ -1,6 +1,7 @@
 package com.fabricatedbook.core.card;
 
 import com.fabricatedbook.core.entity.Profession;
+import com.fabricatedbook.data.DataLoader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,15 +30,26 @@ public class CardPool {
     /** 随机数生成器 */
     private static final Random RANDOM = new Random();
 
-    // 静态初始化：注册战士卡牌
     static {
-        registerWarriorCards();
+        if (!registerCardsFromJson("warrior")) {
+            registerWarriorCards();
+        }
+    }
+
+    private static boolean registerCardsFromJson(String profession) {
+        List<Card> cards = new DataLoader().loadCards(profession);
+        if (cards.isEmpty()) {
+            return false;
+        }
+        registerCards(profession, cards);
+        return true;
     }
 
     /**
      * 注册战士卡牌。
      * <p>
-     * 数据来源：game_encyclopedia.md "四、卡牌系统 - 战士卡牌池"
+     * 兜底数据来源：game_encyclopedia.md "四、卡牌系统 - 战士卡牌池"。
+     * 正常运行时优先从 data/cards/warrior.json 注册。
      */
     private static void registerWarriorCards() {
         String profession = "warrior";

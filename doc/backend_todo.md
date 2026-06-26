@@ -108,7 +108,7 @@
 
 ## B-003：卡牌数据源与职业初始牌组没有统一
 
-状态：部分修复。已新增 `StarterDeckFactory`，由 `GameRunState` 在新对局创建时初始化长期初始牌组；`CombatEngine` 不再硬编码创建 `war_atk1` / `war_def1` / `war_painful_blow`，CLI 调试新对局和种子测试也复用同一入口。剩余问题：`warrior.json` 的 `warrior_*` ID 与运行时 `war_*` ID 仍未统一，暂不能直接将 `CardPool` 切换为 JSON 唯一来源。
+状态：已修复战士主链路。已新增 `StarterDeckFactory`，由 `GameRunState` 在新对局创建时初始化长期初始牌组；`CombatEngine` 不再硬编码创建 `war_atk1` / `war_def1` / `war_painful_blow`，CLI 调试新对局和种子测试也复用同一入口。`warrior.json` 已改为运行时 `war_*` ID 并补齐升级字段，`CardPool` 现在优先从 JSON 注册战士卡，失败时才回退到旧硬编码。法师/女巫完整卡池仍归入职业完整化任务。
 
 ### 位置
 
