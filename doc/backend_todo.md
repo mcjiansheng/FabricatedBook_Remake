@@ -226,7 +226,7 @@
 
 ## B-005：环境效果和部分节点进入规则仍在 UI 层或仅有描述
 
-状态：部分修复。已新增 `NodeEntryResolver` / `NodeEntryResult` 作为 core 节点进入规则入口，`relic_oligarch` 的“进入非战斗节点获得金币”已从 `MapScreen` 下沉到 core，并由 `MapScreen` 与 `BackendDebugLauncher` 共用；测试覆盖非战斗触发和战斗不触发。剩余工作：森林、诡异秘林、迷雾等层环境仍只有描述，事件/商店/安全屋等节点完成时机和反馈展示也还需要继续统一。
+状态：部分修复。已新增 `NodeEntryResolver` / `NodeEntryResult` 作为 core 节点进入规则入口，`relic_oligarch` 的“进入非战斗节点获得金币”已从 `MapScreen` 下沉到 core，并由 `MapScreen` 与 `BackendDebugLauncher` 共用；森林非战斗节点扣 10-20 金币、迷雾每次前进随机回血/扣血已在 core 节点进入入口执行，且随机绑定 seed+节点坐标。测试覆盖寡头触发、森林非战斗/战斗分支和迷雾同 seed 同节点可复现。剩余工作：诡异秘林伤害修正仍缺少对局状态字段；事件/商店/安全屋等节点完成时机和前端反馈展示还需要继续统一。
 
 ### 位置
 

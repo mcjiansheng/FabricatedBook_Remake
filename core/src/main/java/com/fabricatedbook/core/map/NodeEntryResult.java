@@ -9,21 +9,52 @@ import java.util.List;
  */
 public class NodeEntryResult {
     private int goldGained;
+    private int goldLost;
+    private int hpHealed;
+    private int hpLost;
     private final List<String> messages = new ArrayList<>();
 
     public int getGoldGained() { return goldGained; }
+    public int getGoldLost() { return goldLost; }
+    public int getHpHealed() { return hpHealed; }
+    public int getHpLost() { return hpLost; }
 
     public List<String> getMessages() {
         return Collections.unmodifiableList(messages);
     }
 
     public boolean hasChanges() {
-        return goldGained != 0 || !messages.isEmpty();
+        return goldGained != 0 || goldLost != 0 || hpHealed != 0 || hpLost != 0
+                || !messages.isEmpty();
     }
 
     void gainGold(int amount, String message) {
         if (amount <= 0) return;
         goldGained += amount;
+        if (message != null && !message.isBlank()) {
+            messages.add(message);
+        }
+    }
+
+    void loseGold(int amount, String message) {
+        if (amount <= 0) return;
+        goldLost += amount;
+        if (message != null && !message.isBlank()) {
+            messages.add(message);
+        }
+    }
+
+    void heal(int amount, String message) {
+        if (amount <= 0) return;
+        hpHealed += amount;
+        if (message != null && !message.isBlank()) {
+            messages.add(message);
+        }
+    }
+
+    void loseHp(int amount, String message) {
+        if (amount <= 0) return;
+        hpLost += amount;
         if (message != null && !message.isBlank()) {
             messages.add(message);
         }

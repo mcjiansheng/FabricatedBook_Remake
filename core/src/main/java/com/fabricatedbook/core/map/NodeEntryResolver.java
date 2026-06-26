@@ -5,6 +5,8 @@ import com.fabricatedbook.core.relic.DataRelic;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.run.GameRunState;
 
+import java.util.Random;
+
 /**
  * Applies core-side effects that happen when a run enters a map node.
  */
@@ -12,17 +14,49 @@ public class NodeEntryResolver {
     private static final int DEFAULT_OLIGARCH_GOLD = 20;
 
     public NodeEntryResult enterNode(GameRunState runState, NodeType nodeType) {
+        GameRunState.NodeRef nodeRef = nodeType == null ? null
+                : new GameRunState.NodeRef(runState != null ? runState.getCurrentLayerIdx() : 0,
+                -1, -1, typeCode(nodeType));
+        return enterNode(runState, nodeRef);
+    }
+
+    public NodeEntryResult enterNode(GameRunState runState, GameRunState.NodeRef nodeRef) {
         NodeEntryResult result = new NodeEntryResult();
-        if (runState == null || nodeType == null) {
+        if (runState == null || nodeRef == null) {
             return result;
         }
+        NodeType nodeType = LayerMapGraph.fromTypeCode(nodeRef.type);
         Player player = runState.getPlayer();
         if (player == null) {
             return result;
         }
 
+        applyEnvironment(runState, player, nodeRef, nodeType, result);
         applyOligarch(player, nodeType, result);
         return result;
+    }
+
+    private void applyEnvironment(GameRunState runState, Player player,
+                                  GameRunState.NodeRef nodeRef, NodeType nodeType,
+                                  NodeEntryResult result) {
+        Random random = runState.randomFor("node-entry", nodeRef.layer, nodeRef.col,
+                nodeRef.row, nodeRef.type);
+        if (nodeRef.layer == 1 && !nodeType.isCombat()) {
+            int amount = 10 + random.nextInt(11);
+            int actualLost = Math.min(player.getGold(), amount);
+            player.setGold(player.getGold() - amount);
+            result.loseGold(actualLost, "森林环境：失去 " + actualLost + " 金币");
+        } else if (nodeRef.layer == 3) {
+            if (random.nextInt(2) == 0) {
+                int amount = 5 + random.nextInt(26);
+                int healed = player.heal(amount);
+                result.heal(healed, "迷雾环境：回复 " + healed + " 生命值");
+            } else {
+                int amount = 1 + random.nextInt(20);
+                int lost = player.takeDamage(amount);
+                result.loseHp(lost, "迷雾环境：失去 " + lost + " 生命值");
+            }
+        }
     }
 
     private void applyOligarch(Player player, NodeType nodeType, NodeEntryResult result) {
@@ -47,5 +81,18 @@ public class NodeEntryResolver {
             }
         }
         return null;
+    }
+
+    private int typeCode(NodeType type) {
+        return switch (type) {
+            case FIGHT -> 1;
+            case EMERGENCY -> 2;
+            case BOSS -> 3;
+            case UNEXPECTED -> 4;
+            case REWARD -> 5;
+            case SHOP -> 6;
+            case DECISION -> 8;
+            case SAFEHOUSE -> 9;
+        };
     }
 }

@@ -326,13 +326,12 @@ public class BackendDebugLauncher {
 
         println("进入节点: " + node.getType().getDisplayName()
                 + " (" + node.getCol() + "," + node.getRow() + ")");
+        NodeEntryResult entryResult = new NodeEntryResolver().enterNode(runState, toNodeRef(node));
+        for (String message : entryResult.getMessages()) {
+            println(message);
+        }
         if (node.getType().isCombat()) {
             runState.beginCombat(toNodeRef(node));
-        } else {
-            NodeEntryResult entryResult = new NodeEntryResolver().enterNode(runState, node.getType());
-            for (String message : entryResult.getMessages()) {
-                println(message);
-            }
         }
         resolveNode(node);
         if (node.getType().isCombat()) {

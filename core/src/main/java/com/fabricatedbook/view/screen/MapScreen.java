@@ -439,6 +439,7 @@ public class MapScreen implements Screen {
             case EMERGENCY:
             case BOSS:
                 activeNode = node;
+                new NodeEntryResolver().enterNode(runState, toRef(node));
                 runState.beginCombat(toRef(node));
                 game.autosaveCurrentRun();
                 // 进入战斗
@@ -495,7 +496,7 @@ public class MapScreen implements Screen {
         node.visited = true;
         runState.setCompletedNode(toRef(node));
         updateAccessibleNodes();
-        new NodeEntryResolver().enterNode(runState, LayerMapGraph.fromTypeCode(node.type));
+        new NodeEntryResolver().enterNode(runState, toRef(node));
     }
 
     private GameRunState.NodeRef toRef(MapNode node) {
