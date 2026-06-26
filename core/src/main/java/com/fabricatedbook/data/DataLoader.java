@@ -124,6 +124,19 @@ public class DataLoader {
         }
     }
 
+    public List<EventData> loadEvents() {
+        String path = dataPath + "events.json";
+        try {
+            String json = readFileAsString(path);
+            Type listType = new TypeToken<List<EventData>>() {}.getType();
+            List<EventData> events = gson.fromJson(json, listType);
+            return events != null ? events : new ArrayList<>();
+        } catch (Exception e) {
+            System.err.println("[DataLoader] 加载事件失败: " + path + " - " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
     /**
      * 从 JSON 文件加载地图配置。
      *
@@ -156,6 +169,28 @@ public class DataLoader {
                 MapConfig.mist(),
                 MapConfig.tower()
         );
+    }
+
+    public static class EventData {
+        private String id;
+        private String name;
+        private String description;
+        private List<EventOptionData> options;
+
+        public String getId() { return id; }
+        public String getName() { return name; }
+        public String getDescription() { return description; }
+        public List<EventOptionData> getOptions() {
+            return options != null ? options : List.of();
+        }
+    }
+
+    public static class EventOptionData {
+        private String text;
+        private String result;
+
+        public String getText() { return text; }
+        public String getResult() { return result; }
     }
 
     // ==================== 辅助方法 ====================

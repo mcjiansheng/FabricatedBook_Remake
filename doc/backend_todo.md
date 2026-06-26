@@ -326,6 +326,8 @@
 
 ## B-007：事件系统仍是 Java 硬编码，数据文件没有成为规则来源
 
+状态：部分修复。`DataLoader` 已新增 `loadEvents()`，普通事件的名称、描述和选项展示现在由 `events.json` 驱动，`EventHandler` 仍保留 Java 执行结果和两个命运抉择的特殊逻辑；测试覆盖普通事件文本来自 JSON，以及命运抉择条件仍按玩家藏品判断。剩余工作：把固定事件结果、金币/生命/藏品奖励迁到轻量 DSL，特殊事件继续保留 Java executor。
+
 ### 位置
 
 - 包：`com.fabricatedbook.core.event`

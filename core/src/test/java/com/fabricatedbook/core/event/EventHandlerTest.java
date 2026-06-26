@@ -56,6 +56,20 @@ class EventHandlerTest {
     }
 
     @Test
+    void ordinaryEventTextComesFromJsonData() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        assertTrue(handler.getEventNames().contains("相遇"));
+        assertEquals("你偶遇了一个衣衫褴褛的人，他请求与你同行。",
+                handler.getEventDescription("相遇"));
+
+        List<EventHandler.EventOption> options = handler.getOptions("相遇");
+        assertEquals(3, options.size());
+        assertEquals("✅ 同意", options.get(0).label);
+        assertEquals("获得藏品「背叛」", options.get(0).description);
+    }
+
+    @Test
     void playerPotionLimitIsConfigurable() {
         Player player = player();
         player.setMaxPotionSlots(5);

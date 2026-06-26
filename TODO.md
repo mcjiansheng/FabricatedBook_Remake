@@ -320,3 +320,5 @@ Bug ID：
 后端结构问题、修复顺序、影响范围和验证建议集中记录在 [doc/backend_todo.md](doc/backend_todo.md)。当前已完成战斗胜利回调、商店弃牌次数状态、战士卡牌来源统一，以及地图生成/连接规则 core 化；下一步重点是节点进入与环境效果下沉、effect DSL 收敛和事件数据化。
 
 近期后端进展：effect DSL 已先抽出 `CardEffectParser` 作为执行和预览共用解析入口；执行器/预览器注册表与未知 effect 自检仍在后续任务中。
+
+事件系统已先让普通事件的名称、描述和选项展示从 `events.json` 读取；事件结果 DSL 和特殊事件 executor 分层仍待继续。

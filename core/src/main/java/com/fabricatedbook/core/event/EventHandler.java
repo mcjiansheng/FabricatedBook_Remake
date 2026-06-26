@@ -1,6 +1,7 @@
 package com.fabricatedbook.core.event;
 
 import com.fabricatedbook.core.entity.Player;
+import com.fabricatedbook.data.DataLoader;
 
 import java.util.*;
 
@@ -17,6 +18,7 @@ public class EventHandler {
 
     /** 随机数生成器 */
     private final Random random;
+    private final Map<String, DataLoader.EventData> eventsByName;
 
     /** 事件结果回调接口 */
     @FunctionalInterface
@@ -77,6 +79,7 @@ public class EventHandler {
 
     public EventHandler(Random random) {
         this.random = random == null ? new Random() : random;
+        this.eventsByName = loadEventsByName();
     }
 
     /**
@@ -85,11 +88,18 @@ public class EventHandler {
      * @return 所有可用事件的名称列表
      */
     public List<String> getEventNames() {
-        return List.of("相遇", "翅膀雕像", "黏液世界", "投资",
-                "追猎", "村庄", "人生意义", "好诗歪诗");
+        if (!eventsByName.isEmpty()) {
+            return new ArrayList<>(eventsByName.keySet());
+        }
+        return hardcodedEventNames();
     }
 
     public String getEventDescription(String eventName) {
+        DataLoader.EventData eventData = eventsByName.get(eventName);
+        if (eventData != null && eventData.getDescription() != null
+                && !eventData.getDescription().isBlank()) {
+            return eventData.getDescription();
+        }
         return switch (eventName) {
             case "命运抉择1" -> "迷雾渐起，前途未知，你将何去何从？";
             case "命运抉择2" -> "你战胜了强大的敌人，但这只是见到“幕后黑手”的前提。\n他要求你前往高塔帮他“解决”一个麻烦，同时可以给予你一个东西。";
@@ -144,6 +154,10 @@ public class EventHandler {
     }
 
     public List<EventOption> getOptions(String eventName, Player player) {
+        List<EventOption> dataOptions = dataOptions(eventName);
+        if (!dataOptions.isEmpty()) {
+            return dataOptions;
+        }
         switch (eventName) {
             case "命运抉择1":
                 return List.of(
@@ -210,6 +224,33 @@ public class EventHandler {
             default:
                 return List.of(new EventOption("离开", "无事发生"));
         }
+    }
+
+    private Map<String, DataLoader.EventData> loadEventsByName() {
+        Map<String, DataLoader.EventData> events = new LinkedHashMap<>();
+        for (DataLoader.EventData eventData : new DataLoader().loadEvents()) {
+            if (eventData.getName() != null && !eventData.getName().isBlank()) {
+                events.put(eventData.getName(), eventData);
+            }
+        }
+        return events;
+    }
+
+    private List<EventOption> dataOptions(String eventName) {
+        DataLoader.EventData eventData = eventsByName.get(eventName);
+        if (eventData == null || eventData.getOptions().isEmpty()) {
+            return List.of();
+        }
+        List<EventOption> options = new ArrayList<>();
+        for (DataLoader.EventOptionData optionData : eventData.getOptions()) {
+            options.add(new EventOption(optionData.getText(), optionData.getResult()));
+        }
+        return options;
+    }
+
+    private List<String> hardcodedEventNames() {
+        return List.of("相遇", "翅膀雕像", "黏液世界", "投资",
+                "追猎", "村庄", "人生意义", "好诗歪诗");
     }
 
     // ==================== 具体事件实现 ====================
