@@ -238,9 +238,22 @@ public class DataLoader {
     public static class EventOptionData {
         private String text;
         private String result;
+        private String outcomeDescription;
+        private Integer goldChange;
+        private Integer hpChange;
+        private String relicId;
+        private String outcome;
 
         public String getText() { return text; }
         public String getResult() { return result; }
+        public String getOutcomeDescription() { return outcomeDescription; }
+        public int getGoldChange() { return goldChange != null ? goldChange : 0; }
+        public int getHpChange() { return hpChange != null ? hpChange : 0; }
+        public String getRelicId() { return relicId; }
+        public String getOutcome() { return outcome; }
+        public boolean hasExecutableResult() {
+            return outcomeDescription != null && !outcomeDescription.isBlank();
+        }
     }
 
     public static class LayerMapData {

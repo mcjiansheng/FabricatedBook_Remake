@@ -70,6 +70,27 @@ class EventHandlerTest {
     }
 
     @Test
+    void fixedOrdinaryEventResultComesFromJsonData() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        EventHandler.EventResult result = handler.executeEvent("相遇", 0);
+
+        assertEquals("relic_betrayal", result.relicId);
+        assertEquals(0, result.goldChange);
+        assertTrue(result.description.contains("获得藏品「背叛」"));
+    }
+
+    @Test
+    void ordinaryEventWithoutJsonOutcomeFallsBackToJavaHandler() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        EventHandler.EventResult result = handler.executeEvent("翅膀雕像", 1);
+
+        assertTrue(result.goldChange >= 50 && result.goldChange <= 80);
+        assertTrue(result.description.contains("金币"));
+    }
+
+    @Test
     void playerPotionLimitIsConfigurable() {
         Player player = player();
         player.setMaxPotionSlots(5);

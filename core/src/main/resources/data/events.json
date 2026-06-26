@@ -6,15 +6,20 @@
     "options": [
       {
         "text": "✅ 同意",
-        "result": "获得藏品「背叛」"
+        "result": "获得藏品「背叛」",
+        "outcomeDescription": "你同意了同行的请求。他看起来不太对劲，但已经来不及反悔了。\n获得藏品「背叛」",
+        "relicId": "relic_betrayal"
       },
       {
         "text": "❌ 拒绝",
-        "result": "获得藏品「仇恨」"
+        "result": "获得藏品「仇恨」",
+        "outcomeDescription": "你拒绝了同行的请求。他恶狠狠地看了你一眼，你不禁打了个寒颤。\n获得藏品「仇恨」",
+        "relicId": "relic_hatred"
       },
       {
         "text": "😶 无视",
-        "result": "假装没听见，转身离去"
+        "result": "假装没听见，转身离去",
+        "outcomeDescription": "你假装没听见，转身离去。身后传来一声若有若无的叹息。"
       }
     ]
   },
@@ -25,7 +30,9 @@
     "options": [
       {
         "text": "🙏 祈祷",
-        "result": "从牌组移除一张牌，失去 7 生命值"
+        "result": "从牌组移除一张牌，失去 7 生命值",
+        "outcomeDescription": "你虔诚地祈祷。雕像似乎在回应你，但你感到一阵眩晕。\n失去 7 点生命值",
+        "hpChange": -7
       },
       {
         "text": "🔨 摧毁",
@@ -33,7 +40,8 @@
       },
       {
         "text": "🚶 离开",
-        "result": "无事发生"
+        "result": "无事发生",
+        "outcomeDescription": "你决定不碰这座奇怪的雕像，转身离开。"
       }
     ]
   },
@@ -44,7 +52,10 @@
     "options": [
       {
         "text": "💰 收集金币",
-        "result": "获得 75 金币，失去 11 生命值"
+        "result": "获得 75 金币，失去 11 生命值",
+        "outcomeDescription": "你在黏液中摸索，找到了一些金币，但被腐蚀得不轻。\n获得 75 金币，失去 11 生命值",
+        "goldChange": 75,
+        "hpChange": -11
       },
       {
         "text": "🙌 放手吧",
@@ -78,7 +89,10 @@
     "options": [
       {
         "text": "⚔️ 反抗",
-        "result": "失去 15 生命值，获得藏品「复仇者」"
+        "result": "失去 15 生命值，获得藏品「复仇者」",
+        "outcomeDescription": "你奋力还击，击退了黑暗中的生物。手上多了一件奇怪的武器。\n失去 15 生命值，获得藏品「复仇者」",
+        "hpChange": -15,
+        "relicId": "relic_avenger"
       },
       {
         "text": "🏃 逃跑",
@@ -93,11 +107,15 @@
     "options": [
       {
         "text": "💣 曼哈顿计划",
-        "result": "获得 1 个核弹"
+        "result": "获得 1 个核弹",
+        "outcomeDescription": "村民给了你一个威力巨大的··· 等等，这是什么？\n获得 1 个核弹（特殊物品）",
+        "relicId": "relic_nuke"
       },
       {
         "text": "💎 绿宝石",
-        "result": "获得 200 金币"
+        "result": "获得 200 金币",
+        "outcomeDescription": "村民送给你一颗闪闪发光的绿宝石。\n获得 200 金币",
+        "goldChange": 200
       },
       {
         "text": "🍔 板烧鸡腿堡",
@@ -112,11 +130,15 @@
     "options": [
       {
         "text": "🍟 去码头整点薯条",
-        "result": "生命值回满"
+        "result": "生命值回满",
+        "outcomeDescription": "你听取了精灵的建议，去码头整了点薯条。人生嘛，有时候就是这么简单。\n生命值回满",
+        "hpChange": 9999
       },
       {
         "text": "🪙 去银行整点金条",
-        "result": "获得 500 金币"
+        "result": "获得 500 金币",
+        "outcomeDescription": "你听取了精灵的建议，去银行整点金条。\n获得 500 金币",
+        "goldChange": 500
       }
     ]
   },
@@ -127,7 +149,9 @@
     "options": [
       {
         "text": "📖 好诗",
-        "result": "获得 5 张牌"
+        "result": "获得 5 张牌",
+        "outcomeDescription": "你在这首诗前驻足良久，心中涌现出无限灵感。\n获得 5 张牌",
+        "relicId": "relic_five_cards"
       },
       {
         "text": "📝 歪诗",

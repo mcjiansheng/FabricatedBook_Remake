@@ -127,6 +127,10 @@ public class EventHandler {
     }
 
     public EventResult executeEvent(String eventName, int optionIndex, Player player) {
+        EventResult dataResult = executeDataEvent(eventName, optionIndex);
+        if (dataResult != null) {
+            return dataResult;
+        }
         switch (eventName) {
             case "命运抉择1": return firstDecision(optionIndex);
             case "命运抉择2": return secondDecision(optionIndex, player);
@@ -246,6 +250,21 @@ public class EventHandler {
             options.add(new EventOption(optionData.getText(), optionData.getResult()));
         }
         return options;
+    }
+
+    private EventResult executeDataEvent(String eventName, int optionIndex) {
+        DataLoader.EventData eventData = eventsByName.get(eventName);
+        if (eventData == null || optionIndex < 0
+                || optionIndex >= eventData.getOptions().size()) {
+            return null;
+        }
+        DataLoader.EventOptionData optionData = eventData.getOptions().get(optionIndex);
+        if (!optionData.hasExecutableResult()) {
+            return null;
+        }
+        return new EventResult(optionData.getOutcomeDescription(),
+                optionData.getGoldChange(), optionData.getHpChange(),
+                optionData.getRelicId(), optionData.getOutcome());
     }
 
     private List<String> hardcodedEventNames() {

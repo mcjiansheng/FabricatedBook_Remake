@@ -145,9 +145,9 @@
 ### P1：事件、节点与环境效果
 
 - [ ] 确认事件系统是否继续由 `EventHandler` 硬编码，还是迁移到 `data/events.json` 驱动。
-  - [ ] 事件标题、描述、选项由 JSON 读取。
-  - [ ] 事件效果由 Java handler 或通用 DSL 执行。
-  - [ ] 特殊事件保留专用 handler。
+  - [x] 事件标题、描述、选项由 JSON 读取。
+  - [ ] 事件效果由 Java handler 或通用 DSL 执行。（固定金币/生命/藏品结果已开始由 JSON 字段执行；随机和特殊逻辑仍在 Java。）
+  - [x] 特殊事件保留专用 handler。
 - [ ] 补节点语义。
   - [ ] `DECISION` 不应映射为普通随机事件。
   - [ ] `REWARD` 应支持三选一藏品或明确采用当前事件映射。
@@ -321,4 +321,4 @@ Bug ID：
 
 近期后端进展：effect DSL 已先抽出 `CardEffectParser` 作为执行和预览共用解析入口，后端 CLI `selftest` 已能扫描战士 JSON 卡牌未知 effect；执行器/预览器注册表仍在后续任务中。
 
-事件系统已先让普通事件的名称、描述和选项展示从 `events.json` 读取；事件结果 DSL 和特殊事件 executor 分层仍待继续。
+事件系统已先让普通事件的名称、描述、选项展示和部分固定事件结果从 `events.json` 读取；随机事件结果和特殊事件 executor 分层仍待继续。
