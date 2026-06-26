@@ -55,6 +55,8 @@
 
 ## B-002：商店弃牌次数使用 JVM 静态状态
 
+状态：已修复。弃牌次数已迁入 `GameRunState.shopRemoveCount`，正式商店通过 `GameRunState` 读写该计数；`SaveManager` 已保存/恢复该字段，并支持测试传入临时存档路径。旧的无对局构造器仅保留实例内计数，不再使用 JVM 静态状态。
+
 ### 位置
 
 - 包：`com.fabricatedbook.core.shop`

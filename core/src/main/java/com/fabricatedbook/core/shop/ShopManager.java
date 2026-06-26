@@ -45,8 +45,11 @@ public class ShopManager {
     /** 弃牌是否已经购买过 */
     private boolean removePurchased;
 
-    /** 本局游戏弃牌次数 */
-    private static int totalRemoveCount = 0;
+    /** 当前对局状态；正式对局用它持久化弃牌价格成长。 */
+    private final GameRunState runState;
+
+    /** 无对局状态的调试/测试商店使用实例内计数，避免跨 JVM 全局污染。 */
+    private int localRemoveCount;
 
     /**
      * 商店商品。
@@ -100,6 +103,8 @@ public class ShopManager {
         this.random = random == null ? new Random() : random;
         this.seed = null;
         this.randomKey = null;
+        this.runState = null;
+        this.localRemoveCount = 0;
         this.items = new ArrayList<>();
         this.removeCost = 75;
         this.removePurchased = false;
@@ -109,9 +114,26 @@ public class ShopManager {
                        long seed, String randomKey) {
         this.player = player;
         this.relicManager = relicManager;
-        this.random = new Random(GameRunState.seedFor(seed, randomKey));
         this.seed = seed;
         this.randomKey = randomKey == null ? "shop" : randomKey;
+        this.random = new Random(GameRunState.seedFor(seed, this.randomKey));
+        this.runState = null;
+        this.localRemoveCount = 0;
+        this.items = new ArrayList<>();
+        this.removeCost = 75;
+        this.removePurchased = false;
+    }
+
+    public ShopManager(Player player, RelicManager relicManager,
+                       GameRunState runState, String randomKey) {
+        this.player = player;
+        this.relicManager = relicManager;
+        this.runState = runState;
+        long runSeed = runState != null ? runState.getSeed() : System.currentTimeMillis();
+        this.seed = runSeed;
+        this.randomKey = randomKey == null ? "shop" : randomKey;
+        this.random = new Random(GameRunState.seedFor(runSeed, this.randomKey));
+        this.localRemoveCount = 0;
         this.items = new ArrayList<>();
         this.removeCost = 75;
         this.removePurchased = false;
@@ -173,7 +195,7 @@ public class ShopManager {
         // 4. 弃牌机会
         // （不添加到 items 列表，作为独立功能处理）
         this.removePurchased = false;
-        this.removeCost = 75 + totalRemoveCount * 25;
+        this.removeCost = 75 + currentRemoveCount() * 25;
     }
 
     /**
@@ -231,7 +253,7 @@ public class ShopManager {
         if (cardIndex >= 0 && cardIndex < player.getDrawPile().size()) {
             player.spendGold(removeCost);
             player.getDrawPile().remove(cardIndex);
-            totalRemoveCount++;
+            incrementRemoveCount();
             removePurchased = true;
             return true;
         }
@@ -272,6 +294,18 @@ public class ShopManager {
      */
     public int getPlayerGold() {
         return player.getGold();
+    }
+
+    private int currentRemoveCount() {
+        return runState != null ? runState.getShopRemoveCount() : localRemoveCount;
+    }
+
+    private void incrementRemoveCount() {
+        if (runState != null) {
+            runState.incrementShopRemoveCount();
+        } else {
+            localRemoveCount++;
+        }
     }
 
     private <T> List<T> randomSelect(List<T> source, int count) {

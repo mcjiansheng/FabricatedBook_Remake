@@ -28,8 +28,10 @@ import java.util.List;
  */
 public class SaveManager {
 
-    /** 存档文件路径 */
-    private static final String SAVE_FILE = "saves/save.json";
+    /** 默认存档文件路径 */
+    private static final String DEFAULT_SAVE_FILE = "saves/save.json";
+
+    private final String saveFile;
 
     /** Gson 实例 */
     private static final Gson gson = new GsonBuilder()
@@ -47,6 +49,7 @@ public class SaveManager {
         public GameRunState.NodeRef completedNode;
         public GameRunState.NodeRef activeNode;
         public GameRunState.PlayerSnapshot combatBaseline;
+        public int shopRemoveCount;
         public String playerId;
         public String playerName;
         public String profession;
@@ -67,6 +70,16 @@ public class SaveManager {
             this.potionIds = new ArrayList<>();
             this.deck = new ArrayList<>();
         }
+    }
+
+    public SaveManager() {
+        this(DEFAULT_SAVE_FILE);
+    }
+
+    public SaveManager(String saveFile) {
+        this.saveFile = saveFile == null || saveFile.isBlank()
+                ? DEFAULT_SAVE_FILE
+                : saveFile;
     }
 
     /**
@@ -114,7 +127,7 @@ public class SaveManager {
      */
     public boolean save(Player player) {
         return saveSnapshot(GameRunState.PlayerSnapshot.from(player), 0L,
-                Math.max(0, player.getCurrentFloor() - 1), null, null, null);
+                Math.max(0, player.getCurrentFloor() - 1), null, null, null, 0);
     }
 
     public boolean saveRun(GameRunState runState) {
@@ -129,14 +142,15 @@ public class SaveManager {
                 : null;
         return saveSnapshot(playerSnapshot, runState.getSeed(),
                 runState.getCurrentLayerIdx(), runState.getCompletedNode(),
-                activeNode, runState.getCombatBaseline());
+                activeNode, runState.getCombatBaseline(), runState.getShopRemoveCount());
     }
 
     private boolean saveSnapshot(GameRunState.PlayerSnapshot snapshot, long seed,
                                  int currentLayerIdx,
                                  GameRunState.NodeRef completedNode,
                                  GameRunState.NodeRef activeNode,
-                                 GameRunState.PlayerSnapshot combatBaseline) {
+                                 GameRunState.PlayerSnapshot combatBaseline,
+                                 int shopRemoveCount) {
         try {
             SaveData data = new SaveData();
             data.version = 2;
@@ -145,6 +159,7 @@ public class SaveManager {
             data.completedNode = completedNode;
             data.activeNode = activeNode;
             data.combatBaseline = combatBaseline;
+            data.shopRemoveCount = Math.max(0, shopRemoveCount);
             data.playerId = snapshot.playerId;
             data.playerName = snapshot.playerName;
             data.profession = snapshot.profession;
@@ -171,19 +186,20 @@ public class SaveManager {
             }
 
             // 确保 saves 目录存在
-            File saveDir = new File("saves");
-            if (!saveDir.exists()) {
+            File saveTarget = new File(saveFile);
+            File saveDir = saveTarget.getParentFile();
+            if (saveDir != null && !saveDir.exists()) {
                 saveDir.mkdirs();
             }
 
             // 写入 JSON 文件
             String json = gson.toJson(data);
-            try (FileWriter writer = new FileWriter(SAVE_FILE,
+            try (FileWriter writer = new FileWriter(saveTarget,
                     StandardCharsets.UTF_8)) {
                 writer.write(json);
             }
 
-            System.out.println("[SaveManager] 存档成功: " + SAVE_FILE);
+            System.out.println("[SaveManager] 存档成功: " + saveFile);
             return true;
 
         } catch (Exception e) {
@@ -206,12 +222,13 @@ public class SaveManager {
         runState.setCurrentLayerIdx(data.version >= 2
                 ? data.currentLayerIdx
                 : Math.max(0, data.currentFloor - 1));
+        runState.setShopRemoveCount(data.version >= 2 ? data.shopRemoveCount : 0);
         runState.setCompletedNode(data.completedNode);
         if (data.activeNode != null && data.combatBaseline != null) {
             runState.beginCombat(data.activeNode);
             runState.clearCombatState();
         }
-        System.out.println("[SaveManager] 对局读档成功: " + SAVE_FILE);
+        System.out.println("[SaveManager] 对局读档成功: " + saveFile);
         return runState;
     }
 
@@ -227,9 +244,9 @@ public class SaveManager {
 
     private SaveData loadData() {
         try {
-            File file = new File(SAVE_FILE);
+            File file = new File(saveFile);
             if (!file.exists()) {
-                System.out.println("[SaveManager] 存档文件不存在: " + SAVE_FILE);
+                System.out.println("[SaveManager] 存档文件不存在: " + saveFile);
                 return null;
             }
 
@@ -310,7 +327,7 @@ public class SaveManager {
                 }
             }
 
-            System.out.println("[SaveManager] 读档成功: " + SAVE_FILE);
+            System.out.println("[SaveManager] 读档成功: " + saveFile);
             return player;
 
         } catch (Exception e) {
@@ -325,7 +342,7 @@ public class SaveManager {
      * @return true 如果存档存在
      */
     public boolean hasSave() {
-        return new File(SAVE_FILE).exists();
+        return new File(saveFile).exists();
     }
 
     /**
@@ -334,7 +351,7 @@ public class SaveManager {
      * @return true 如果删除成功
      */
     public boolean deleteSave() {
-        File file = new File(SAVE_FILE);
+        File file = new File(saveFile);
         return file.exists() && file.delete();
     }
 }

@@ -25,11 +25,13 @@ public class GameRunState {
     private NodeRef completedNode;
     private NodeRef activeNode;
     private PlayerSnapshot combatBaseline;
+    private int shopRemoveCount;
 
     public GameRunState(long seed, Player player) {
         this.seed = seed;
         this.player = player;
         this.currentLayerIdx = Math.max(0, player.getCurrentFloor() - 1);
+        this.shopRemoveCount = 0;
     }
 
     public long getSeed() { return seed; }
@@ -45,6 +47,13 @@ public class GameRunState {
     public NodeRef getActiveNode() { return activeNode; }
     public void setActiveNode(NodeRef activeNode) { this.activeNode = activeNode; }
     public PlayerSnapshot getCombatBaseline() { return combatBaseline; }
+    public int getShopRemoveCount() { return shopRemoveCount; }
+    public void setShopRemoveCount(int shopRemoveCount) {
+        this.shopRemoveCount = Math.max(0, shopRemoveCount);
+    }
+    public void incrementShopRemoveCount() {
+        shopRemoveCount++;
+    }
     public boolean isInCombat() { return activeNode != null && combatBaseline != null; }
 
     public void beginCombat(NodeRef nodeRef) {

@@ -545,7 +545,7 @@ public class MapScreen implements Screen {
                 markNodeEntered(node);
                 // 进入商店
                 ShopManager shopManager = new ShopManager(player, new RelicManager(player),
-                        runState.getSeed(), "shop:" + nodeKey(node));
+                        runState, "shop:" + nodeKey(node));
                 shopManager.generateItems();
                 game.autosaveCurrentRun();
                 game.setScreen(new ShopScreen(game, player, shopManager, this));
