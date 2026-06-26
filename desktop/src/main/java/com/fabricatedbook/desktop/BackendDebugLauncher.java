@@ -10,9 +10,9 @@ import com.fabricatedbook.core.entity.EntityFactory;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.event.EventHandler;
-import com.fabricatedbook.core.map.MapConfig;
-import com.fabricatedbook.core.map.MapGraph;
-import com.fabricatedbook.core.map.Node;
+import com.fabricatedbook.core.map.LayerMapConfig;
+import com.fabricatedbook.core.map.LayerMapGraph;
+import com.fabricatedbook.core.map.LayerMapNode;
 import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
@@ -39,17 +39,11 @@ public class BackendDebugLauncher {
     private final Scanner scanner = new Scanner(System.in);
     private Random random = new Random();
     private final SaveManager saveManager = new SaveManager();
-    private final List<MapConfig> configs = List.of(
-            MapConfig.wilderness(),
-            MapConfig.forest(),
-            MapConfig.mysticForest(),
-            MapConfig.mist(),
-            MapConfig.tower()
-    );
+    private final List<LayerMapConfig> configs = LayerMapConfig.defaults();
 
     private GameRunState runState;
     private Player player;
-    private MapGraph map;
+    private LayerMapGraph map;
     private int levelIndex;
     private boolean running = true;
 
@@ -203,9 +197,9 @@ public class BackendDebugLauncher {
     }
 
     private void createMap() {
-        MapConfig config = configs.get(levelIndex);
+        LayerMapConfig config = configs.get(levelIndex);
         runState.setCurrentLayerIdx(levelIndex);
-        map = new MapGraph(config, runState.getSeed(), "backend-map:" + levelIndex);
+        map = new LayerMapGraph(config, runState.getSeed(), levelIndex);
         player.setCurrentFloor(config.getLevel());
     }
 
@@ -253,34 +247,34 @@ public class BackendDebugLauncher {
         levelIndex = Math.max(0, Math.min(configs.size() - 1, nodeRef.layer));
         runState.setCurrentLayerIdx(levelIndex);
         createMap();
-        map.restorePosition(nodeRef.row, nodeRef.col);
+        map.restorePosition(nodeRef.col, nodeRef.row);
     }
 
-    private GameRunState.NodeRef toNodeRef(Node node) {
+    private GameRunState.NodeRef toNodeRef(LayerMapNode node) {
         if (node == null) return null;
-        return new GameRunState.NodeRef(levelIndex, node.getRow(), node.getCol(),
-                node.getType().ordinal());
+        return new GameRunState.NodeRef(levelIndex, node.getCol(), node.getRow(),
+                node.getTypeCode());
     }
 
-    private Random randomForNode(String purpose, Node node) {
+    private Random randomForNode(String purpose, LayerMapNode node) {
         if (node == null) {
             return runState.randomFor(purpose, levelIndex, "none");
         }
-        return runState.randomFor(purpose, levelIndex, node.getRow(), node.getCol(),
+        return runState.randomFor(purpose, levelIndex, node.getCol(), node.getRow(),
                 node.getType().name());
     }
 
     private void printMap() {
-        MapConfig config = map.getConfig();
+        LayerMapConfig config = map.getConfig();
         println("");
         println("地图: " + config.getLevelName()
-                + " (" + config.getWidth() + "x" + config.getHeight() + ")"
-                + " 环境: " + config.getEnvironmentEffect());
-        for (List<Node> row : map.getGrid()) {
+                + " (" + config.getLength() + "列, 最大" + config.getWidth() + "行)"
+                + " 环境: " + config.getEffectText());
+        for (LayerMapNode[] column : map.getColumns()) {
             StringBuilder builder = new StringBuilder();
-            for (Node node : row) {
+            for (LayerMapNode node : column) {
                 String marker = " ";
-                if (node == map.getPlayerPosition()) {
+                if (node == map.getCurrentNode()) {
                     marker = "@";
                 } else if (node.isVisited()) {
                     marker = "*";
@@ -289,8 +283,8 @@ public class BackendDebugLauncher {
                 }
                 builder.append(String.format("[%s%d,%d %-4s] ",
                         marker,
-                        node.getRow(),
                         node.getCol(),
+                        node.getRow(),
                         shortName(node.getType())));
             }
             println(builder.toString());
@@ -299,35 +293,35 @@ public class BackendDebugLauncher {
     }
 
     private void printRoutes() {
-        List<Node> available = map.getAvailableNodes();
+        List<LayerMapNode> available = map.getAvailableNodes();
         if (available.isEmpty()) {
             println("当前没有可选路线。");
             return;
         }
         println("可选路线:");
         for (int i = 0; i < available.size(); i++) {
-            Node node = available.get(i);
+            LayerMapNode node = available.get(i);
             println("  " + (i + 1) + ". " + node.getType().getDisplayName()
-                    + " (" + node.getRow() + "," + node.getCol() + ")");
+                    + " (" + node.getCol() + "," + node.getRow() + ")");
         }
     }
 
     private void chooseRoute(int index) {
-        List<Node> available = map.getAvailableNodes();
+        List<LayerMapNode> available = map.getAvailableNodes();
         if (index < 1 || index > available.size()) {
             println("路线编号无效。");
             printRoutes();
             return;
         }
 
-        Node node = available.get(index - 1);
+        LayerMapNode node = available.get(index - 1);
         if (!map.moveTo(node)) {
             println("移动失败: " + node);
             return;
         }
 
         println("进入节点: " + node.getType().getDisplayName()
-                + " (" + node.getRow() + "," + node.getCol() + ")");
+                + " (" + node.getCol() + "," + node.getRow() + ")");
         if (node.getType().isCombat()) {
             runState.beginCombat(toNodeRef(node));
         }
@@ -351,7 +345,7 @@ public class BackendDebugLauncher {
         printMap();
     }
 
-    private void resolveNode(Node node) {
+    private void resolveNode(LayerMapNode node) {
         NodeType type = node.getType();
         if (type.isCombat()) {
             runBattle(type);
@@ -394,9 +388,9 @@ public class BackendDebugLauncher {
 
     private void resolveEvent() {
         EventHandler handler = new EventHandler(randomForNode("event-result",
-                map.getPlayerPosition()));
+                map.getCurrentNode()));
         List<String> names = handler.getEventNames();
-        String eventName = names.get(randomForNode("event-name", map.getPlayerPosition())
+        String eventName = names.get(randomForNode("event-name", map.getCurrentNode())
                 .nextInt(names.size()));
         List<EventHandler.EventOption> options = handler.getOptions(eventName);
         println("事件: " + eventName);
@@ -909,9 +903,9 @@ public class BackendDebugLauncher {
         startNewRun(seed);
         int baselineHp = player.getHp();
         int baselineGold = player.getGold();
-        Node combatNode = firstAvailableCombatNode();
+        LayerMapNode combatNode = firstAvailableCombatNode();
         if (combatNode == null) {
-            combatNode = map.getAvailableNodes().isEmpty() ? map.getPlayerPosition()
+            combatNode = map.getAvailableNodes().isEmpty() ? map.getCurrentNode()
                     : map.getAvailableNodes().get(0);
         }
         runState.beginCombat(toNodeRef(combatNode));
@@ -939,10 +933,10 @@ public class BackendDebugLauncher {
     }
 
     private String mapSignature(long seed, int layer) {
-        MapGraph testMap = new MapGraph(configs.get(layer), seed, "backend-map:" + layer);
+        LayerMapGraph testMap = new LayerMapGraph(configs.get(layer), seed, layer);
         StringBuilder builder = new StringBuilder();
-        for (List<Node> row : testMap.getGrid()) {
-            for (Node node : row) {
+        for (LayerMapNode[] column : testMap.getColumns()) {
+            for (LayerMapNode node : column) {
                 builder.append(node.getType().name().charAt(0));
             }
             builder.append('/');
@@ -967,8 +961,8 @@ public class BackendDebugLauncher {
         return builder.toString();
     }
 
-    private Node firstAvailableCombatNode() {
-        for (Node node : map.getAvailableNodes()) {
+    private LayerMapNode firstAvailableCombatNode() {
+        for (LayerMapNode node : map.getAvailableNodes()) {
             if (node.getType().isCombat()) {
                 return node;
             }

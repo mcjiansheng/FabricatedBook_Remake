@@ -58,21 +58,21 @@
 ### P1：地图系统规则下沉
 
 - [ ] 设计 core 层地图模型，承载当前 `MapScreen` 内置的原版列优先稀疏地图。
-  - [ ] 明确是否扩展 `MapGraph`，还是新增 `LayerGraph` / `RunMapGraph`。
-  - [ ] 支持每层 `length`、`width`、起点类型、终点类型、特殊列、节点概率、层名、层效果文案。
+  - [x] 明确是否扩展 `MapGraph`，还是新增 `LayerGraph` / `RunMapGraph`。（已新增 `LayerMapConfig` / `LayerMapGraph` / `LayerMapNode`，旧矩形 `MapGraph` 暂保留兼容。）
+  - [x] 支持每层 `length`、`width`、起点类型、终点类型、特殊列、节点概率、层名、层效果文案。
   - [x] 前端临时支持迷雾层倒数第二列 Boss、最后一列命运抉择。
-  - [ ] 将迷雾层倒数第二列 Boss、最后一列命运抉择规则下沉到 core/JSON。
+  - [x] 将迷雾层倒数第二列 Boss、最后一列命运抉择规则下沉到 core/JSON。（已下沉到 core；JSON 化仍在迁移项中。）
   - [ ] 保留同种子可复现的随机流 key 设计。
 - [ ] 将 `MapScreen` 内置常量迁移到 core/JSON。
-  - [ ] 迁移 `LAYER_LENGTHS`、`LAYER_WIDTHS`。
-  - [ ] 迁移 `LAYER_START_TYPES`、`LAYER_END_TYPES`、迷雾特殊 Boss 列。
-  - [ ] 迁移 `LAYER_PROBABILITIES`。
-  - [ ] 迁移 `LAYER_NAMES`、`LAYER_EFFECTS` 或建立统一文案来源。
+  - [x] 迁移 `LAYER_LENGTHS`、`LAYER_WIDTHS`。（已迁入 `LayerMapConfig.defaults()`。）
+  - [x] 迁移 `LAYER_START_TYPES`、`LAYER_END_TYPES`、迷雾特殊 Boss 列。（已迁入 `LayerMapConfig.defaults()`。）
+  - [x] 迁移 `LAYER_PROBABILITIES`。（已迁入 `LayerMapConfig.defaults()`。）
+  - [x] 迁移 `LAYER_NAMES`、`LAYER_EFFECTS` 或建立统一文案来源。（已由 `MapScreen` 读取 `LayerMapConfig`。）
   - [ ] 更新 `data/maps/levels.json`，让它表达原版稀疏地图参数，而不是旧矩形 `width/height` 语义。
 - [ ] 让 `MapScreen` 只负责渲染和输入。
-  - [ ] 地图生成、节点连接、可达性计算移动到 core。
+  - [x] 地图生成、节点连接、可达性计算移动到 core。（当前 `MapScreen` 仍有渲染用 `MapNode` 包装，节点进入流程待 B-005 下沉。）
   - [ ] UI 点击后只调用 core 层移动/完成节点接口。
-  - [ ] 前端地图和后端 CLI 地图尽量共用同一规则实现。
+  - [x] 前端地图和后端 CLI 地图尽量共用同一规则实现。
   - [ ] 更新 `doc/frontend_design.md`、`doc/original_map_analysis.md` 或新增迁移说明。
 
 ### P1：法师、女巫职业完整化
@@ -308,8 +308,8 @@ Bug ID：
 ## 决策待确认
 
 - [x] 第 6 层固定隐藏层暂不作为近期目标。
-- [ ] 地图规则最终放在 `MapGraph` 扩展还是新增稀疏图模型。
-- [ ] 卡牌数据最终以 JSON 为唯一来源，还是保留 `CardPool` 硬编码兜底。
+- [x] 地图规则最终放在 `MapGraph` 扩展还是新增稀疏图模型。（已新增稀疏图模型，旧 `MapGraph` 暂保留兼容。）
+- [ ] 卡牌数据最终以 JSON 为唯一来源，还是保留 `CardPool` 硬编码兜底。（战士主链路已优先 JSON，硬编码仅作 fallback。）
 - [ ] 事件系统是否全面 JSON 化。
 - [ ] 奖励交互采用重制版便利流程还是原版逐项领取流程。
 - [x] 女巫和其它职业不急于完成；但药水上限必须保留扩展能力，可能超过 5。
@@ -317,4 +317,4 @@ Bug ID：
 
 ## 后端专项梳理
 
-后端结构问题、修复顺序、影响范围和验证建议集中记录在 [doc/backend_todo.md](doc/backend_todo.md)。当前优先顺序为：先修战斗胜利回调错误，再处理商店弃牌次数静态状态，然后推进卡牌来源统一、地图规则下沉、环境效果下沉和事件数据化。
+后端结构问题、修复顺序、影响范围和验证建议集中记录在 [doc/backend_todo.md](doc/backend_todo.md)。当前已完成战斗胜利回调、商店弃牌次数状态、战士卡牌来源统一，以及地图生成/连接规则 core 化；下一步重点是节点进入与环境效果下沉、effect DSL 收敛和事件数据化。

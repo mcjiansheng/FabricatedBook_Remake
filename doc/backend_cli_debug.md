@@ -112,7 +112,7 @@ gradlew.bat runBackendDebug
 
 ## 四、节点处理逻辑
 
-执行 `choose <编号>` 后，调试器调用 `MapGraph.moveTo(node)` 移动玩家位置，并根据节点类型进入对应后端流程。
+执行 `choose <编号>` 后，调试器调用 `LayerMapGraph.moveTo(node)` 移动玩家位置，并根据节点类型进入对应后端流程。
 
 | 节点类型 | 命令行处理 |
 |:--|:--|
@@ -359,4 +359,4 @@ printf 'save\nload\nseed\nstatus\nquit\n' | ./gradlew runBackendDebug --args="--
 3. 如需命令行覆盖商店购买，复用 `ShopManager` 做交互式商品选择。
 4. 如需命令行覆盖奖励选择，复用 `BattleScreen` 当前的奖励生成规则或下沉为后端奖励服务。
 5. 将命令行事件的 `relicId` 结果同步接入 `RelicManager`。
-6. 增加 JUnit 测试覆盖 `MapGraph` 路线可达性和 `CombatEngine` 基础战斗流。
+6. 继续扩展 JUnit 测试覆盖 `LayerMapGraph` 路线可达性和 `CombatEngine` 基础战斗流。

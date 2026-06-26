@@ -22,6 +22,9 @@ import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.EntityFactory;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.event.EventHandler;
+import com.fabricatedbook.core.map.LayerMapConfig;
+import com.fabricatedbook.core.map.LayerMapGraph;
+import com.fabricatedbook.core.map.LayerMapNode;
 import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.core.run.GameRunState;
@@ -60,21 +63,7 @@ public class MapScreen implements Screen {
     public static final int DECISION = 8;
     public static final int SAFE_HOUSE = 9;
 
-    // ====== 层级配置 ======
-    private static final int[] LAYER_LENGTHS = {4, 5, 6, 7, 7};
-    private static final int[] LAYER_WIDTHS = {3, 3, 4, 4, 4};
-    private static final int[] LAYER_START_TYPES = {FIGHT, FIGHT, REWARD, EMERGENCY, UNEXPECTEDLY};
-    private static final int[] LAYER_END_TYPES = {DECISION, SHOP, BOSS, DECISION, BOSS};
-    private static final int LAYER_END_BOSS_COL = 5;
-
-    // 每层节点概率（与 C 版保持一致）
-    private static final int[][] LAYER_PROBABILITIES = {
-            {60, 10, 0, 30, 0, 0, 0, 0, 0},
-            {40, 20, 0, 10, 10, 10, 0, 0, 10},
-            {40, 20, 0, 10, 10, 10, 0, 0, 10},
-            {40, 20, 0, 10, 10, 10, 0, 0, 10},
-            {40, 20, 0, 10, 10, 10, 0, 0, 10}
-    };
+    private static final List<LayerMapConfig> LAYER_CONFIGS = LayerMapConfig.defaults();
 
     // ====== 节点贴图索引 ======
     private static final int[] NODE_TYPE_TO_TEXTURE = {
@@ -126,7 +115,6 @@ public class MapScreen implements Screen {
     private GlyphLayout glyphLayout;
     private Stage uiStage;
     private GameHud gameHud;
-    private Random random;
 
     // 贴图资源
     private Texture[] nodeTextures; // index 1-9
@@ -151,14 +139,6 @@ public class MapScreen implements Screen {
 
     // UI 顶栏
     private static final float TOP_BAR_HEIGHT = 52f;
-    private static final String[] LAYER_NAMES = {"荒野", "森林", "诡异秘林", "迷雾", "高塔"};
-    private static final String[] LAYER_EFFECTS = {
-            "当前层效果：无",
-            "当前层效果：奖励与商店出现",
-            "当前层效果：Boss 节点出现",
-            "当前层效果：路线更窄，Boss 后出现门扉",
-            "当前层效果：最终高塔"
-    };
     private float layerIntroTimer;
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
@@ -184,7 +164,6 @@ public class MapScreen implements Screen {
         this.activeNode = null;
         this.scrollX = 0;
         this.scrollY = 0;
-        this.random = runState.randomFor("map-layout");
         this.layerIntroTimer = 2.2f;
         this.game.setCurrentRun(runState);
 
@@ -223,65 +202,29 @@ public class MapScreen implements Screen {
 
     /** 生成单层地图（对应 C 版 init_layer） */
     private void generateLayer(int layerIdx) {
-        int len = LAYER_LENGTHS[layerIdx];
-        int width = LAYER_WIDTHS[layerIdx];
-        int[] lineNum = new int[len];
+        LayerMapGraph graph = new LayerMapGraph(LAYER_CONFIGS.get(layerIdx),
+                runState.getSeed(), layerIdx);
+        LayerMapNode[][] coreLayer = graph.getColumns();
+        int[] lineNum = graph.getNodeCounts();
         layerNodeCounts[layerIdx] = lineNum;
 
-        // 每列随机节点数
-        for (int col = 1; col < len - 1; col++) {
-            lineNum[col] = 1 + runState.randomFor("map-line-count", layerIdx, col)
-                    .nextInt(width);
-        }
-        lineNum[0] = 1;
-        lineNum[len - 1] = 1;
-
-        // 如果是迷雾层 (layerIdx == 3)，倒数第二列也是1
-        if (layerIdx == 3) {
-            lineNum[len - 2] = 1;
-        }
-
-        MapNode[][] layer = new MapNode[len][];
+        MapNode[][] layer = new MapNode[coreLayer.length][];
         allLayers[layerIdx] = layer;
 
-        // 创建节点
-        for (int col = 0; col < len; col++) {
+        for (int col = 0; col < coreLayer.length; col++) {
             layer[col] = new MapNode[lineNum[col]];
             for (int row = 0; row < lineNum[col]; row++) {
-                // 特殊列：起点/终点
-                if (col == 0) {
-                    layer[col][row] = new MapNode(LAYER_START_TYPES[layerIdx]);
-                } else if (col == len - 1) {
-                    layer[col][row] = new MapNode(LAYER_END_TYPES[layerIdx]);
-                } else if (layerIdx == 3 && col == len - 2) {
-                    layer[col][row] = new MapNode(BOSS);
-                } else {
-                    int type = randomChoice(LAYER_PROBABILITIES[layerIdx],
-                            runState.randomFor("map-node-type", layerIdx, col, row));
-                    layer[col][row] = new MapNode(type);
-                }
+                layer[col][row] = new MapNode(coreLayer[col][row].getTypeCode());
                 layer[col][row].col = col;
                 layer[col][row].row = row;
             }
         }
 
-        // 建立连接（列间连接）
-        int tail = len - (layerIdx == 3 ? 3 : 2);
-        for (int col = 0; col < len - 1; col++) {
-            if (col == 0) {
-                // 起点连接到第一列所有节点
-                for (int r = 0; r < lineNum[1]; r++) {
-                    layer[0][0].nxt[layer[0][0].nxtNum++] = layer[1][r];
-                }
-            } else if (col < tail) {
-                // 中间列：按 C 版算法连接
-                connectColumns(layerIdx, layer, lineNum, col, tail);
-            } else if (col == tail) {
-                // 最后一列普通节点连接到终点
-                for (int r = 0; r < lineNum[tail]; r++) {
-                    if (layer[col][r] != null) {
-                        layer[col][r].nxt[layer[col][r].nxtNum++] = layer[len - 1][0];
-                    }
+        for (int col = 0; col < coreLayer.length; col++) {
+            for (int row = 0; row < coreLayer[col].length; row++) {
+                for (LayerMapNode next : coreLayer[col][row].getNext()) {
+                    layer[col][row].nxt[layer[col][row].nxtNum++] =
+                            layer[next.getCol()][next.getRow()];
                 }
             }
         }
@@ -290,35 +233,11 @@ public class MapScreen implements Screen {
         layoutLayer(layerIdx);
     }
 
-    /** 连接相邻两列（对应 C 版连接算法） */
-    private void connectColumns(int layerIdx, MapNode[][] layer, int[] lineNum,
-                                int col, int tail) {
-        if (col >= tail) return;
-        int x = 0, y = 0;
-        for (int j = 0; j < lineNum[col]; j++) {
-            int size = Math.max(0, lineNum[col + 1] - 1 - y);
-            if (size > 0) {
-                y += runState.randomFor("map-connection", layerIdx, col, j)
-                        .nextInt(size + 1);
-            }
-            if (j == lineNum[col] - 1 && y < lineNum[col + 1] - 1) {
-                y = lineNum[col + 1] - 1;
-            }
-            int connectCount = y - x + 1;
-            for (int k = x; k <= y; k++) {
-                if (k < layer[col + 1].length) {
-                    layer[col][j].nxt[layer[col][j].nxtNum++] = layer[col + 1][k];
-                }
-            }
-            x = y;
-        }
-    }
-
     /** 布局计算（对应 C 版 init_map_printer） */
     private void layoutLayer(int layerIdx) {
         MapNode[][] layer = allLayers[layerIdx];
         int[] lineNum = layerNodeCounts[layerIdx];
-        int len = LAYER_LENGTHS[layerIdx];
+        int len = layer.length;
 
         float startX = MAP_LEFT_PAD;
 
@@ -348,23 +267,6 @@ public class MapScreen implements Screen {
             }
             startX += STEP_X;
         }
-    }
-
-    /** 权重随机选节点类型 */
-    private int randomChoice(int[] probabilities) {
-        return randomChoice(probabilities, random);
-    }
-
-    private int randomChoice(int[] probabilities, Random random) {
-        int total = 0;
-        for (int p : probabilities) total += p;
-        int r = random.nextInt(total);
-        int sum = 0;
-        for (int i = 0; i < probabilities.length; i++) {
-            sum += probabilities[i];
-            if (r < sum) return i + 1;
-        }
-        return FIGHT;
     }
 
     @Override
@@ -1068,7 +970,8 @@ public class MapScreen implements Screen {
     }
 
     public String currentLayerStatusText() {
-        return "第 " + (currentLayerIdx + 1) + " 层  " + LAYER_NAMES[currentLayerIdx];
+        return "第 " + (currentLayerIdx + 1) + " 层  "
+                + LAYER_CONFIGS.get(currentLayerIdx).getLevelName();
     }
 
     private void drawLayerIntro() {
@@ -1085,9 +988,9 @@ public class MapScreen implements Screen {
         batch.setColor(1f, 1f, 1f, alpha);
         drawCenteredText(game.getFontForScale(2.2f), "第 " + (currentLayerIdx + 1) + " 层",
                 FabricBookGame.SCREEN_HEIGHT / 2f + 40);
-        drawCenteredText(game.getFontForScale(1.1f), LAYER_NAMES[currentLayerIdx],
+        drawCenteredText(game.getFontForScale(1.1f), LAYER_CONFIGS.get(currentLayerIdx).getLevelName(),
                 FabricBookGame.SCREEN_HEIGHT / 2f);
-        drawCenteredText(game.getFont(), LAYER_EFFECTS[currentLayerIdx],
+        drawCenteredText(game.getFont(), LAYER_CONFIGS.get(currentLayerIdx).getEffectText(),
                 FabricBookGame.SCREEN_HEIGHT / 2f - 42);
         batch.setColor(1f, 1f, 1f, 1f);
         batch.end();

@@ -121,7 +121,7 @@ saves/save.json
 - `CardPool.randomSelect(...)`：奖励/商店卡牌选择。
 - `RelicFactory.randomRelic(...)`：随机藏品奖励。
 - `ShopManager`：商品生成与价格波动。
-- `NodeFactory` / `MapGraph`：后端 CLI 地图生成。
+- `LayerMapConfig` / `LayerMapGraph`：后端 CLI 与前端地图共用的稀疏层地图生成。
 - `EventHandler`：事件结果中的随机金币、回血和投资掷点。
 
 前端 `MapScreen` 使用 `GameRunState.randomFor(...)` 为地图、选怪、事件、商店和战斗创建随机源。
@@ -178,5 +178,5 @@ printf 'save\nload\nseed\nstatus\nquit\n' \
 
 - 存档当前为单槽位 `saves/save.json`。
 - `GameRunState.randomFor(key)` 是按 key 派生随机流，不保存随机调用次数；应为独立随机事件使用独立 key，避免把无关事件放进同一个随机流。
-- 后端 CLI 的地图系统使用 `MapGraph`，前端地图使用 `MapScreen` 内部地图生成，两者都已接入种子，但布局算法不是同一套。
+- 后端 CLI 与前端地图已共用 `LayerMapGraph` 生成节点和连接；`MapScreen` 仍保留渲染用节点包装，节点进入副作用后续继续下沉。
 - CLI 的 `savetest` 会写入测试存档；测试后如不需要该存档，可以删除对应运行目录下的 `saves/save.json`。
