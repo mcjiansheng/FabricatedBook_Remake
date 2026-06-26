@@ -32,4 +32,16 @@ class CardEffectParserTest {
         assertTrue(CardEffectParser.isKnownType("end_turn_damage"));
         assertFalse(CardEffectParser.isKnownType("mystery_effect"));
     }
+
+    @Test
+    void registryTracksExecutionAndPreviewSupportSeparately() {
+        assertTrue(CardEffectParser.isExecutionSupported("damage"));
+        assertTrue(CardEffectParser.isPreviewSupported("damage"));
+
+        assertTrue(CardEffectParser.isExecutionSupported("end_turn_damage"));
+        assertFalse(CardEffectParser.isPreviewSupported("end_turn_damage"));
+
+        assertFalse(CardEffectParser.isExecutionSupported("mystery_effect"));
+        assertFalse(CardEffectParser.isPreviewSupported("mystery_effect"));
+    }
 }

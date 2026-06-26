@@ -911,6 +911,10 @@ public class BackendDebugLauncher {
                     println("[SELFTEST] 未知卡牌 effect: " + card.getId()
                             + " -> " + effect.getRaw());
                     ok = false;
+                } else if (!CardEffectParser.isExecutionSupported(effect.getType())) {
+                    println("[SELFTEST] 卡牌 effect 尚未接入实战执行: " + card.getId()
+                            + " -> " + effect.getRaw());
+                    ok = false;
                 }
             }
         }
