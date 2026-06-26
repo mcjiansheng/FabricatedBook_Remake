@@ -840,7 +840,8 @@ public class BackendDebugLauncher {
 
         List<Card> cards = loader.loadCards("warrior");
         ok &= assertCheck(!cards.isEmpty(), "战士 JSON 卡牌可加载: " + cards.size());
-        ok &= assertCheck(cardEffectsAreKnown(cards), "战士 JSON 卡牌 effect 均为已知 DSL");
+        ok &= assertCheck(availableCardEffectsAreKnown(loader),
+                "已配置职业 JSON 卡牌 effect 均已接入实战 DSL");
         ok &= assertCheck(configs.size() == 5
                         && configs.get(3).getEndType() == NodeType.DECISION
                         && configs.get(3).getSpecialBossColumn() == 5,
@@ -903,16 +904,31 @@ public class BackendDebugLauncher {
         println(ok ? "SELFTEST PASS" : "SELFTEST FAIL");
     }
 
-    private boolean cardEffectsAreKnown(List<Card> cards) {
+    private boolean availableCardEffectsAreKnown(DataLoader loader) {
+        boolean ok = true;
+        for (Profession profession : Profession.values()) {
+            String professionId = profession.name().toLowerCase();
+            List<Card> cards = loader.loadCards(professionId);
+            if (cards.isEmpty()) {
+                continue;
+            }
+            ok &= cardEffectsAreKnown(profession.getDisplayName(), cards);
+        }
+        return ok;
+    }
+
+    private boolean cardEffectsAreKnown(String professionName, List<Card> cards) {
         boolean ok = true;
         for (Card card : cards) {
             for (CardEffect effect : CardEffectParser.parse(card.getEffects())) {
                 if (!CardEffectParser.isKnownType(effect.getType())) {
-                    println("[SELFTEST] 未知卡牌 effect: " + card.getId()
+                    println("[SELFTEST] 未知卡牌 effect: " + professionName + "/"
+                            + card.getId()
                             + " -> " + effect.getRaw());
                     ok = false;
                 } else if (!CardEffectParser.isExecutionSupported(effect.getType())) {
-                    println("[SELFTEST] 卡牌 effect 尚未接入实战执行: " + card.getId()
+                    println("[SELFTEST] 卡牌 effect 尚未接入实战执行: " + professionName
+                            + "/" + card.getId()
                             + " -> " + effect.getRaw());
                     ok = false;
                 }
