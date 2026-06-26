@@ -2,7 +2,6 @@ package com.fabricatedbook.desktop;
 
 import com.fabricatedbook.core.action.CombatAction;
 import com.fabricatedbook.core.card.Card;
-import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.engine.CombatEngine;
 import com.fabricatedbook.core.engine.ViewNotifier;
 import com.fabricatedbook.core.entity.AbstractEntity;
@@ -196,7 +195,6 @@ public class BackendDebugLauncher {
 
     private void startNewRun(long seed) {
         player = new Player("debug-player", "调试战士", Profession.WARRIOR);
-        initDebugDeck();
         player.setGold(80);
         levelIndex = 0;
         runState = new GameRunState(seed, player);
@@ -954,7 +952,6 @@ public class BackendDebugLauncher {
 
     private String openingHandSignature(long seed, NodeType nodeType) {
         Player testPlayer = new Player("seed-player", "种子战士", Profession.WARRIOR);
-        addStarterDeck(testPlayer);
         GameRunState testRun = new GameRunState(seed, testPlayer);
         CombatEngine engine = new CombatEngine(testRun.getSeed(), "backend-combat:0:"
                 + nodeType.name());
@@ -991,37 +988,6 @@ public class BackendDebugLauncher {
     private boolean assertCheck(boolean condition, String message) {
         println((condition ? "[OK] " : "[FAIL] ") + message);
         return condition;
-    }
-
-    private void initDebugDeck() {
-        addStarterDeck(player);
-    }
-
-    private void addStarterDeck(Player targetPlayer) {
-        addCopiesToDrawPile(targetPlayer, "war_atk1", 5);
-        addCopiesToDrawPile(targetPlayer, "war_def1", 5);
-    }
-
-    private void addCopiesToDrawPile(String cardId, int count) {
-        addCopiesToDrawPile(player, cardId, count);
-    }
-
-    private void addCopiesToDrawPile(Player targetPlayer, String cardId, int count) {
-        Card source = CardPool.findById(cardId);
-        if (source == null) {
-            return;
-        }
-        for (int i = 0; i < count; i++) {
-            targetPlayer.getDrawPile().add(copyCard(source));
-        }
-    }
-
-    private Card copyCard(Card source) {
-        return new Card(source.getId(), source.getName(),
-                source.getCost(), source.getDescription(), source.getType(),
-                source.getRarity(), source.getValue(), source.getTargetType(),
-                source.getTargetCount(), new ArrayList<>(source.getEffects()),
-                source.isExhaust(), source.getProfession());
     }
 
     private String shortName(NodeType type) {

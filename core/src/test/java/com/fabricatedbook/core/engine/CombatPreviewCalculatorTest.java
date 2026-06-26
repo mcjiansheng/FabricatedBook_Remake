@@ -489,17 +489,13 @@ class CombatPreviewCalculatorTest {
     @Test
     void warriorStarterDeckIncludesPainfulBlowAsBasicCard() {
         Player player = player();
-        CombatEngine engine = new CombatEngine();
+        new GameRunState(1L, player);
 
-        engine.initBattle(player, List.of(enemy("e1")));
-
-        long painfulBlows = player.getHand().stream()
-                .filter(card -> "war_painful_blow".equals(card.getId()))
-                .count()
-                + player.getDrawPile().stream()
+        long painfulBlows = player.getDrawPile().stream()
                 .filter(card -> "war_painful_blow".equals(card.getId()))
                 .count();
         assertEquals(1, painfulBlows);
+        assertEquals(10, player.getDrawPile().size());
         assertEquals(Card.Rarity.BASIC, CardPool.findById("war_painful_blow").getRarity());
         assertEquals(0, CardPool.findById("war_painful_blow").getValue());
     }

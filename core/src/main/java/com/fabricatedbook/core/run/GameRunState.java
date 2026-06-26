@@ -3,6 +3,7 @@ package com.fabricatedbook.core.run;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
+import com.fabricatedbook.core.card.StarterDeckFactory;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.potion.Potion;
@@ -30,6 +31,7 @@ public class GameRunState {
     public GameRunState(long seed, Player player) {
         this.seed = seed;
         this.player = player;
+        StarterDeckFactory.addStarterDeckIfEmpty(player);
         this.currentLayerIdx = Math.max(0, player.getCurrentFloor() - 1);
         this.shopRemoveCount = 0;
     }

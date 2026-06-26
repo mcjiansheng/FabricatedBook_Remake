@@ -140,7 +140,7 @@ public class CombatEngine {
         player.setShuffleRandom(randomFor("reshuffle"));
         installStatusDamageModifiers();
 
-        // 初始化玩家手牌：抽牌堆放入基础卡牌，抽初始手牌
+        // 初始化玩家手牌：洗入长期牌组并抽初始手牌
         initPlayerDeck();
 
         // 藏品管理器事件订阅
@@ -162,29 +162,9 @@ public class CombatEngine {
     }
 
     /**
-     * 初始化玩家牌组：将玩家卡牌牌组放入抽牌堆并洗牌。
+     * 初始化玩家牌组：只洗牌已有长期牌组。
      */
     private void initPlayerDeck() {
-        // 如果没有抽牌堆，创建初始套牌
-        if (player.getDrawPile().isEmpty()) {
-            List<Card> starterDeck = new ArrayList<>();
-            // 基础攻击牌 ×5
-            for (int i = 0; i < 5; i++) {
-                Card atk = CardPool.findById("war_atk1");
-                if (atk != null) starterDeck.add(CardFactory.createFromTemplate(atk));
-            }
-            // 基础防御牌 ×4
-            for (int i = 0; i < 4; i++) {
-                Card def = CardPool.findById("war_def1");
-                if (def != null) starterDeck.add(CardFactory.createFromTemplate(def));
-            }
-            // 初始专属牌：痛击 ×1
-            Card painfulBlow = CardPool.findById("war_painful_blow");
-            if (painfulBlow != null) {
-                starterDeck.add(CardFactory.createFromTemplate(painfulBlow));
-            }
-            player.getDrawPile().addAll(starterDeck);
-        }
         Collections.shuffle(player.getDrawPile(), randomFor("initial-shuffle"));
     }
 
