@@ -179,6 +179,40 @@ class CombatPreviewCalculatorTest {
     }
 
     @Test
+    void combatVictoryRelicsAdvanceOnlyAfterVictory() {
+        Player player = player();
+        Enemy enemy = enemy("e1");
+        RelicManager relicManager = new RelicManager(player);
+        relicManager.addRelic(RelicFactory.createById("relic_frostmourne", player));
+        CombatEngine engine = new CombatEngine();
+        engine.setRelicManager(relicManager);
+        engine.initBattle(player, List.of(enemy));
+
+        enemy.setHp(0);
+        engine.checkBattleEnd();
+
+        assertTrue(engine.isVictory());
+        assertEquals(108, relicManager.modifyDamage(100, player, enemy));
+    }
+
+    @Test
+    void combatVictoryRelicsDoNotAdvanceAfterDefeat() {
+        Player player = player();
+        Enemy enemy = enemy("e1");
+        RelicManager relicManager = new RelicManager(player);
+        relicManager.addRelic(RelicFactory.createById("relic_frostmourne", player));
+        CombatEngine engine = new CombatEngine();
+        engine.setRelicManager(relicManager);
+        engine.initBattle(player, List.of(enemy));
+
+        player.setHp(0);
+        engine.checkBattleEnd();
+
+        assertFalse(engine.isVictory());
+        assertEquals(100, relicManager.modifyDamage(100, player, enemy));
+    }
+
+    @Test
     void cardPreviewOnlyReplacesDamageNumberAndKeepsConditionalText() {
         Player player = player();
         Enemy healthy = enemy("healthy");

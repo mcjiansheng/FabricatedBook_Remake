@@ -939,7 +939,6 @@ public class CombatEngine {
 
             if (relicManager != null) {
                 relicManager.onCombatEnd();
-                relicManager.onCombatVictory();
             }
 
             if (viewNotifier != null) {
@@ -982,6 +981,7 @@ public class CombatEngine {
 
             // 藏品结束
             if (relicManager != null) {
+                relicManager.onCombatVictory();
                 relicManager.onCombatEnd();
             }
 
