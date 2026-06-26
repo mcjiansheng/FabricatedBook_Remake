@@ -1,7 +1,9 @@
 package com.fabricatedbook.data;
 
 import com.fabricatedbook.core.card.Card;
+import com.fabricatedbook.core.map.LayerMapConfig;
 import com.fabricatedbook.core.map.MapConfig;
+import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.RelicData;
@@ -16,7 +18,9 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DataLoader — 数据加载器
@@ -143,16 +147,35 @@ public class DataLoader {
      * @return 地图配置列表（5 层）
      */
     public List<MapConfig> loadMapConfigs() {
+        List<MapConfig> configs = new ArrayList<>();
+        for (LayerMapConfig layer : loadLayerMapConfigs()) {
+            configs.add(new MapConfig(layer.getLength(), layer.getWidth(),
+                    layer.getStartType(), layer.getEndType(),
+                    probabilityMap(layer.getProbabilities()),
+                    layer.getEffectText(), layer.getLevel()));
+        }
+        return configs.isEmpty() ? defaultMapConfigs() : configs;
+    }
+
+    public List<LayerMapConfig> loadLayerMapConfigs() {
         String path = dataPath + "maps/levels.json";
         try {
             String json = readFileAsString(path);
-            Type listType = new TypeToken<List<MapConfig>>() {}.getType();
-            List<MapConfig> configs = gson.fromJson(json, listType);
-            return configs != null ? configs : new ArrayList<>();
+            Type listType = new TypeToken<List<LayerMapData>>() {}.getType();
+            List<LayerMapData> data = gson.fromJson(json, listType);
+            List<LayerMapConfig> configs = new ArrayList<>();
+            if (data != null) {
+                for (LayerMapData layer : data) {
+                    LayerMapConfig config = layer.toConfig();
+                    if (config != null) {
+                        configs.add(config);
+                    }
+                }
+            }
+            return configs.isEmpty() ? LayerMapConfig.defaults() : configs;
         } catch (Exception e) {
-            System.err.println("[DataLoader] 加载地图配置失败: " + path + " - " + e.getMessage());
-            // 返回默认配置
-            return defaultMapConfigs();
+            System.err.println("[DataLoader] 加载稀疏地图配置失败: " + path + " - " + e.getMessage());
+            return LayerMapConfig.defaults();
         }
     }
 
@@ -169,6 +192,33 @@ public class DataLoader {
                 MapConfig.mist(),
                 MapConfig.tower()
         );
+    }
+
+    private Map<NodeType, Integer> probabilityMap(int[] probabilities) {
+        Map<NodeType, Integer> weights = new EnumMap<>(NodeType.class);
+        for (int i = 0; i < probabilities.length; i++) {
+            int weight = probabilities[i];
+            if (weight <= 0) continue;
+            NodeType type = nodeTypeFromCode(i + 1);
+            if (type != null) {
+                weights.put(type, weight);
+            }
+        }
+        return weights;
+    }
+
+    private static NodeType nodeTypeFromCode(int typeCode) {
+        return switch (typeCode) {
+            case 1 -> NodeType.FIGHT;
+            case 2 -> NodeType.EMERGENCY;
+            case 3 -> NodeType.BOSS;
+            case 4 -> NodeType.UNEXPECTED;
+            case 5 -> NodeType.REWARD;
+            case 6 -> NodeType.SHOP;
+            case 8 -> NodeType.DECISION;
+            case 9 -> NodeType.SAFEHOUSE;
+            default -> null;
+        };
     }
 
     public static class EventData {
@@ -191,6 +241,55 @@ public class DataLoader {
 
         public String getText() { return text; }
         public String getResult() { return result; }
+    }
+
+    public static class LayerMapData {
+        private int level;
+        private String name;
+        private String effectText;
+        private int length;
+        private int width;
+        private NodeType startType;
+        private NodeType endType;
+        private Map<NodeType, Integer> probabilities;
+        private int specialBossColumn = -1;
+
+        LayerMapConfig toConfig() {
+            if (level <= 0 || length <= 0 || width <= 0
+                    || startType == null || endType == null) {
+                return null;
+            }
+            return new LayerMapConfig(level, name, effectText, length, width,
+                    startType, endType, toProbabilityArray(probabilities),
+                    specialBossColumn);
+        }
+
+        private int[] toProbabilityArray(Map<NodeType, Integer> weights) {
+            int[] values = new int[9];
+            if (weights == null) {
+                return values;
+            }
+            for (Map.Entry<NodeType, Integer> entry : weights.entrySet()) {
+                int index = typeCode(entry.getKey()) - 1;
+                if (index >= 0 && index < values.length) {
+                    values[index] = Math.max(0, entry.getValue());
+                }
+            }
+            return values;
+        }
+
+        private int typeCode(NodeType type) {
+            return switch (type) {
+                case FIGHT -> 1;
+                case EMERGENCY -> 2;
+                case BOSS -> 3;
+                case UNEXPECTED -> 4;
+                case REWARD -> 5;
+                case SHOP -> 6;
+                case DECISION -> 8;
+                case SAFEHOUSE -> 9;
+            };
+        }
     }
 
     // ==================== 辅助方法 ====================

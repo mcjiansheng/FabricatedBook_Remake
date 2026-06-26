@@ -43,7 +43,7 @@ public class BackendDebugLauncher {
     private final Scanner scanner = new Scanner(System.in);
     private Random random = new Random();
     private final SaveManager saveManager = new SaveManager();
-    private final List<LayerMapConfig> configs = LayerMapConfig.defaults();
+    private final List<LayerMapConfig> configs = new DataLoader().loadLayerMapConfigs();
 
     private GameRunState runState;
     private Player player;
@@ -841,6 +841,10 @@ public class BackendDebugLauncher {
         List<Card> cards = loader.loadCards("warrior");
         ok &= assertCheck(!cards.isEmpty(), "战士 JSON 卡牌可加载: " + cards.size());
         ok &= assertCheck(cardEffectsAreKnown(cards), "战士 JSON 卡牌 effect 均为已知 DSL");
+        ok &= assertCheck(configs.size() == 5
+                        && configs.get(3).getEndType() == NodeType.DECISION
+                        && configs.get(3).getSpecialBossColumn() == 5,
+                "稀疏地图 JSON 配置可加载: " + configs.size() + " 层");
 
         List<Potion> potions = loader.loadPotions();
         ok &= assertCheck(!potions.isEmpty(), "药水可加载: " + potions.size());

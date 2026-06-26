@@ -164,7 +164,7 @@
 
 ## B-004：地图规则有两套实现，正式前端没有复用 core 地图
 
-状态：部分修复。已新增 `LayerMapConfig`、`LayerMapGraph`、`LayerMapNode`，用 core 表达正式前端使用的列优先稀疏地图；`MapScreen.generateLayer()` 改为从 `LayerMapGraph` 复制节点和连线用于渲染，`BackendDebugLauncher` 也改为使用同一 core 图。迷雾层现在由 core 固定为倒数第二列 Boss、最后一列命运抉择，并有单元测试覆盖。剩余工作：将层配置进一步迁入 JSON，并把 UI 里的节点进入、副作用和完成节点流程下沉到 B-005 的 core 规则入口。
+状态：已修复地图生成主链路。已新增 `LayerMapConfig`、`LayerMapGraph`、`LayerMapNode`，用 core 表达正式前端使用的列优先稀疏地图；`data/maps/levels.json` 已改为稀疏图配置，`DataLoader.loadLayerMapConfigs()` 负责加载并在失败时回退默认配置。`MapScreen.generateLayer()` 从 `LayerMapGraph` 复制节点和连线用于渲染，`BackendDebugLauncher` 也使用同一 core 图。迷雾层现在由 JSON/core 固定为倒数第二列 Boss、最后一列命运抉择，并有单元测试与 CLI `selftest` 覆盖。剩余的节点进入、副作用和环境效果统一归入 B-005。
 
 ### 位置
 

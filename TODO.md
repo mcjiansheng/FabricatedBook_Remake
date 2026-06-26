@@ -64,11 +64,11 @@
   - [x] 将迷雾层倒数第二列 Boss、最后一列命运抉择规则下沉到 core/JSON。（已下沉到 core；JSON 化仍在迁移项中。）
   - [ ] 保留同种子可复现的随机流 key 设计。
 - [ ] 将 `MapScreen` 内置常量迁移到 core/JSON。
-  - [x] 迁移 `LAYER_LENGTHS`、`LAYER_WIDTHS`。（已迁入 `LayerMapConfig.defaults()`。）
-  - [x] 迁移 `LAYER_START_TYPES`、`LAYER_END_TYPES`、迷雾特殊 Boss 列。（已迁入 `LayerMapConfig.defaults()`。）
-  - [x] 迁移 `LAYER_PROBABILITIES`。（已迁入 `LayerMapConfig.defaults()`。）
-  - [x] 迁移 `LAYER_NAMES`、`LAYER_EFFECTS` 或建立统一文案来源。（已由 `MapScreen` 读取 `LayerMapConfig`。）
-  - [ ] 更新 `data/maps/levels.json`，让它表达原版稀疏地图参数，而不是旧矩形 `width/height` 语义。
+  - [x] 迁移 `LAYER_LENGTHS`、`LAYER_WIDTHS`。（已迁入 `data/maps/levels.json` 并由 `LayerMapConfig` 加载。）
+  - [x] 迁移 `LAYER_START_TYPES`、`LAYER_END_TYPES`、迷雾特殊 Boss 列。（已迁入 `data/maps/levels.json`。）
+  - [x] 迁移 `LAYER_PROBABILITIES`。（已迁入 `data/maps/levels.json`。）
+  - [x] 迁移 `LAYER_NAMES`、`LAYER_EFFECTS` 或建立统一文案来源。（已由 `MapScreen` 读取 `LayerMapConfig`，配置来自 JSON。）
+  - [x] 更新 `data/maps/levels.json`，让它表达原版稀疏地图参数，而不是旧矩形 `width/height` 语义。
 - [ ] 让 `MapScreen` 只负责渲染和输入。
   - [x] 地图生成、节点连接、可达性计算移动到 core。（当前 `MapScreen` 仍有渲染用 `MapNode` 包装，节点进入流程待 B-005 下沉。）
   - [ ] UI 点击后只调用 core 层移动/完成节点接口。（已下沉寡头节点进入副作用；完整节点进入/完成流程仍待继续。）

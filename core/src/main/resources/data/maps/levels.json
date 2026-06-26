@@ -3,97 +3,92 @@
   {
     "level": 1,
     "name": "荒野",
-    "width": 4,
-    "height": 3,
-    "startNodeType": "FIGHT",
-    "endNodeType": "DECISION",
-    "startCol": 2,
-    "endRow": 2,
-    "nodeWeights": {
+    "effectText": "当前层效果：无",
+    "length": 4,
+    "width": 3,
+    "startType": "FIGHT",
+    "endType": "DECISION",
+    "specialBossColumn": -1,
+    "probabilities": {
       "FIGHT": 60,
       "EMERGENCY": 10,
       "UNEXPECTED": 30
-    },
-    "environmentEffect": "无"
+    }
   },
   // ===== 第2层：森林 =====
   {
     "level": 2,
     "name": "森林",
-    "width": 5,
-    "height": 3,
-    "startNodeType": "FIGHT",
-    "endNodeType": "SHOP",
-    "startCol": 2,
-    "endRow": 2,
-    "nodeWeights": {
+    "effectText": "当前层效果：奖励与商店出现",
+    "length": 5,
+    "width": 3,
+    "startType": "FIGHT",
+    "endType": "SHOP",
+    "specialBossColumn": -1,
+    "probabilities": {
       "FIGHT": 40,
       "EMERGENCY": 20,
       "UNEXPECTED": 10,
       "SAFEHOUSE": 10,
       "SHOP": 10,
       "REWARD": 10
-    },
-    "environmentEffect": "非战斗节点损失金币，战斗获得金币增加"
+    }
   },
   // ===== 第3层：诡异秘林 =====
   {
     "level": 3,
     "name": "诡异秘林",
-    "width": 6,
-    "height": 4,
-    "startNodeType": "REWARD",
-    "endNodeType": "BOSS",
-    "startCol": 3,
-    "endRow": 3,
-    "nodeWeights": {
-      "FIGHT": 50,
-      "EMERGENCY": 20,
-      "UNEXPECTED": 15,
-      "SAFEHOUSE": 5,
-      "REWARD": 5,
-      "SHOP": 5
-    },
-    "environmentEffect": "进战斗伤害-1，进非战斗伤害+1(±3)"
-  },
-  // ===== 第4层：迷雾 =====
-  {
-    "level": 4,
-    "name": "迷雾",
-    "width": 7,
-    "height": 4,
-    "startNodeType": "EMERGENCY",
-    "endNodeType": "BOSS",
-    "startCol": 3,
-    "endRow": 3,
-    "nodeWeights": {
-      "FIGHT": 40,
-      "EMERGENCY": 20,
-      "UNEXPECTED": 20,
-      "SAFEHOUSE": 10,
-      "REWARD": 5,
-      "SHOP": 5
-    },
-    "environmentEffect": "每次前进概率回血或扣血"
-  },
-  // ===== 第5层：高塔 =====
-  {
-    "level": 5,
-    "name": "高塔",
-    "width": 7,
-    "height": 4,
-    "startNodeType": "UNEXPECTED",
-    "endNodeType": "BOSS",
-    "startCol": 3,
-    "endRow": 3,
-    "nodeWeights": {
+    "effectText": "当前层效果：Boss 节点出现",
+    "length": 6,
+    "width": 4,
+    "startType": "REWARD",
+    "endType": "BOSS",
+    "specialBossColumn": -1,
+    "probabilities": {
       "FIGHT": 40,
       "EMERGENCY": 20,
       "UNEXPECTED": 10,
       "SAFEHOUSE": 10,
       "SHOP": 10,
       "REWARD": 10
-    },
-    "environmentEffect": "无"
+    }
+  },
+  // ===== 第4层：迷雾 =====
+  {
+    "level": 4,
+    "name": "迷雾",
+    "effectText": "当前层效果：路线更窄，Boss 后出现门扉",
+    "length": 7,
+    "width": 4,
+    "startType": "EMERGENCY",
+    "endType": "DECISION",
+    "specialBossColumn": 5,
+    "probabilities": {
+      "FIGHT": 40,
+      "EMERGENCY": 20,
+      "UNEXPECTED": 10,
+      "SAFEHOUSE": 10,
+      "SHOP": 10,
+      "REWARD": 10
+    }
+  },
+  // ===== 第5层：高塔 =====
+  {
+    "level": 5,
+    "name": "高塔",
+    "effectText": "当前层效果：最终高塔",
+    "length": 7,
+    "width": 4,
+    "startType": "UNEXPECTED",
+    "endType": "BOSS",
+    "specialBossColumn": -1,
+    "probabilities": {
+      "FIGHT": 40,
+      "EMERGENCY": 20,
+      "UNEXPECTED": 10,
+      "SAFEHOUSE": 10,
+      "SHOP": 10,
+      "REWARD": 10
+    }
   }
 ]

@@ -64,7 +64,8 @@ public class MapScreen implements Screen {
     public static final int DECISION = 8;
     public static final int SAFE_HOUSE = 9;
 
-    private static final List<LayerMapConfig> LAYER_CONFIGS = LayerMapConfig.defaults();
+    private static final List<LayerMapConfig> LAYER_CONFIGS =
+            new DataLoader().loadLayerMapConfigs();
 
     // ====== 节点贴图索引 ======
     private static final int[] NODE_TYPE_TO_TEXTURE = {
