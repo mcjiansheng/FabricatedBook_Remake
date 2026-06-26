@@ -12,12 +12,14 @@ public class NodeEntryResult {
     private int goldLost;
     private int hpHealed;
     private int hpLost;
+    private int damageModifierChange;
     private final List<String> messages = new ArrayList<>();
 
     public int getGoldGained() { return goldGained; }
     public int getGoldLost() { return goldLost; }
     public int getHpHealed() { return hpHealed; }
     public int getHpLost() { return hpLost; }
+    public int getDamageModifierChange() { return damageModifierChange; }
 
     public List<String> getMessages() {
         return Collections.unmodifiableList(messages);
@@ -25,7 +27,7 @@ public class NodeEntryResult {
 
     public boolean hasChanges() {
         return goldGained != 0 || goldLost != 0 || hpHealed != 0 || hpLost != 0
-                || !messages.isEmpty();
+                || damageModifierChange != 0 || !messages.isEmpty();
     }
 
     void gainGold(int amount, String message) {
@@ -55,6 +57,14 @@ public class NodeEntryResult {
     void loseHp(int amount, String message) {
         if (amount <= 0) return;
         hpLost += amount;
+        if (message != null && !message.isBlank()) {
+            messages.add(message);
+        }
+    }
+
+    void changeDamageModifier(int amount, String message) {
+        if (amount == 0) return;
+        damageModifierChange += amount;
         if (message != null && !message.isBlank()) {
             messages.add(message);
         }

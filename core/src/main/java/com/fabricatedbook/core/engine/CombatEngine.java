@@ -75,6 +75,7 @@ public class CombatEngine {
 
     /** 当前战斗来源节点类型，用于结算正式奖励区间。 */
     private NodeType battleNodeType;
+    private int environmentDamageModifier;
 
     /** Enemy intent values that must be shown and later executed identically. */
     private final Map<Enemy, PlannedEnemyAction> plannedEnemyActions;
@@ -105,6 +106,7 @@ public class CombatEngine {
         this.victory = false;
         this.eventBus = EventBus.getInstance();
         this.battleNodeType = NodeType.FIGHT;
+        this.environmentDamageModifier = 0;
         this.plannedEnemyActions = new HashMap<>();
     }
 
@@ -1032,6 +1034,10 @@ public class CombatEngine {
         this.battleNodeType = battleNodeType != null ? battleNodeType : NodeType.FIGHT;
     }
 
+    public void setEnvironmentDamageModifier(int environmentDamageModifier) {
+        this.environmentDamageModifier = Math.max(-3, Math.min(3, environmentDamageModifier));
+    }
+
     public void setRelicManager(RelicManager relicManager) {
         this.relicManager = relicManager;
     }
@@ -1042,7 +1048,10 @@ public class CombatEngine {
                 int modified = relicManager != null
                         ? relicManager.modifyDamage(damage, source, target)
                         : damage;
-                return modifyEnemyPassiveDamage(modified, source, target);
+                if (source == player && environmentDamageModifier != 0) {
+                    modified += environmentDamageModifier;
+                }
+                return modifyEnemyPassiveDamage(Math.max(0, modified), source, target);
             });
         }
         if (action instanceof HealAction healAction && relicManager != null) {

@@ -592,6 +592,7 @@ public class MapScreen implements Screen {
         MapNode node = activeNode != null ? activeNode : currentNode;
         CombatEngine engine = new CombatEngine(runState.getSeed(), "combat:" + nodeKey(node));
         player.setCurrentFloor(currentLayerIdx + 1);
+        engine.setEnvironmentDamageModifier(runState.getMapDamageModifier());
         if (node != null) {
             switch (node.type) {
                 case EMERGENCY:

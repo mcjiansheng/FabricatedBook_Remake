@@ -36,6 +36,14 @@ public final class CombatPreviewCalculator {
                                           List<Enemy> enemies,
                                           Enemy target,
                                           RelicManager relicManager) {
+        return previewCard(card, player, enemies, target, relicManager, 0);
+    }
+
+    public static CardPreview previewCard(Card card, Player player,
+                                          List<Enemy> enemies,
+                                          Enemy target,
+                                          RelicManager relicManager,
+                                          int environmentDamageModifier) {
         if (card == null || player == null) {
             return new CardPreview("", false);
         }
@@ -55,7 +63,7 @@ public final class CombatPreviewCalculator {
                     int baseDamage = parseInt(parts[1], 0);
                     int repeat = parts.length > 2 ? parseInt(parts[2], 1) : 1;
                     addDamage(totals, baseDamage, repeat, previewPlayer, player, damageTarget,
-                            relicManager);
+                            relicManager, environmentDamageModifier);
                 }
                 case "damage_x" -> {
                     if (damageTarget == null || parts.length < 2) break;
@@ -63,7 +71,7 @@ public final class CombatPreviewCalculator {
                     int repeat = Math.max(0, player.getEnergy());
                     if (repeat > 0) {
                         addDamage(totals, baseDamage, repeat, previewPlayer, player,
-                                damageTarget, relicManager);
+                                damageTarget, relicManager, environmentDamageModifier);
                     }
                 }
                 case "damage_all" -> {
@@ -72,7 +80,7 @@ public final class CombatPreviewCalculator {
                     int repeat = parts.length > 2 ? parseInt(parts[2], 1) : 1;
                     AbstractEntity commonTarget = commonEnemyTarget(aliveEnemies);
                     addDamage(totals, baseDamage, repeat, previewPlayer, player, commonTarget,
-                            relicManager);
+                            relicManager, environmentDamageModifier);
                 }
                 case "damage_all_attacking_intent" -> {
                     if (aliveEnemies.isEmpty() || parts.length < 2) break;
@@ -85,13 +93,13 @@ public final class CombatPreviewCalculator {
                             .filter(enemy -> enemy.getIntent() == com.fabricatedbook.core.entity.IntentType.ATTACK)
                             .toList());
                     addDamage(totals, baseDamage, attackingCount, previewPlayer, player,
-                            commonTarget, relicManager);
+                            commonTarget, relicManager, environmentDamageModifier);
                 }
                 case "counter" -> {
                     if (damageTarget == null || parts.length < 2) break;
                     if ("block".equalsIgnoreCase(parts[1]) && player.getBlock() > 0) {
                         addDamage(totals, player.getBlock(), 1, previewPlayer, player, damageTarget,
-                                relicManager);
+                                relicManager, environmentDamageModifier);
                     }
                 }
                 case "bonus_per_attack" -> {
@@ -199,6 +207,16 @@ public final class CombatPreviewCalculator {
                                   AbstractEntity relicSource,
                                   AbstractEntity target,
                                   RelicManager relicManager) {
+        addDamage(totals, baseDamage, repeat, calculationSource, relicSource, target,
+                relicManager, 0);
+    }
+
+    private static void addDamage(PreviewTotals totals, int baseDamage, int repeat,
+                                  AbstractEntity calculationSource,
+                                  AbstractEntity relicSource,
+                                  AbstractEntity target,
+                                  RelicManager relicManager,
+                                  int environmentDamageModifier) {
         int safeRepeat = Math.max(1, repeat);
         int startIndex = totals.damageHits.size();
         for (int i = 0; i < safeRepeat; i++) {
@@ -206,10 +224,12 @@ public final class CombatPreviewCalculator {
             if (relicManager != null) {
                 damage = relicManager.previewModifyDamage(damage, relicSource, target);
             }
+            damage += environmentDamageModifier;
             totals.addDamage(Math.max(0, damage));
         }
         totals.lastDamage = new LastDamage(startIndex, baseDamage, safeRepeat,
-                calculationSource, relicSource, target, relicManager);
+                calculationSource, relicSource, target, relicManager,
+                environmentDamageModifier);
     }
 
     private static void addBaseDamageToLastPreview(PreviewTotals totals, int amount) {
@@ -219,7 +239,8 @@ public final class CombatPreviewCalculator {
             totals.damageHits.remove(totals.damageHits.size() - 1);
         }
         addDamage(totals, last.baseDamage + amount, last.repeat,
-                last.calculationSource, last.relicSource, last.target, last.relicManager);
+                last.calculationSource, last.relicSource, last.target, last.relicManager,
+                last.environmentDamageModifier);
     }
 
     private static AbstractEntity resolveCardDamageTarget(Card card,
@@ -721,12 +742,14 @@ public final class CombatPreviewCalculator {
         private final AbstractEntity relicSource;
         private final AbstractEntity target;
         private final RelicManager relicManager;
+        private final int environmentDamageModifier;
 
         private LastDamage(int startIndex, int baseDamage, int repeat,
                            AbstractEntity calculationSource,
                            AbstractEntity relicSource,
                            AbstractEntity target,
-                           RelicManager relicManager) {
+                           RelicManager relicManager,
+                           int environmentDamageModifier) {
             this.startIndex = startIndex;
             this.baseDamage = baseDamage;
             this.repeat = repeat;
@@ -734,6 +757,7 @@ public final class CombatPreviewCalculator {
             this.relicSource = relicSource;
             this.target = target;
             this.relicManager = relicManager;
+            this.environmentDamageModifier = environmentDamageModifier;
         }
     }
 

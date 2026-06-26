@@ -27,6 +27,7 @@ public class GameRunState {
     private NodeRef activeNode;
     private PlayerSnapshot combatBaseline;
     private int shopRemoveCount;
+    private int mapDamageModifier;
 
     public GameRunState(long seed, Player player) {
         this.seed = seed;
@@ -34,6 +35,7 @@ public class GameRunState {
         StarterDeckFactory.addStarterDeckIfEmpty(player);
         this.currentLayerIdx = Math.max(0, player.getCurrentFloor() - 1);
         this.shopRemoveCount = 0;
+        this.mapDamageModifier = 0;
     }
 
     public long getSeed() { return seed; }
@@ -55,6 +57,13 @@ public class GameRunState {
     }
     public void incrementShopRemoveCount() {
         shopRemoveCount++;
+    }
+    public int getMapDamageModifier() { return mapDamageModifier; }
+    public void setMapDamageModifier(int mapDamageModifier) {
+        this.mapDamageModifier = Math.max(-3, Math.min(3, mapDamageModifier));
+    }
+    public void addMapDamageModifier(int delta) {
+        setMapDamageModifier(mapDamageModifier + delta);
     }
     public boolean isInCombat() { return activeNode != null && combatBaseline != null; }
 

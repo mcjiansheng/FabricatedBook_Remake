@@ -50,6 +50,7 @@ public class SaveManager {
         public GameRunState.NodeRef activeNode;
         public GameRunState.PlayerSnapshot combatBaseline;
         public int shopRemoveCount;
+        public int mapDamageModifier;
         public String playerId;
         public String playerName;
         public String profession;
@@ -127,7 +128,7 @@ public class SaveManager {
      */
     public boolean save(Player player) {
         return saveSnapshot(GameRunState.PlayerSnapshot.from(player), 0L,
-                Math.max(0, player.getCurrentFloor() - 1), null, null, null, 0);
+                Math.max(0, player.getCurrentFloor() - 1), null, null, null, 0, 0);
     }
 
     public boolean saveRun(GameRunState runState) {
@@ -142,7 +143,8 @@ public class SaveManager {
                 : null;
         return saveSnapshot(playerSnapshot, runState.getSeed(),
                 runState.getCurrentLayerIdx(), runState.getCompletedNode(),
-                activeNode, runState.getCombatBaseline(), runState.getShopRemoveCount());
+                activeNode, runState.getCombatBaseline(), runState.getShopRemoveCount(),
+                runState.getMapDamageModifier());
     }
 
     private boolean saveSnapshot(GameRunState.PlayerSnapshot snapshot, long seed,
@@ -150,7 +152,8 @@ public class SaveManager {
                                  GameRunState.NodeRef completedNode,
                                  GameRunState.NodeRef activeNode,
                                  GameRunState.PlayerSnapshot combatBaseline,
-                                 int shopRemoveCount) {
+                                 int shopRemoveCount,
+                                 int mapDamageModifier) {
         try {
             SaveData data = new SaveData();
             data.version = 2;
@@ -160,6 +163,7 @@ public class SaveManager {
             data.activeNode = activeNode;
             data.combatBaseline = combatBaseline;
             data.shopRemoveCount = Math.max(0, shopRemoveCount);
+            data.mapDamageModifier = Math.max(-3, Math.min(3, mapDamageModifier));
             data.playerId = snapshot.playerId;
             data.playerName = snapshot.playerName;
             data.profession = snapshot.profession;
@@ -223,6 +227,7 @@ public class SaveManager {
                 ? data.currentLayerIdx
                 : Math.max(0, data.currentFloor - 1));
         runState.setShopRemoveCount(data.version >= 2 ? data.shopRemoveCount : 0);
+        runState.setMapDamageModifier(data.version >= 2 ? data.mapDamageModifier : 0);
         runState.setCompletedNode(data.completedNode);
         if (data.activeNode != null && data.combatBaseline != null) {
             runState.beginCombat(data.activeNode);

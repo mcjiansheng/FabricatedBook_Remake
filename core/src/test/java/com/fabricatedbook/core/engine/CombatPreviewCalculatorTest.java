@@ -47,6 +47,19 @@ class CombatPreviewCalculatorTest {
     }
 
     @Test
+    void cardPreviewAppliesEnvironmentDamageModifierAfterDamageCalculation() {
+        Player player = player();
+        Enemy enemy = enemy("e1");
+        enemy.addBuff(new Fragile(2));
+        Card card = attackCard("strike", Card.TargetType.SINGLE_ENEMY, "damage:8");
+
+        CardPreview preview = CombatPreviewCalculator.previewCard(card, player,
+                List.of(enemy), enemy, null, -3);
+
+        assertEquals("造成 7 点伤害", preview.getDescription());
+    }
+
+    @Test
     void cardPreviewForAllEnemiesOnlyUsesBuffsSharedByAllTargets() {
         Player player = player();
         Enemy fragileEnemy = enemy("e1");
@@ -691,6 +704,21 @@ class CombatPreviewCalculatorTest {
 
         assertEquals(23, enemy.getHp());
         assertEquals(15, player.getBlock());
+    }
+
+    @Test
+    void combatEngineAppliesEnvironmentDamageModifierToPlayerDamage() {
+        Player player = player();
+        player.getDrawPile().add(attackCard("env", Card.TargetType.SINGLE_ENEMY,
+                "damage:10"));
+        Enemy enemy = enemy("e1");
+        CombatEngine engine = new CombatEngine();
+        engine.setEnvironmentDamageModifier(2);
+
+        engine.initBattle(player, List.of(enemy));
+        assertTrue(engine.playCard(player.getHand().get(0), enemy));
+
+        assertEquals(28, enemy.getHp());
     }
 
     @Test

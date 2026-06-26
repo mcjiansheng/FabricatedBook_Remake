@@ -80,6 +80,29 @@ class NodeEntryResolverTest {
         assertEquals(firstPlayer.getHp(), secondPlayer.getHp());
     }
 
+    @Test
+    void mysticForestAdjustsMapDamageModifierWithinBounds() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        GameRunState runState = new GameRunState(1L, player);
+        NodeEntryResolver resolver = new NodeEntryResolver();
+
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 1, 0, 4));
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 2, 0, 5));
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 3, 0, 6));
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 4, 0, 8));
+
+        assertEquals(3, runState.getMapDamageModifier());
+
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 1, 0, 1));
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 2, 0, 2));
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 3, 0, 3));
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 4, 0, 1));
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 5, 0, 2));
+        resolver.enterNode(runState, new GameRunState.NodeRef(2, 6, 0, 3));
+
+        assertEquals(-3, runState.getMapDamageModifier());
+    }
+
     private Player woundedPlayer() {
         Player player = new Player("p", "战士", Profession.WARRIOR);
         player.setHp(40);

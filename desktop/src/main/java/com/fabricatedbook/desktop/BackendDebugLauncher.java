@@ -462,6 +462,7 @@ public class BackendDebugLauncher {
         CombatEngine engine = new CombatEngine(runState.getSeed(),
                 "backend-combat:" + levelIndex + ":" + nodeType.name());
         engine.setBattleNodeType(nodeType);
+        engine.setEnvironmentDamageModifier(runState.getMapDamageModifier());
         engine.setRelicManager(new RelicManager(player));
         engine.setViewNotifier(new ConsoleNotifier());
         engine.initBattle(player, enemies);

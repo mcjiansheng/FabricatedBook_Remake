@@ -46,6 +46,14 @@ public class NodeEntryResolver {
             int actualLost = Math.min(player.getGold(), amount);
             player.setGold(player.getGold() - amount);
             result.loseGold(actualLost, "森林环境：失去 " + actualLost + " 金币");
+        } else if (nodeRef.layer == 2) {
+            int before = runState.getMapDamageModifier();
+            runState.addMapDamageModifier(nodeType.isCombat() ? -1 : 1);
+            int change = runState.getMapDamageModifier() - before;
+            if (change != 0) {
+                result.changeDamageModifier(change,
+                        "诡异秘林环境：伤害修正 " + signed(runState.getMapDamageModifier()));
+            }
         } else if (nodeRef.layer == 3) {
             if (random.nextInt(2) == 0) {
                 int amount = 5 + random.nextInt(26);
@@ -57,6 +65,10 @@ public class NodeEntryResolver {
                 result.loseHp(lost, "迷雾环境：失去 " + lost + " 生命值");
             }
         }
+    }
+
+    private String signed(int value) {
+        return value > 0 ? "+" + value : String.valueOf(value);
     }
 
     private void applyOligarch(Player player, NodeType nodeType, NodeEntryResult result) {

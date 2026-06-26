@@ -416,7 +416,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
     private void applyCardPreview(CardActor actor, Enemy target) {
         CardPreview preview = CombatPreviewCalculator.previewCard(actor.getCard(), player,
-                enemies, target, relicManager);
+                enemies, target, relicManager,
+                runState != null ? runState.getMapDamageModifier() : 0);
         if (preview.hasPreview()) {
             actor.setPreviewDescription(preview.getDescription());
         } else {
