@@ -71,7 +71,7 @@
   - [ ] 更新 `data/maps/levels.json`，让它表达原版稀疏地图参数，而不是旧矩形 `width/height` 语义。
 - [ ] 让 `MapScreen` 只负责渲染和输入。
   - [x] 地图生成、节点连接、可达性计算移动到 core。（当前 `MapScreen` 仍有渲染用 `MapNode` 包装，节点进入流程待 B-005 下沉。）
-  - [ ] UI 点击后只调用 core 层移动/完成节点接口。
+  - [ ] UI 点击后只调用 core 层移动/完成节点接口。（已下沉寡头节点进入副作用；完整节点进入/完成流程仍待继续。）
   - [x] 前端地图和后端 CLI 地图尽量共用同一规则实现。
   - [ ] 更新 `doc/frontend_design.md`、`doc/original_map_analysis.md` 或新增迁移说明。
 

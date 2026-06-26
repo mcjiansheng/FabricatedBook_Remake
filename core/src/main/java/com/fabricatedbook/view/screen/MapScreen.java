@@ -25,6 +25,7 @@ import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.map.LayerMapConfig;
 import com.fabricatedbook.core.map.LayerMapGraph;
 import com.fabricatedbook.core.map.LayerMapNode;
+import com.fabricatedbook.core.map.NodeEntryResolver;
 import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.core.run.GameRunState;
@@ -493,7 +494,7 @@ public class MapScreen implements Screen {
         node.visited = true;
         runState.setCompletedNode(toRef(node));
         updateAccessibleNodes();
-        applyNodeEntryRelics(node.type);
+        new NodeEntryResolver().enterNode(runState, LayerMapGraph.fromTypeCode(node.type));
     }
 
     private GameRunState.NodeRef toRef(MapNode node) {
@@ -777,13 +778,6 @@ public class MapScreen implements Screen {
             return enemies;
         }
         return List.of();
-    }
-
-    private void applyNodeEntryRelics(int nodeType) {
-        if (nodeType != FIGHT && nodeType != EMERGENCY && nodeType != BOSS
-                && player.hasRelic("relic_oligarch")) {
-            player.gainGold(20);
-        }
     }
 
     private void addBabelTowerEnemy(List<Enemy> enemies,

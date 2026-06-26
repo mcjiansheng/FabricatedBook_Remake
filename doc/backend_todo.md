@@ -226,6 +226,8 @@
 
 ## B-005：环境效果和部分节点进入规则仍在 UI 层或仅有描述
 
+状态：部分修复。已新增 `NodeEntryResolver` / `NodeEntryResult` 作为 core 节点进入规则入口，`relic_oligarch` 的“进入非战斗节点获得金币”已从 `MapScreen` 下沉到 core，并由 `MapScreen` 与 `BackendDebugLauncher` 共用；测试覆盖非战斗触发和战斗不触发。剩余工作：森林、诡异秘林、迷雾等层环境仍只有描述，事件/商店/安全屋等节点完成时机和反馈展示也还需要继续统一。
+
 ### 位置
 
 - 包：`com.fabricatedbook.core.map`

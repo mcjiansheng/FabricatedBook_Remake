@@ -13,6 +13,8 @@ import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.map.LayerMapConfig;
 import com.fabricatedbook.core.map.LayerMapGraph;
 import com.fabricatedbook.core.map.LayerMapNode;
+import com.fabricatedbook.core.map.NodeEntryResolver;
+import com.fabricatedbook.core.map.NodeEntryResult;
 import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
@@ -324,6 +326,11 @@ public class BackendDebugLauncher {
                 + " (" + node.getCol() + "," + node.getRow() + ")");
         if (node.getType().isCombat()) {
             runState.beginCombat(toNodeRef(node));
+        } else {
+            NodeEntryResult entryResult = new NodeEntryResolver().enterNode(runState, node.getType());
+            for (String message : entryResult.getMessages()) {
+                println(message);
+            }
         }
         resolveNode(node);
         if (node.getType().isCombat()) {
