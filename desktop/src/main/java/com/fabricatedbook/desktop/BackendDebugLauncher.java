@@ -857,6 +857,16 @@ public class BackendDebugLauncher {
             ok &= assertCheck(!groups.isEmpty(), "第 " + level + " 层怪物组可加载: " + groups.size());
         }
 
+        EventHandler eventHandler = new EventHandler(new Random(1));
+        EventHandler.EventResult fixedEvent = eventHandler.executeEvent("相遇", 0);
+        EventHandler.EventResult randomFallbackEvent = eventHandler.executeEvent("翅膀雕像", 1);
+        ok &= assertCheck("relic_betrayal".equals(fixedEvent.relicId)
+                        && fixedEvent.description.contains("背叛"),
+                "固定事件结果可从 JSON 执行");
+        ok &= assertCheck(randomFallbackEvent.goldChange >= 50
+                        && randomFallbackEvent.goldChange <= 80,
+                "随机事件结果保留 Java executor");
+
         Player testPlayer = new Player("selftest", "自检战士", Profession.WARRIOR);
         int oldMaxHp = testPlayer.getMaxHp();
         Relic hotWater = RelicFactory.createById("relic_hot_water_flask", testPlayer);
