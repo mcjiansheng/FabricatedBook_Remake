@@ -376,9 +376,9 @@ public class CombatEngine {
         List<CombatAction> actions = new ArrayList<>();
         List<AbstractEntity> aliveEnemies = getAliveEnemies();
 
-        for (String effect : card.getEffects()) {
-            String[] parts = effect.split(":");
-            String type = parts[0];
+        for (CardEffect effect : CardEffectParser.parse(card.getEffects())) {
+            String[] parts = effect.parts();
+            String type = effect.getType();
 
             switch (type) {
                 case "damage": {
@@ -660,7 +660,7 @@ public class CombatEngine {
                     break;
                 }
                 default:
-                    System.out.println("[CombatEngine] 未知效果: " + effect);
+                    System.out.println("[CombatEngine] 未知效果: " + effect.getRaw());
                     break;
             }
         }

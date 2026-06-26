@@ -45,10 +45,9 @@ public final class CombatPreviewCalculator {
         PreviewEntity previewPlayer = copyEntity(player);
         AbstractEntity damageTarget = resolveCardDamageTarget(card, aliveEnemies, target);
 
-        for (String effect : card.getEffects()) {
-            if (effect == null || effect.isBlank()) continue;
-            String[] parts = effect.split(":");
-            String type = parts[0].toLowerCase();
+        for (CardEffect effect : CardEffectParser.parse(card.getEffects())) {
+            String[] parts = effect.parts();
+            String type = effect.getType();
 
             switch (type) {
                 case "damage" -> {
