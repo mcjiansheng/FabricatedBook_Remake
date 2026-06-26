@@ -259,12 +259,7 @@ public class EventHandler {
             return null;
         }
         DataLoader.EventOptionData optionData = eventData.getOptions().get(optionIndex);
-        if (!optionData.hasExecutableResult()) {
-            return null;
-        }
-        return new EventResult(optionData.getOutcomeDescription(),
-                optionData.getGoldChange(), optionData.getHpChange(),
-                optionData.getRelicId(), optionData.getOutcome());
+        return EventResultResolver.resolve(optionData);
     }
 
     private List<String> hardcodedEventNames() {

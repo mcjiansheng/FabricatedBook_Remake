@@ -81,6 +81,19 @@ class EventHandlerTest {
     }
 
     @Test
+    void fixedEventResolverKeepsOutcomeFieldsFromJsonData() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        EventHandler.EventResult result = handler.executeEvent("翅膀雕像", 0);
+
+        assertEquals(-7, result.hpChange);
+        assertEquals(0, result.goldChange);
+        assertNull(result.relicId);
+        assertNull(result.outcome);
+        assertTrue(result.description.contains("失去 7 点生命值"));
+    }
+
+    @Test
     void ordinaryEventWithoutJsonOutcomeFallsBackToJavaHandler() {
         EventHandler handler = new EventHandler(new Random(1));
 

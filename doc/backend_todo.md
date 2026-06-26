@@ -327,12 +327,13 @@
 
 ## B-007：事件系统仍是 Java 硬编码，数据文件没有成为规则来源
 
-状态：部分修复。`DataLoader` 已新增 `loadEvents()`，普通事件的名称、描述和选项展示现在由 `events.json` 驱动；`events.json` 也开始承载固定事件结果字段（`outcomeDescription`、`goldChange`、`hpChange`、`relicId`、`outcome`），`EventHandler` 会优先执行这些 JSON 结果。随机金币/随机治疗/随机藏品、投资、命运抉择等复杂逻辑仍保留 Java executor。测试覆盖普通事件文本来自 JSON、固定结果来自 JSON、随机选项回退 Java，以及命运抉择条件仍按玩家藏品判断。剩余工作：继续把可数据化的固定事件结果迁入 JSON，并为随机/特殊事件设计更明确的 executor 分层。
+状态：部分修复。`DataLoader` 已新增 `loadEvents()`，普通事件的名称、描述和选项展示现在由 `events.json` 驱动；`events.json` 也开始承载固定事件结果字段（`outcomeDescription`、`goldChange`、`hpChange`、`relicId`、`outcome`），`EventResultResolver` 会把可执行 JSON 选项转换为 `EventResult`，`EventHandler` 只负责优先调度数据结果再回退 Java executor。随机金币/随机治疗/随机藏品、投资、命运抉择等复杂逻辑仍保留 Java executor。测试覆盖普通事件文本来自 JSON、固定结果来自 JSON、固定字段解析、随机选项回退 Java，以及命运抉择条件仍按玩家藏品判断。剩余工作：继续把可数据化的固定事件结果迁入 JSON，并为随机/特殊事件设计更明确的 executor 分层。
 
 ### 位置
 
 - 包：`com.fabricatedbook.core.event`
 - 类：`EventHandler`
+  - `EventResultResolver`
 - 方法：
   - `getEventNames()`
   - `getEventDescription(String eventName)`
@@ -356,14 +357,16 @@
 - 普通事件的标题、描述、选项、固定数值来自 JSON。
 - 特殊事件和复杂条件由 Java handler 执行。
 - `EventHandler` 负责调度，不负责塞满所有文本和所有规则。
+- `EventResultResolver` 或后续 executor 负责把数据选项转换为可执行结果。
 
 ### 解决方式
 
 1. 对照 `events.json` 和 `EventHandler` 建立事件字段差异清单。
 2. 先把纯文本和固定选项迁到 JSON。
 3. 为事件结果设计轻量 DSL，例如金币、生命、藏品、卡牌、结局 outcome。
-4. 特殊事件保留 Java executor。
-5. 补事件数据自检和关键事件单元测试。
+4. 把固定 JSON 结果转换从 `EventHandler` 抽到 resolver。（已完成：`EventResultResolver`）
+5. 特殊事件保留 Java executor。
+6. 补事件数据自检和关键事件单元测试。
 
 ### 影响面
 
