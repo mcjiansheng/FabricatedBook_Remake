@@ -37,6 +37,7 @@ public class SafeHouseScreen implements Screen {
     private final FabricBookGame game;
     private final Player player;
     private final MapScreen returnMap;
+    private final String entryMessage;
     private Stage stage;
     private OrthographicCamera camera;
     private Table content;
@@ -44,9 +45,15 @@ public class SafeHouseScreen implements Screen {
     private com.badlogic.gdx.scenes.scene2d.Group escapeMenu;
 
     public SafeHouseScreen(FabricBookGame game, Player player, MapScreen returnMap) {
+        this(game, player, returnMap, null);
+    }
+
+    public SafeHouseScreen(FabricBookGame game, Player player, MapScreen returnMap,
+                           String entryMessage) {
         this.game = game;
         this.player = player;
         this.returnMap = returnMap;
+        this.entryMessage = entryMessage;
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
                 FabricBookGame.SCREEN_HEIGHT);
@@ -79,7 +86,9 @@ public class SafeHouseScreen implements Screen {
                 game.getFontForScale(2.0f), Color.GOLD));
         content.add(title).padBottom(26).row();
 
-        statusLabel = new Label("选择一项补给。", new Label.LabelStyle(
+        statusLabel = new Label(entryMessage == null || entryMessage.isBlank()
+                ? "选择一项补给。"
+                : entryMessage, new Label.LabelStyle(
                 game.getFont(), Color.LIGHT_GRAY));
         content.add(statusLabel).width(760).padBottom(24).row();
 

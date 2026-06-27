@@ -45,6 +45,7 @@ public class EventScreen implements Screen {
     private final EventHandler eventHandler;
     private final String eventName;
     private final MapScreen returnMap;
+    private final String entryMessage;
     private Stage stage;
     private OrthographicCamera camera;
     private ShapeRenderer shapeRenderer;
@@ -77,11 +78,18 @@ public class EventScreen implements Screen {
 
     public EventScreen(FabricBookGame game, Player player, String eventName,
                        MapScreen returnMap, Random eventRandom) {
+        this(game, player, eventName, returnMap, eventRandom, null);
+    }
+
+    public EventScreen(FabricBookGame game, Player player, String eventName,
+                       MapScreen returnMap, Random eventRandom,
+                       String entryMessage) {
         this.game = game;
         this.player = player;
         this.eventHandler = new EventHandler(eventRandom);
         this.eventName = eventName;
         this.returnMap = returnMap;
+        this.entryMessage = entryMessage;
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
                 FabricBookGame.SCREEN_HEIGHT);
@@ -114,7 +122,7 @@ public class EventScreen implements Screen {
         eventText.add(titleLabel).left().padBottom(34);
         eventText.row();
 
-        Label description = new Label(eventHandler.getEventDescription(eventName),
+        Label description = new Label(eventDescriptionText(),
                 new Label.LabelStyle(game.getFont(), Color.WHITE));
         description.setWrap(true);
         description.setAlignment(Align.left);
@@ -239,6 +247,14 @@ public class EventScreen implements Screen {
             }
         });
         optionTable.add(backBtn).width(260).height(56).left();
+    }
+
+    private String eventDescriptionText() {
+        String description = eventHandler.getEventDescription(eventName);
+        if (entryMessage == null || entryMessage.isBlank()) {
+            return description;
+        }
+        return entryMessage + "\n\n" + description;
     }
 
     private String resultSummary(EventHandler.EventResult result, String relicName) {

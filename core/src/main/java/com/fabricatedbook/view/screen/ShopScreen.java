@@ -45,6 +45,7 @@ public class ShopScreen implements Screen {
     private final Player player;
     private final ShopManager shopManager;
     private final MapScreen returnMap;
+    private final String entryMessage;
     private Stage stage;
     private OrthographicCamera camera;
     private Table itemTable;
@@ -71,10 +72,17 @@ public class ShopScreen implements Screen {
 
     public ShopScreen(FabricBookGame game, Player player,
                       ShopManager shopManager, MapScreen returnMap) {
+        this(game, player, shopManager, returnMap, null);
+    }
+
+    public ShopScreen(FabricBookGame game, Player player,
+                      ShopManager shopManager, MapScreen returnMap,
+                      String entryMessage) {
         this.game = game;
         this.player = player;
         this.shopManager = shopManager;
         this.returnMap = returnMap;
+        this.entryMessage = entryMessage;
         this.camera = new OrthographicCamera();
         camera.setToOrtho(false, FabricBookGame.SCREEN_WIDTH,
                 FabricBookGame.SCREEN_HEIGHT);
@@ -95,7 +103,9 @@ public class ShopScreen implements Screen {
         feedbackLabel = new UiFeedback(game);
         feedbackLabel.setPosition(20, FabricBookGame.SCREEN_HEIGHT - 116);
         stage.addActor(feedbackLabel);
-        feedbackLabel.show("选择商品购买。", UiFeedback.Tone.INFO);
+        feedbackLabel.show(entryMessage == null || entryMessage.isBlank()
+                ? "选择商品购买。"
+                : entryMessage, UiFeedback.Tone.INFO);
 
         // 商品列表
         itemTable = new Table();

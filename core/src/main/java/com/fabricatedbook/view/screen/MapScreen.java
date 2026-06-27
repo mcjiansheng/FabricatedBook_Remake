@@ -26,6 +26,7 @@ import com.fabricatedbook.core.map.LayerMapConfig;
 import com.fabricatedbook.core.map.LayerMapGraph;
 import com.fabricatedbook.core.map.LayerMapNode;
 import com.fabricatedbook.core.map.NodeEntryResolver;
+import com.fabricatedbook.core.map.NodeEntryResult;
 import com.fabricatedbook.core.map.NodeType;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.core.run.GameRunState;
@@ -447,40 +448,45 @@ public class MapScreen implements Screen {
                         createEnemiesFor(node.type), this));
                 break;
             case SHOP:
-                markNodeEntered(node);
+                NodeEntryResult shopEntry = markNodeEntered(node);
                 // 进入商店
                 ShopManager shopManager = new ShopManager(player, new RelicManager(player),
                         runState, "shop:" + nodeKey(node));
                 shopManager.generateItems();
                 game.autosaveCurrentRun();
-                game.setScreen(new ShopScreen(game, player, shopManager, this));
+                game.setScreen(new ShopScreen(game, player, shopManager, this,
+                        entryMessage(shopEntry)));
                 break;
             case UNEXPECTEDLY:
-                markNodeEntered(node);
+                NodeEntryResult eventEntry = markNodeEntered(node);
                 game.autosaveCurrentRun();
                 // 进入事件
                 game.setScreen(new EventScreen(game, player, randomEventName(), this,
-                        runState.randomFor("event-result", nodeKey(node))));
+                        runState.randomFor("event-result", nodeKey(node)),
+                        entryMessage(eventEntry)));
                 break;
             case REWARD:
-                markNodeEntered(node);
+                NodeEntryResult rewardEntry = markNodeEntered(node);
                 game.autosaveCurrentRun();
                 // 宝箱奖励
                 game.setScreen(new EventScreen(game, player, "好诗歪诗", this,
-                        runState.randomFor("event-result", nodeKey(node))));
+                        runState.randomFor("event-result", nodeKey(node)),
+                        entryMessage(rewardEntry)));
                 break;
             case SAFE_HOUSE:
-                markNodeEntered(node);
+                NodeEntryResult safeHouseEntry = markNodeEntered(node);
                 game.autosaveCurrentRun();
                 // 安全屋
-                game.setScreen(new SafeHouseScreen(game, player, this));
+                game.setScreen(new SafeHouseScreen(game, player, this,
+                        entryMessage(safeHouseEntry)));
                 break;
             case DECISION:
-                markNodeEntered(node);
+                NodeEntryResult decisionEntry = markNodeEntered(node);
                 game.autosaveCurrentRun();
                 // 命运抉择
                 game.setScreen(new EventScreen(game, player, decisionEventName(), this,
-                        runState.randomFor("event-result", nodeKey(node))));
+                        runState.randomFor("event-result", nodeKey(node)),
+                        entryMessage(decisionEntry)));
                 break;
         }
     }
@@ -489,14 +495,21 @@ public class MapScreen implements Screen {
         return currentLayerIdx == 3 ? "命运抉择2" : "命运抉择1";
     }
 
-    private void markNodeEntered(MapNode node) {
+    private NodeEntryResult markNodeEntered(MapNode node) {
         currentNode = node;
         activeNode = null;
         runState.clearCombatState();
         node.visited = true;
         runState.setCompletedNode(toRef(node));
         updateAccessibleNodes();
-        new NodeEntryResolver().enterNode(runState, toRef(node));
+        return new NodeEntryResolver().enterNode(runState, toRef(node));
+    }
+
+    private String entryMessage(NodeEntryResult result) {
+        if (result == null || result.getMessages().isEmpty()) {
+            return null;
+        }
+        return String.join("\n", result.getMessages());
     }
 
     private GameRunState.NodeRef toRef(MapNode node) {
