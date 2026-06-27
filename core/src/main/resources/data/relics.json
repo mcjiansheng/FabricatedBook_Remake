@@ -279,6 +279,20 @@
     "effectValue": 30
   },
   {
+    "id": "relic_nuke",
+    "name": "核弹",
+    "rarity": "SPECIAL",
+    "description": "村庄事件获得的特殊物品。后续效果待专用事件 executor 接入",
+    "effectValue": 0
+  },
+  {
+    "id": "relic_five_cards",
+    "name": "五张牌",
+    "rarity": "SPECIAL",
+    "description": "好诗事件获得的特殊奖励标记。后续将替换为正式选牌奖励流程",
+    "effectValue": 0
+  },
+  {
     "id": "relic_babel_tower",
     "name": "\"巴别塔\"",
     "rarity": "SPECIAL",

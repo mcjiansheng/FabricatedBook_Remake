@@ -327,7 +327,7 @@
 
 ## B-007：事件系统仍是 Java 硬编码，数据文件没有成为规则来源
 
-状态：部分修复。`DataLoader` 已新增 `loadEvents()`，普通事件的名称、描述和选项展示现在由 `events.json` 驱动；`events.json` 也开始承载固定事件结果字段（`outcomeDescription`、`goldChange`、`hpChange`、`fullHeal`、`relicId`、`outcome`），`EventResultResolver` 会把可执行 JSON 选项转换为 `EventResult`，`EventHandler` 只负责优先调度数据结果再回退 Java executor。“生命回满”已从 `hpChange = 9999` 哨兵值改为显式 `fullHeal` 字段，并由前端事件页和后端 CLI 共用。后端 CLI `selftest` 会扫描所有 JSON 固定事件结果，确认字段可解析，且 `fullHeal` 不与普通 `hpChange` 混用。随机金币/随机治疗/随机藏品、投资、命运抉择等复杂逻辑仍保留 Java executor。测试覆盖普通事件文本来自 JSON、固定结果来自 JSON、固定字段解析、显式回满、随机选项回退 Java，以及命运抉择条件仍按玩家藏品判断。剩余工作：继续把可数据化的固定事件结果迁入 JSON，并为随机/特殊事件设计更明确的 executor 分层。
+状态：部分修复。`DataLoader` 已新增 `loadEvents()`，普通事件的名称、描述和选项展示现在由 `events.json` 驱动；`events.json` 也开始承载固定事件结果字段（`outcomeDescription`、`goldChange`、`hpChange`、`fullHeal`、`relicId`、`outcome`），`EventResultResolver` 会把可执行 JSON 选项转换为 `EventResult`，`EventHandler` 只负责优先调度数据结果再回退 Java executor。“生命回满”已从 `hpChange = 9999` 哨兵值改为显式 `fullHeal` 字段，并由前端事件页和后端 CLI 共用。后端 CLI `selftest` 会扫描所有 JSON 固定事件结果，确认字段可解析、`relicId` 可创建，且 `fullHeal` 不与普通 `hpChange` 混用。`relic_nuke` 和 `relic_five_cards` 已补为特殊藏品占位，避免事件奖励引用空 ID。随机金币/随机治疗/随机藏品、投资、命运抉择等复杂逻辑仍保留 Java executor。测试覆盖普通事件文本来自 JSON、固定结果来自 JSON、固定字段解析、显式回满、固定结果藏品 ID、随机选项回退 Java，以及命运抉择条件仍按玩家藏品判断。剩余工作：继续把可数据化的固定事件结果迁入 JSON，并为随机/特殊事件设计更明确的 executor 分层。
 
 ### 位置
 

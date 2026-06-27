@@ -926,6 +926,13 @@ public class BackendDebugLauncher {
                             + event.getName() + " -> " + option.getText());
                     ok = false;
                 }
+                if (result != null && result.relicId != null
+                        && !result.relicId.isBlank()
+                        && RelicFactory.createById(result.relicId, player) == null) {
+                    println("[SELFTEST] 固定事件结果引用未知藏品: " + event.getName()
+                            + " -> " + option.getText() + " -> " + result.relicId);
+                    ok = false;
+                }
             }
         }
         if (count == 0) {

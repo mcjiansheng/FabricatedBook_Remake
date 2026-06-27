@@ -5,6 +5,8 @@ import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.EventBus;
 import com.fabricatedbook.core.relic.Relic;
+import com.fabricatedbook.core.relic.RelicFactory;
+import com.fabricatedbook.data.DataLoader;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -113,6 +115,22 @@ class EventHandlerTest {
 
         assertTrue(result.goldChange >= 50 && result.goldChange <= 80);
         assertTrue(result.description.contains("金币"));
+    }
+
+    @Test
+    void fixedJsonEventRelicsCanBeCreated() {
+        Player owner = player();
+
+        for (DataLoader.EventData event : new DataLoader().loadEvents()) {
+            for (DataLoader.EventOptionData option : event.getOptions()) {
+                if (!option.hasExecutableResult() || option.getRelicId() == null
+                        || option.getRelicId().isBlank()) {
+                    continue;
+                }
+                assertTrue(RelicFactory.createById(option.getRelicId(), owner) != null,
+                        event.getName() + " references unknown relic " + option.getRelicId());
+            }
+        }
     }
 
     @Test
