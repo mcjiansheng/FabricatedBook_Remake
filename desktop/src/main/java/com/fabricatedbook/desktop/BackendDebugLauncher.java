@@ -12,6 +12,7 @@ import com.fabricatedbook.core.entity.EntityFactory;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.event.EventHandler;
+import com.fabricatedbook.core.event.EventResultResolver;
 import com.fabricatedbook.core.map.LayerMapConfig;
 import com.fabricatedbook.core.map.LayerMapGraph;
 import com.fabricatedbook.core.map.LayerMapNode;
@@ -859,6 +860,8 @@ public class BackendDebugLauncher {
         EventHandler eventHandler = new EventHandler(new Random(1));
         EventHandler.EventResult fixedEvent = eventHandler.executeEvent("相遇", 0);
         EventHandler.EventResult randomFallbackEvent = eventHandler.executeEvent("翅膀雕像", 1);
+        ok &= assertCheck(fixedEventResultsAreValid(loader.loadEvents()),
+                "JSON 固定事件结果字段可解析");
         ok &= assertCheck("relic_betrayal".equals(fixedEvent.relicId)
                         && fixedEvent.description.contains("背叛"),
                 "固定事件结果可从 JSON 执行");
@@ -900,6 +903,36 @@ public class BackendDebugLauncher {
                 "命令行战斗从 JSON 怪物池创建敌人");
 
         println(ok ? "SELFTEST PASS" : "SELFTEST FAIL");
+    }
+
+    private boolean fixedEventResultsAreValid(List<DataLoader.EventData> events) {
+        boolean ok = true;
+        int count = 0;
+        for (DataLoader.EventData event : events) {
+            for (DataLoader.EventOptionData option : event.getOptions()) {
+                if (!option.hasExecutableResult()) {
+                    continue;
+                }
+                count++;
+                EventHandler.EventResult result = EventResultResolver.resolve(option);
+                if (result == null || result.description == null
+                        || result.description.isBlank()) {
+                    println("[SELFTEST] 固定事件结果无法解析: " + event.getName()
+                            + " -> " + option.getText());
+                    ok = false;
+                }
+                if (result != null && result.fullHeal && result.hpChange != 0) {
+                    println("[SELFTEST] 固定事件结果同时声明 fullHeal 和 hpChange: "
+                            + event.getName() + " -> " + option.getText());
+                    ok = false;
+                }
+            }
+        }
+        if (count == 0) {
+            println("[SELFTEST] 未找到可执行 JSON 固定事件结果");
+            return false;
+        }
+        return ok;
     }
 
     private boolean availableCardEffectsAreKnown(DataLoader loader) {
