@@ -277,7 +277,7 @@
 
 ## B-006：卡牌 effect DSL 执行与预览重复解析
 
-状态：部分修复。已新增 `CardEffectParser` / `CardEffect`，`CombatEngine.parseCardEffects()` 和 `CombatPreviewCalculator.previewCard()` 现在共用同一个 DSL 拆分入口，不再各自处理空值、split 和 effect type 归一化；`CardEffectType` 已把现有 effect DSL 列成注册表，并记录实战执行与数值预览支持状态。后端 CLI `selftest` 已扫描所有已配置职业 JSON 卡牌 effect，遇到未知 DSL type 或未接入实战执行的 type 会失败并打印职业与卡牌 ID。现有执行/预览 switch 暂时保持原语义。剩余工作：把 effect 执行器和预览器继续收敛成注册式结构。
+状态：部分修复。已新增 `CardEffectParser` / `CardEffect`，`CombatEngine.parseCardEffects()` 和 `CombatPreviewCalculator.previewCard()` 现在共用同一个 DSL 拆分入口，不再各自处理空值、split 和 effect type 归一化；`CardEffectType` 已把现有 effect DSL 列成注册表，并记录实战执行、数值预览支持状态和 DSL 参数数量范围。后端 CLI `selftest` 已扫描所有已配置职业 JSON 卡牌 effect，遇到未知 DSL type、未接入实战执行的 type 或参数数量不匹配会失败并打印职业与卡牌 ID。现有执行/预览 switch 暂时保持原语义。剩余工作：把 effect 执行器和预览器继续收敛成注册式结构。
 
 ### 位置
 
@@ -313,7 +313,7 @@
 ### 解决方式
 
 1. 先把现有支持的 effect 列成枚举或注册表。（已完成：`CardEffectType`）
-2. 为每个 effect 增加执行和预览支持状态。（已完成：实战执行与数值预览分开记录）
+2. 为每个 effect 增加执行、预览支持状态和参数数量校验。（已完成：实战执行、数值预览与 arity 分开记录）
 3. 把 `CombatEngine.parseCardEffects()` 拆出 parser。（已完成：`CardEffectParser`）
 4. 让 `CombatPreviewCalculator` 使用 parser 的结果。（已完成）
 5. 扩展 `selftest`：扫描已配置职业 JSON 卡牌，发现未知 effect 或未接入实战执行的 effect 直接报错。（已完成）

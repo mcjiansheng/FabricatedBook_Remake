@@ -51,4 +51,19 @@ public final class CardEffectParser {
                 .map(CardEffectType::supportsPreview)
                 .orElse(false);
     }
+
+    public static boolean hasValidArity(CardEffect effect) {
+        if (effect == null) {
+            return false;
+        }
+        return CardEffectType.fromType(effect.getType())
+                .map(type -> type.acceptsPartCount(effect.parts().length))
+                .orElse(false);
+    }
+
+    public static String expectedArity(String type) {
+        return CardEffectType.fromType(type)
+                .map(CardEffectType::expectedArity)
+                .orElse("unknown");
+    }
 }

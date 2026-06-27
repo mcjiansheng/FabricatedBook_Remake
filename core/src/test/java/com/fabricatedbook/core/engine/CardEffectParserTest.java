@@ -44,4 +44,17 @@ class CardEffectParserTest {
         assertFalse(CardEffectParser.isExecutionSupported("mystery_effect"));
         assertFalse(CardEffectParser.isPreviewSupported("mystery_effect"));
     }
+
+    @Test
+    void registryValidatesDslPartCounts() {
+        assertTrue(CardEffectParser.hasValidArity(CardEffectParser.parse("damage:6")));
+        assertTrue(CardEffectParser.hasValidArity(CardEffectParser.parse("damage:6:2")));
+        assertFalse(CardEffectParser.hasValidArity(CardEffectParser.parse("damage")));
+
+        assertTrue(CardEffectParser.hasValidArity(CardEffectParser.parse("double_poison")));
+        assertTrue(CardEffectParser.hasValidArity(CardEffectParser.parse("double_poison:3")));
+        assertFalse(CardEffectParser.hasValidArity(CardEffectParser.parse("double_poison:3:extra")));
+
+        assertEquals("2-3", CardEffectParser.expectedArity("damage"));
+    }
 }

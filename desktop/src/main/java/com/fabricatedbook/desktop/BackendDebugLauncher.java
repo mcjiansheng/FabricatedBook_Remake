@@ -969,6 +969,12 @@ public class BackendDebugLauncher {
                             + "/" + card.getId()
                             + " -> " + effect.getRaw());
                     ok = false;
+                } else if (!CardEffectParser.hasValidArity(effect)) {
+                    println("[SELFTEST] 卡牌 effect 参数数量不匹配: " + professionName
+                            + "/" + card.getId()
+                            + " -> " + effect.getRaw()
+                            + "，期望分段数 " + CardEffectParser.expectedArity(effect.getType()));
+                    ok = false;
                 }
             }
         }
