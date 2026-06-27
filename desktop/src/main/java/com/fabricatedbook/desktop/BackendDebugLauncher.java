@@ -975,6 +975,12 @@ public class BackendDebugLauncher {
                             + " -> " + effect.getRaw()
                             + "，期望分段数 " + CardEffectParser.expectedArity(effect.getType()));
                     ok = false;
+                } else if (!CardEffectParser.hasValidArgumentTypes(effect)) {
+                    println("[SELFTEST] 卡牌 effect 参数类型不匹配: " + professionName
+                            + "/" + card.getId()
+                            + " -> " + effect.getRaw()
+                            + "，整数分段索引 " + CardEffectParser.expectedNumericParts(effect.getType()));
+                    ok = false;
                 }
             }
         }

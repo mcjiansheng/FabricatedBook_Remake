@@ -66,4 +66,19 @@ public final class CardEffectParser {
                 .map(CardEffectType::expectedArity)
                 .orElse("unknown");
     }
+
+    public static boolean hasValidArgumentTypes(CardEffect effect) {
+        if (effect == null) {
+            return false;
+        }
+        return CardEffectType.fromType(effect.getType())
+                .map(type -> type.acceptsArgumentTypes(effect.parts()))
+                .orElse(false);
+    }
+
+    public static String expectedNumericParts(String type) {
+        return CardEffectType.fromType(type)
+                .map(CardEffectType::expectedNumericParts)
+                .orElse("unknown");
+    }
 }

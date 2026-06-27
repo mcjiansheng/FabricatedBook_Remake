@@ -57,4 +57,19 @@ class CardEffectParserTest {
 
         assertEquals("2-3", CardEffectParser.expectedArity("damage"));
     }
+
+    @Test
+    void registryValidatesNumericArguments() {
+        assertTrue(CardEffectParser.hasValidArgumentTypes(
+                CardEffectParser.parse("damage:6:2")));
+        assertFalse(CardEffectParser.hasValidArgumentTypes(
+                CardEffectParser.parse("damage:abc")));
+
+        assertTrue(CardEffectParser.hasValidArgumentTypes(
+                CardEffectParser.parse("debuff:weak:2")));
+        assertFalse(CardEffectParser.hasValidArgumentTypes(
+                CardEffectParser.parse("debuff:weak:soon")));
+
+        assertEquals("1,2", CardEffectParser.expectedNumericParts("damage"));
+    }
 }
