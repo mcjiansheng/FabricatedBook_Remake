@@ -169,11 +169,11 @@ public class EventScreen implements Screen {
                             player.spendGold(-result.goldChange);
                         }
                     }
-                    if (result.hpChange != 0) {
-                        if (result.hpChange > 0 && result.hpChange < 9999) {
+                    if (result.fullHeal) {
+                        player.heal(player.getMaxHp());
+                    } else if (result.hpChange != 0) {
+                        if (result.hpChange > 0) {
                             player.heal(result.hpChange);
-                        } else if (result.hpChange > 0) {
-                            player.heal(player.getMaxHp()); // 回满
                         } else {
                             player.takeDamage(-result.hpChange);
                         }
@@ -247,10 +247,14 @@ public class EventScreen implements Screen {
             summary.append(result.goldChange > 0 ? "金币 +" : "金币 ")
                     .append(result.goldChange);
         }
-        if (result.hpChange != 0) {
+        if (result.fullHeal) {
             if (summary.length() > 0) summary.append("   ");
-            summary.append(result.hpChange >= 9999 ? "生命回满" : result.hpChange > 0
-                    ? "生命 +" + result.hpChange : "生命 " + result.hpChange);
+            summary.append("生命回满");
+        } else if (result.hpChange != 0) {
+            if (summary.length() > 0) summary.append("   ");
+            summary.append(result.hpChange > 0
+                    ? "生命 +" + result.hpChange
+                    : "生命 " + result.hpChange);
         }
         if (relicName != null && !relicName.isBlank()) {
             if (summary.length() > 0) summary.append("   ");

@@ -57,6 +57,7 @@ public class EventHandler {
         public final int hpChange;
         public final String relicId;
         public final String outcome;
+        public final boolean fullHeal;
 
         public EventResult(String description, int goldChange,
                            int hpChange, String relicId) {
@@ -65,11 +66,18 @@ public class EventHandler {
 
         public EventResult(String description, int goldChange,
                            int hpChange, String relicId, String outcome) {
+            this(description, goldChange, hpChange, relicId, outcome, false);
+        }
+
+        public EventResult(String description, int goldChange,
+                           int hpChange, String relicId, String outcome,
+                           boolean fullHeal) {
             this.description = description;
             this.goldChange = goldChange;
             this.hpChange = hpChange;
             this.relicId = relicId;
             this.outcome = outcome;
+            this.fullHeal = fullHeal;
         }
     }
 
@@ -440,7 +448,7 @@ public class EventHandler {
             case 0: // 薯条
                 return new EventResult(
                         "你听取了精灵的建议，去码头整了点薯条。人生嘛，有时候就是这么简单。\n生命值回满",
-                        0, 9999, null);
+                        0, 0, null, null, true);
             default: // 金条
                 return new EventResult(
                         "你听取了精灵的建议，去银行整了点金条。\n获得 500 金币",

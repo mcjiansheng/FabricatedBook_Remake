@@ -132,7 +132,7 @@
         "text": "🍟 去码头整点薯条",
         "result": "生命值回满",
         "outcomeDescription": "你听取了精灵的建议，去码头整了点薯条。人生嘛，有时候就是这么简单。\n生命值回满",
-        "hpChange": 9999
+        "fullHeal": true
       },
       {
         "text": "🪙 去银行整点金条",

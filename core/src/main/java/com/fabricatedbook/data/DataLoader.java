@@ -241,6 +241,7 @@ public class DataLoader {
         private String outcomeDescription;
         private Integer goldChange;
         private Integer hpChange;
+        private boolean fullHeal;
         private String relicId;
         private String outcome;
 
@@ -249,6 +250,7 @@ public class DataLoader {
         public String getOutcomeDescription() { return outcomeDescription; }
         public int getGoldChange() { return goldChange != null ? goldChange : 0; }
         public int getHpChange() { return hpChange != null ? hpChange : 0; }
+        public boolean isFullHeal() { return fullHeal; }
         public String getRelicId() { return relicId; }
         public String getOutcome() { return outcome; }
         public boolean hasExecutableResult() {

@@ -428,12 +428,10 @@ public class BackendDebugLauncher {
             player.spendGold(-result.goldChange);
         }
 
-        if (result.hpChange > 0) {
-            if (result.hpChange >= 9999) {
-                player.heal(player.getMaxHp());
-            } else {
-                player.heal(result.hpChange);
-            }
+        if (result.fullHeal) {
+            player.heal(player.getMaxHp());
+        } else if (result.hpChange > 0) {
+            player.heal(result.hpChange);
         } else if (result.hpChange < 0) {
             player.takeDamage(-result.hpChange);
         }

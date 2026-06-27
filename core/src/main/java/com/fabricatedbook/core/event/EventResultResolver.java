@@ -14,6 +14,7 @@ public final class EventResultResolver {
         }
         return new EventHandler.EventResult(optionData.getOutcomeDescription(),
                 optionData.getGoldChange(), optionData.getHpChange(),
-                optionData.getRelicId(), optionData.getOutcome());
+                optionData.getRelicId(), optionData.getOutcome(),
+                optionData.isFullHeal());
     }
 }

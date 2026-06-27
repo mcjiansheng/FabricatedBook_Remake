@@ -87,10 +87,22 @@ class EventHandlerTest {
         EventHandler.EventResult result = handler.executeEvent("翅膀雕像", 0);
 
         assertEquals(-7, result.hpChange);
+        assertFalse(result.fullHeal);
         assertEquals(0, result.goldChange);
         assertNull(result.relicId);
         assertNull(result.outcome);
         assertTrue(result.description.contains("失去 7 点生命值"));
+    }
+
+    @Test
+    void fullHealEventResultIsExplicitInJsonData() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        EventHandler.EventResult result = handler.executeEvent("人生意义", 0);
+
+        assertTrue(result.fullHeal);
+        assertEquals(0, result.hpChange);
+        assertTrue(result.description.contains("生命值回满"));
     }
 
     @Test
