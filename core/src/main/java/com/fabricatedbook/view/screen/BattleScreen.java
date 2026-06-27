@@ -75,6 +75,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private final List<Enemy> enemies;
     private final MapScreen returnMap;
     private final GameRunState runState;
+    private final String entryMessage;
 
     private Stage stage;
     private OrthographicCamera camera;
@@ -117,12 +118,19 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
 
     public BattleScreen(FabricBookGame game, CombatEngine combatEngine,
                         Player player, List<Enemy> enemies, MapScreen returnMap) {
+        this(game, combatEngine, player, enemies, returnMap, null);
+    }
+
+    public BattleScreen(FabricBookGame game, CombatEngine combatEngine,
+                        Player player, List<Enemy> enemies, MapScreen returnMap,
+                        String entryMessage) {
         this.game = game;
         this.combatEngine = combatEngine != null ? combatEngine : new CombatEngine();
         this.player = player;
         this.enemies = enemies;
         this.returnMap = returnMap;
         this.runState = game.getCurrentRun();
+        this.entryMessage = entryMessage;
         this.enemyActors = new ArrayList<>();
         this.battleInitialized = false;
         this.resultShown = false;
@@ -218,6 +226,7 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
             combatEngine.setRelicManager(relicManager);
             combatEngine.setViewNotifier(this);
             combatEngine.initBattle(player, enemies);
+            showEntryMessage();
             battleInitialized = true;
         }
     }
@@ -504,6 +513,16 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
         while (combatLogEntries.size() > 3) combatLogEntries.removeLast();
         if (combatLogLabel != null) {
             combatLogLabel.setText(String.join("\n", combatLogEntries));
+        }
+    }
+
+    private void showEntryMessage() {
+        if (entryMessage == null || entryMessage.isBlank()) {
+            return;
+        }
+        statusLabel.setText(entryMessage);
+        for (String line : entryMessage.split("\\R")) {
+            recordCombatLog(line);
         }
     }
 

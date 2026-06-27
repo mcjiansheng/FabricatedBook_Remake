@@ -440,12 +440,13 @@ public class MapScreen implements Screen {
             case EMERGENCY:
             case BOSS:
                 activeNode = node;
-                new NodeEntryResolver().enterNode(runState, toRef(node));
+                NodeEntryResult combatEntry =
+                        new NodeEntryResolver().enterNode(runState, toRef(node));
                 runState.beginCombat(toRef(node));
                 game.autosaveCurrentRun();
                 // 进入战斗
                 game.setScreen(new BattleScreen(game, createCombatEngine(), player,
-                        createEnemiesFor(node.type), this));
+                        createEnemiesFor(node.type), this, entryMessage(combatEntry)));
                 break;
             case SHOP:
                 NodeEntryResult shopEntry = markNodeEntered(node);
