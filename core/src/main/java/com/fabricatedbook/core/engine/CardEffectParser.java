@@ -81,4 +81,19 @@ public final class CardEffectParser {
                 .map(CardEffectType::expectedNumericParts)
                 .orElse("unknown");
     }
+
+    public static boolean hasValidLiteralValues(CardEffect effect) {
+        if (effect == null) {
+            return false;
+        }
+        return CardEffectType.fromType(effect.getType())
+                .map(type -> type.acceptsLiteralValues(effect.parts()))
+                .orElse(false);
+    }
+
+    public static String expectedLiteralValues(String type) {
+        return CardEffectType.fromType(type)
+                .map(CardEffectType::expectedLiteralValues)
+                .orElse("unknown");
+    }
 }

@@ -72,4 +72,19 @@ class CardEffectParserTest {
 
         assertEquals("1,2", CardEffectParser.expectedNumericParts("damage"));
     }
+
+    @Test
+    void registryValidatesLiteralArguments() {
+        assertTrue(CardEffectParser.hasValidLiteralValues(
+                CardEffectParser.parse("buff:self:strength:2")));
+        assertFalse(CardEffectParser.hasValidLiteralValues(
+                CardEffectParser.parse("buff:enemy:strength:2")));
+
+        assertTrue(CardEffectParser.hasValidLiteralValues(
+                CardEffectParser.parse("counter:block")));
+        assertFalse(CardEffectParser.hasValidLiteralValues(
+                CardEffectParser.parse("counter:hp")));
+
+        assertEquals("1=self", CardEffectParser.expectedLiteralValues("buff"));
+    }
 }

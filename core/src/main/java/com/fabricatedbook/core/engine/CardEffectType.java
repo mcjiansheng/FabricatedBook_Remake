@@ -104,6 +104,25 @@ public enum CardEffectType {
         return true;
     }
 
+    public boolean acceptsLiteralValues(String[] parts) {
+        if (parts == null) {
+            return false;
+        }
+        return switch (this) {
+            case BUFF -> acceptsLiteral(parts, 1, "self");
+            case COUNTER -> acceptsLiteral(parts, 1, "block");
+            default -> true;
+        };
+    }
+
+    public String expectedLiteralValues() {
+        return switch (this) {
+            case BUFF -> "1=self";
+            case COUNTER -> "1=block";
+            default -> "none";
+        };
+    }
+
     public String expectedNumericParts() {
         if (numericPartIndexes.isEmpty()) {
             return "none";
@@ -124,6 +143,10 @@ public enum CardEffectType {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    private boolean acceptsLiteral(String[] parts, int index, String expected) {
+        return index < parts.length && expected.equalsIgnoreCase(parts[index]);
     }
 
     public static Optional<CardEffectType> fromType(String type) {

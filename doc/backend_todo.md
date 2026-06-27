@@ -277,7 +277,7 @@
 
 ## B-006：卡牌 effect DSL 执行与预览重复解析
 
-状态：部分修复。已新增 `CardEffectParser` / `CardEffect`，`CombatEngine.parseCardEffects()` 和 `CombatPreviewCalculator.previewCard()` 现在共用同一个 DSL 拆分入口，不再各自处理空值、split 和 effect type 归一化；`CardEffectType` 已把现有 effect DSL 列成注册表，并记录实战执行、数值预览支持状态、DSL 参数数量范围和整数参数位置。后端 CLI `selftest` 已扫描所有已配置职业 JSON 卡牌 effect，遇到未知 DSL type、未接入实战执行的 type、参数数量不匹配或整数参数无法解析会失败并打印职业与卡牌 ID。现有执行/预览 switch 暂时保持原语义。剩余工作：把 effect 执行器和预览器继续收敛成注册式结构。
+状态：部分修复。已新增 `CardEffectParser` / `CardEffect`，`CombatEngine.parseCardEffects()` 和 `CombatPreviewCalculator.previewCard()` 现在共用同一个 DSL 拆分入口，不再各自处理空值、split 和 effect type 归一化；`CardEffectType` 已把现有 effect DSL 列成注册表，并记录实战执行、数值预览支持状态、DSL 参数数量范围、整数参数位置和关键文字参数约束。后端 CLI `selftest` 已扫描所有已配置职业 JSON 卡牌 effect，遇到未知 DSL type、未接入实战执行的 type、参数数量不匹配、整数参数无法解析或文字参数不支持会失败并打印职业与卡牌 ID。现有执行/预览 switch 暂时保持原语义。剩余工作：把 effect 执行器和预览器继续收敛成注册式结构。
 
 ### 位置
 
