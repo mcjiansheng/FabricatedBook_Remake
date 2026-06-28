@@ -862,6 +862,8 @@ public class BackendDebugLauncher {
         EventHandler.EventResult randomFallbackEvent = eventHandler.executeEvent("翅膀雕像", 1);
         ok &= assertCheck(fixedEventResultsAreValid(loader.loadEvents()),
                 "JSON 固定事件结果字段可解析");
+        ok &= assertCheck(javaEventOptionsAreMarked(loader.loadEvents()),
+                "复杂事件选项已标记 Java executor");
         ok &= assertCheck("relic_betrayal".equals(fixedEvent.relicId)
                         && fixedEvent.description.contains("背叛"),
                 "固定事件结果可从 JSON 执行");
@@ -938,6 +940,23 @@ public class BackendDebugLauncher {
         if (count == 0) {
             println("[SELFTEST] 未找到可执行 JSON 固定事件结果");
             return false;
+        }
+        return ok;
+    }
+
+    private boolean javaEventOptionsAreMarked(List<DataLoader.EventData> events) {
+        boolean ok = true;
+        for (DataLoader.EventData event : events) {
+            for (DataLoader.EventOptionData option : event.getOptions()) {
+                if (option.hasExecutableResult()) {
+                    continue;
+                }
+                if (!option.usesJavaExecutor()) {
+                    println("[SELFTEST] 事件选项缺少固定结果或 Java executor 标记: "
+                            + event.getName() + " -> " + option.getText());
+                    ok = false;
+                }
+            }
         }
         return ok;
     }

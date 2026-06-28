@@ -134,6 +134,19 @@ class EventHandlerTest {
     }
 
     @Test
+    void nonFixedJsonEventOptionsDeclareJavaExecutor() {
+        for (DataLoader.EventData event : new DataLoader().loadEvents()) {
+            for (DataLoader.EventOptionData option : event.getOptions()) {
+                if (option.hasExecutableResult()) {
+                    continue;
+                }
+                assertTrue(option.usesJavaExecutor(),
+                        event.getName() + " option needs executor marker: " + option.getText());
+            }
+        }
+    }
+
+    @Test
     void playerPotionLimitIsConfigurable() {
         Player player = player();
         player.setMaxPotionSlots(5);

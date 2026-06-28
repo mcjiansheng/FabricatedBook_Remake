@@ -244,6 +244,7 @@ public class DataLoader {
         private boolean fullHeal;
         private String relicId;
         private String outcome;
+        private String executor;
 
         public String getText() { return text; }
         public String getResult() { return result; }
@@ -253,8 +254,12 @@ public class DataLoader {
         public boolean isFullHeal() { return fullHeal; }
         public String getRelicId() { return relicId; }
         public String getOutcome() { return outcome; }
+        public String getExecutor() { return executor; }
         public boolean hasExecutableResult() {
             return outcomeDescription != null && !outcomeDescription.isBlank();
+        }
+        public boolean usesJavaExecutor() {
+            return "java".equalsIgnoreCase(executor);
         }
     }
 
