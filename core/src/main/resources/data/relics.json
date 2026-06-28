@@ -293,6 +293,20 @@
     "effectValue": 0
   },
   {
+    "id": "relic_random_leq3",
+    "name": "随机低阶藏品",
+    "rarity": "SPECIAL",
+    "description": "事件奖励占位：获得随机 1 个价值 3 及以下藏品。后续将替换为正式随机藏品结算流程",
+    "effectValue": 0
+  },
+  {
+    "id": "relic_curse_random",
+    "name": "随机负面藏品",
+    "rarity": "CURSED",
+    "description": "事件奖励占位：获得一个随机负面藏品。后续将替换为正式随机负面藏品结算流程",
+    "effectValue": 0
+  },
+  {
     "id": "relic_babel_tower",
     "name": "\"巴别塔\"",
     "rarity": "SPECIAL",

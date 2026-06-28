@@ -856,7 +856,9 @@ public class BackendDebugLauncher {
 
         EventHandler eventHandler = new EventHandler(new Random(1));
         EventHandler.EventResult fixedEvent = eventHandler.executeEvent("相遇", 0);
-        EventHandler.EventResult javaFallbackEvent = eventHandler.executeEvent("好诗歪诗", 1);
+        EventHandler.EventResult placeholderRelicEvent = eventHandler.executeEvent("好诗歪诗", 1);
+        EventHandler.EventResult decisionEvent = eventHandler.executeEvent("命运抉择2", 2,
+                new Player("selftest-decision", "自检战士", Profession.WARRIOR));
         EventHandler.EventResult weightedEvent = eventHandler.executeEvent("投资", 2);
         ok &= assertCheck(fixedEventResultsAreValid(loader.loadEvents()),
                 "JSON 固定事件结果字段可解析");
@@ -868,8 +870,11 @@ public class BackendDebugLauncher {
         ok &= assertCheck(List.of(-100, 0, 150, 200, 1000)
                         .contains(weightedEvent.goldChange),
                 "加权随机事件结果可从 JSON 执行");
-        ok &= assertCheck("relic_random_leq3".equals(javaFallbackEvent.relicId),
-                "复杂随机事件结果保留 Java executor");
+        ok &= assertCheck("relic_random_leq3".equals(placeholderRelicEvent.relicId),
+                "占位藏品事件结果可从 JSON 执行");
+        ok &= assertCheck(decisionEvent.relicId == null
+                        && decisionEvent.description.contains("没有作出选择"),
+                "命运抉择条件保留 Java handler");
 
         Player testPlayer = new Player("selftest", "自检战士", Profession.WARRIOR);
         int oldMaxHp = testPlayer.getMaxHp();

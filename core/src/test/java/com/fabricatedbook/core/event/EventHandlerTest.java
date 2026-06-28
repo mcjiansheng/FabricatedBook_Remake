@@ -108,12 +108,18 @@ class EventHandlerTest {
     }
 
     @Test
-    void ordinaryEventWithoutJsonOutcomeFallsBackToJavaHandler() {
+    void placeholderRelicEventResultsComeFromJsonData() {
         EventHandler handler = new EventHandler(new Random(1));
 
-        EventHandler.EventResult result = handler.executeEvent("好诗歪诗", 1);
+        EventHandler.EventResult poetry = handler.executeEvent("好诗歪诗", 1);
+        EventHandler.EventResult cursePoetry = handler.executeEvent("好诗歪诗", 2);
+        EventHandler.EventResult huntEscape = handler.executeEvent("追猎", 1);
 
-        assertEquals("relic_random_leq3", result.relicId);
+        assertEquals("relic_random_leq3", poetry.relicId);
+        assertTrue(poetry.description.contains("获得一个藏品"));
+        assertEquals("relic_curse_random", cursePoetry.relicId);
+        assertEquals("relic_curse_random", huntEscape.relicId);
+        assertEquals(20, huntEscape.hpChange);
     }
 
     @Test

@@ -156,7 +156,9 @@
       {
         "text": "🏃 逃跑",
         "result": "获得 20 生命值 + 一个负面藏品",
-        "executor": "java"
+        "outcomeDescription": "你拼命逃跑，虽然活了下来，但背上了一个奇怪的负担。\n获得一个负面藏品",
+        "hpChange": 20,
+        "relicId": "relic_curse_random"
       }
     ]
   },
@@ -219,12 +221,14 @@
       {
         "text": "📝 歪诗",
         "result": "获得随机 1 个价值 3 及以下藏品",
-        "executor": "java"
+        "outcomeDescription": "这首诗··· 工整吗？不管了，你发现墙后有东西。\n获得一个藏品",
+        "relicId": "relic_random_leq3"
       },
       {
         "text": "🤔 看不懂思密达",
         "result": "获得一个奇怪（负面）的藏品",
-        "executor": "java"
+        "outcomeDescription": "你看不懂，但大为震撼。似乎有什么东西缠上了你。\n获得一个奇怪（负面）的藏品",
+        "relicId": "relic_curse_random"
       }
     ]
   }
