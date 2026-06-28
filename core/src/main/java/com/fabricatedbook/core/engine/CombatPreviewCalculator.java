@@ -53,122 +53,9 @@ public final class CombatPreviewCalculator {
         PreviewEntity previewPlayer = copyEntity(player);
         AbstractEntity damageTarget = resolveCardDamageTarget(card, aliveEnemies, target);
 
-        for (CardEffect effect : CardEffectParser.parse(card.getEffects())) {
-            String[] parts = effect.parts();
-            String type = effect.getType();
-
-            switch (type) {
-                case "damage" -> {
-                    if (damageTarget == null || parts.length < 2) break;
-                    int baseDamage = parseInt(parts[1], 0);
-                    int repeat = parts.length > 2 ? parseInt(parts[2], 1) : 1;
-                    addDamage(totals, baseDamage, repeat, previewPlayer, player, damageTarget,
-                            relicManager, environmentDamageModifier);
-                }
-                case "damage_x" -> {
-                    if (damageTarget == null || parts.length < 2) break;
-                    int baseDamage = parseInt(parts[1], 0);
-                    int repeat = Math.max(0, player.getEnergy());
-                    if (repeat > 0) {
-                        addDamage(totals, baseDamage, repeat, previewPlayer, player,
-                                damageTarget, relicManager, environmentDamageModifier);
-                    }
-                }
-                case "damage_all" -> {
-                    if (aliveEnemies.isEmpty() || parts.length < 2) break;
-                    int baseDamage = parseInt(parts[1], 0);
-                    int repeat = parts.length > 2 ? parseInt(parts[2], 1) : 1;
-                    AbstractEntity commonTarget = commonEnemyTarget(aliveEnemies);
-                    addDamage(totals, baseDamage, repeat, previewPlayer, player, commonTarget,
-                            relicManager, environmentDamageModifier);
-                }
-                case "damage_all_attacking_intent" -> {
-                    if (aliveEnemies.isEmpty() || parts.length < 2) break;
-                    int attackingCount = (int) aliveEnemies.stream()
-                            .filter(enemy -> enemy.getIntent() == com.fabricatedbook.core.entity.IntentType.ATTACK)
-                            .count();
-                    if (attackingCount <= 0) break;
-                    int baseDamage = parseInt(parts[1], 0);
-                    AbstractEntity commonTarget = commonEnemyTarget(aliveEnemies.stream()
-                            .filter(enemy -> enemy.getIntent() == com.fabricatedbook.core.entity.IntentType.ATTACK)
-                            .toList());
-                    addDamage(totals, baseDamage, attackingCount, previewPlayer, player,
-                            commonTarget, relicManager, environmentDamageModifier);
-                }
-                case "counter" -> {
-                    if (damageTarget == null || parts.length < 2) break;
-                    if ("block".equalsIgnoreCase(parts[1]) && player.getBlock() > 0) {
-                        addDamage(totals, player.getBlock(), 1, previewPlayer, player, damageTarget,
-                                relicManager, environmentDamageModifier);
-                    }
-                }
-                case "bonus_per_attack" -> {
-                    if (damageTarget == null || parts.length < 2 || !totals.hasDamage()) {
-                        break;
-                    }
-                    int bonus = parseInt(parts[1], 0);
-                    int attackCount = (int) player.getHand().stream()
-                            .filter(c -> c.getType() == Card.CardType.ATTACK)
-                            .count();
-                    addBaseDamageToLastPreview(totals, bonus * attackCount);
-                }
-                case "bonus_low_hp" -> {
-                    if (target == null || !target.isAlive() || parts.length < 3) break;
-                    int threshold = parseInt(parts[1], 0);
-                    int bonus = parseInt(parts[2], 0);
-                    if (target.getHp() < threshold) {
-                        addBaseDamageToLastPreview(totals, bonus);
-                    }
-                }
-                case "bonus_per_damage_taken" -> {
-                    if (damageTarget == null || parts.length < 3) break;
-                    int threshold = parseInt(parts[1], 1);
-                    int bonus = parseInt(parts[2], 0);
-                    int lostHp = player.getMaxHp() - player.getHp();
-                    int extraDamage = (lostHp / Math.max(1, threshold)) * bonus;
-                    if (extraDamage > 0) {
-                        addBaseDamageToLastPreview(totals, extraDamage);
-                    }
-                }
-                case "escalating" -> {
-                    if (damageTarget == null || card.getEscalatingBonus() <= 0) break;
-                    int bonus = parseInt(parts.length > 1 ? parts[1] : "0", 0);
-                    int alreadyStoredBonus = Math.max(0, card.getEscalatingBonus() - bonus);
-                    if (alreadyStoredBonus > 0) {
-                        addBaseDamageToLastPreview(totals, alreadyStoredBonus);
-                    }
-                }
-                case "block" -> {
-                    if (parts.length < 2) break;
-                    totals.addBlock(DamageCalculator.calculateBlock(parseInt(parts[1], 0),
-                            previewPlayer));
-                }
-                case "block_per_target" -> {
-                    if (parts.length < 2) break;
-                    int baseBlock = parseInt(parts[1], 0) * aliveEnemies.size();
-                    totals.addBlock(DamageCalculator.calculateBlock(baseBlock, previewPlayer));
-                }
-                case "buff" -> {
-                    if (parts.length >= 3 && "self".equalsIgnoreCase(parts[1])) {
-                        int stack = parts.length > 3 ? parseInt(parts[3], 1) : 1;
-                        applyBuff(previewPlayer, parts[2], stack);
-                    }
-                }
-                case "debuff" -> {
-                    if (damageTarget != null && parts.length >= 3) {
-                        applyBuff(damageTarget, parts[1], parseInt(parts[2], 1));
-                    }
-                }
-                case "debuff_all" -> {
-                    if (damageTarget != null && parts.length >= 3) {
-                        applyBuff(damageTarget, parts[1], parseInt(parts[2], 1));
-                    }
-                }
-                default -> {
-                    // Non-deterministic and non-number effects do not alter preview text.
-                }
-            }
-        }
+        new CardEffectPreviewer(card, player, aliveEnemies, target, damageTarget,
+                previewPlayer, relicManager, environmentDamageModifier)
+                .apply(CardEffectParser.parse(card.getEffects()), totals);
 
         String description = buildCardDescription(card, totals);
         return new CardPreview(description, totals.hasPreview());
@@ -211,12 +98,12 @@ public final class CombatPreviewCalculator {
                 relicManager, 0);
     }
 
-    private static void addDamage(PreviewTotals totals, int baseDamage, int repeat,
-                                  AbstractEntity calculationSource,
-                                  AbstractEntity relicSource,
-                                  AbstractEntity target,
-                                  RelicManager relicManager,
-                                  int environmentDamageModifier) {
+    static void addDamage(PreviewTotals totals, int baseDamage, int repeat,
+                          AbstractEntity calculationSource,
+                          AbstractEntity relicSource,
+                          AbstractEntity target,
+                          RelicManager relicManager,
+                          int environmentDamageModifier) {
         int safeRepeat = Math.max(1, repeat);
         int startIndex = totals.damageHits.size();
         for (int i = 0; i < safeRepeat; i++) {
@@ -232,7 +119,7 @@ public final class CombatPreviewCalculator {
                 environmentDamageModifier);
     }
 
-    private static void addBaseDamageToLastPreview(PreviewTotals totals, int amount) {
+    static void addBaseDamageToLastPreview(PreviewTotals totals, int amount) {
         if (amount <= 0 || totals.lastDamage == null) return;
         LastDamage last = totals.lastDamage;
         while (totals.damageHits.size() > last.startIndex) {
@@ -266,7 +153,7 @@ public final class CombatPreviewCalculator {
         return alive;
     }
 
-    private static AbstractEntity commonEnemyTarget(List<Enemy> aliveEnemies) {
+    static AbstractEntity commonEnemyTarget(List<Enemy> aliveEnemies) {
         PreviewEntity target = new PreviewEntity("preview_enemy", "敌人");
         if (aliveEnemies.isEmpty()) {
             return target;
@@ -309,7 +196,7 @@ public final class CombatPreviewCalculator {
         return copy;
     }
 
-    private static void applyBuff(AbstractEntity target, String buffName, int stack) {
+    static void applyBuff(AbstractEntity target, String buffName, int stack) {
         BuffHook incoming = BuffResolver.resolve(buffName).create(Math.max(1, stack));
         BuffHook existing = null;
         for (BuffHook buff : target.getBuffs()) {
@@ -690,7 +577,7 @@ public final class CombatPreviewCalculator {
         }
     }
 
-    private static int parseInt(String raw, int fallback) {
+    static int parseInt(String raw, int fallback) {
         try {
             return Integer.parseInt(raw);
         } catch (Exception ignored) {
@@ -706,24 +593,24 @@ public final class CombatPreviewCalculator {
         return true;
     }
 
-    private static class PreviewTotals {
-        private final List<Integer> damageHits = new ArrayList<>();
-        private int block;
+    static class PreviewTotals {
+        final List<Integer> damageHits = new ArrayList<>();
+        int block;
         private LastDamage lastDamage;
 
-        private void addDamage(int damage) {
+        void addDamage(int damage) {
             damageHits.add(damage);
         }
 
-        private void addBlock(int amount) {
+        void addBlock(int amount) {
             block += Math.max(0, amount);
         }
 
-        private boolean hasDamage() {
+        boolean hasDamage() {
             return !damageHits.isEmpty();
         }
 
-        private boolean hasPreview() {
+        boolean hasPreview() {
             return hasDamage() || block > 0;
         }
     }
