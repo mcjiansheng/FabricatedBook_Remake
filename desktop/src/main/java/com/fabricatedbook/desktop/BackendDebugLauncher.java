@@ -327,12 +327,10 @@ public class BackendDebugLauncher {
 
         println("进入节点: " + node.getType().getDisplayName()
                 + " (" + node.getCol() + "," + node.getRow() + ")");
+        runState.beginNode(toNodeRef(node));
         NodeEntryResult entryResult = new NodeEntryResolver().enterNode(runState, toNodeRef(node));
         for (String message : entryResult.getMessages()) {
             println(message);
-        }
-        if (node.getType().isCombat()) {
-            runState.beginCombat(toNodeRef(node));
         }
         resolveNode(node);
         if (node.getType().isCombat()) {
@@ -340,8 +338,7 @@ public class BackendDebugLauncher {
                 runState.completeActiveNode();
             }
         } else {
-            runState.clearCombatState();
-            runState.setCompletedNode(toNodeRef(node));
+            runState.completeActiveNode();
         }
 
         if (!running) {
@@ -1061,6 +1058,27 @@ public class BackendDebugLauncher {
             ok &= assertCheck(openingHandSignature(seed, NodeType.FIGHT)
                             .equals(openingHandSignature(seed, NodeType.FIGHT)),
                     "读档后重新进入同节点可复现抽牌顺序");
+        }
+
+        startNewRun(seed + 1);
+        player.setGold(90);
+        GameRunState.NodeRef shopNode = new GameRunState.NodeRef(1, 2, 0, 6);
+        runState.beginNode(shopNode);
+        new NodeEntryResolver().enterNode(runState, shopNode);
+        ok &= assertCheck(player.getGold() < 90,
+                "非战斗节点入口效果已在保存前生效");
+        ok &= assertCheck(saveManager.saveRun(runState), "非战斗节点中可以保存对局");
+
+        GameRunState loadedNonCombat = saveManager.loadRun();
+        ok &= assertCheck(loadedNonCombat != null, "可以读取非战斗节点中途存档");
+        if (loadedNonCombat != null) {
+            ok &= assertCheck(loadedNonCombat.getPlayer().getGold() == 90,
+                    "非战斗节点中途存档应回到节点入口前金币: "
+                            + loadedNonCombat.getPlayer().getGold());
+            ok &= assertCheck(loadedNonCombat.getCompletedNode() == null,
+                    "非战斗节点中途退出不会记录该节点已完成");
+            ok &= assertCheck(loadedNonCombat.getActiveNode() == null,
+                    "读档后不保留未完成节点过程状态");
         }
         println(ok ? "SAVETEST PASS" : "SAVETEST FAIL");
     }

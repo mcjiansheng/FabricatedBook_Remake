@@ -135,10 +135,10 @@ public class SaveManager {
         if (runState == null || runState.getPlayer() == null) {
             return false;
         }
-        GameRunState.PlayerSnapshot playerSnapshot = runState.isInCombat()
+        GameRunState.PlayerSnapshot playerSnapshot = runState.isNodeActive()
                 ? runState.getCombatBaseline()
                 : GameRunState.PlayerSnapshot.from(runState.getPlayer());
-        GameRunState.NodeRef activeNode = runState.isInCombat()
+        GameRunState.NodeRef activeNode = runState.isNodeActive()
                 ? runState.getActiveNode()
                 : null;
         return saveSnapshot(playerSnapshot, runState.getSeed(),
@@ -229,10 +229,7 @@ public class SaveManager {
         runState.setShopRemoveCount(data.version >= 2 ? data.shopRemoveCount : 0);
         runState.setMapDamageModifier(data.version >= 2 ? data.mapDamageModifier : 0);
         runState.setCompletedNode(data.completedNode);
-        if (data.activeNode != null && data.combatBaseline != null) {
-            runState.beginCombat(data.activeNode);
-            runState.clearCombatState();
-        }
+        runState.clearCombatState();
         System.out.println("[SaveManager] 对局读档成功: " + saveFile);
         return runState;
     }

@@ -226,7 +226,7 @@
 
 ## B-005：环境效果和部分节点进入规则仍在 UI 层或仅有描述
 
-状态：部分修复。已新增 `NodeEntryResolver` / `NodeEntryResult` 作为 core 节点进入规则入口，`relic_oligarch` 的“进入非战斗节点获得金币”已从 `MapScreen` 下沉到 core，并由 `MapScreen` 与 `BackendDebugLauncher` 共用；森林非战斗节点扣 10-20 金币、诡异秘林进入战斗/非战斗调整伤害修正（±3）、迷雾每次前进随机回血/扣血已在 core 节点进入入口执行，且随机绑定 seed+节点坐标。诡异秘林伤害修正进入 `GameRunState.mapDamageModifier` 并随存档保存恢复，`CombatEngine` 和 `CombatPreviewCalculator` 都会应用到玩家伤害。`NodeEntryResult` 消息现在会传入商店、事件、安全屋和战斗页面，避免前端吞掉环境/藏品反馈。测试覆盖寡头触发、三层环境效果、存档恢复、战斗伤害和预览接入。剩余工作：节点完成时机和自动保存时机还需要继续统一。
+状态：部分修复。已新增 `NodeEntryResolver` / `NodeEntryResult` 作为 core 节点进入规则入口，`relic_oligarch` 的“进入非战斗节点获得金币”已从 `MapScreen` 下沉到 core，并由 `MapScreen` 与 `BackendDebugLauncher` 共用；森林非战斗节点扣 10-20 金币、诡异秘林进入战斗/非战斗调整伤害修正（±3）、迷雾每次前进随机回血/扣血已在 core 节点进入入口执行，且随机绑定 seed+节点坐标。诡异秘林伤害修正进入 `GameRunState.mapDamageModifier` 并随存档保存恢复，`CombatEngine` 和 `CombatPreviewCalculator` 都会应用到玩家伤害。`NodeEntryResult` 消息现在会传入商店、事件、安全屋和战斗页面，避免前端吞掉环境/藏品反馈。`GameRunState.beginNode()` 已作为战斗/非战斗共用的节点开始入口，所有节点在入口副作用前记录节点前快照；`SaveManager.saveRun()` 会在 active 节点中保存该快照，读档后不保留未完成节点过程状态，也不会把事件/商店/安全屋等非战斗节点提前标记完成。测试覆盖寡头触发、三层环境效果、存档恢复、战斗伤害、预览接入，以及战斗/非战斗节点中途存档不会写入未完成过程。剩余工作：继续梳理各 UI 操作中的自动保存入口，确认节点内购买/事件选择/奖励领取等玩家可见流程的保存粒度。
 
 ### 位置
 

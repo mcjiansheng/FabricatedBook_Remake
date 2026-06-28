@@ -439,17 +439,14 @@ public class MapScreen implements Screen {
             case FIGHT:
             case EMERGENCY:
             case BOSS:
-                activeNode = node;
-                NodeEntryResult combatEntry =
-                        new NodeEntryResolver().enterNode(runState, toRef(node));
-                runState.beginCombat(toRef(node));
+                NodeEntryResult combatEntry = beginMapNode(node);
                 game.autosaveCurrentRun();
                 // 进入战斗
                 game.setScreen(new BattleScreen(game, createCombatEngine(), player,
                         createEnemiesFor(node.type), this, entryMessage(combatEntry)));
                 break;
             case SHOP:
-                NodeEntryResult shopEntry = markNodeEntered(node);
+                NodeEntryResult shopEntry = beginMapNode(node);
                 // 进入商店
                 ShopManager shopManager = new ShopManager(player, new RelicManager(player),
                         runState, "shop:" + nodeKey(node));
@@ -459,7 +456,7 @@ public class MapScreen implements Screen {
                         entryMessage(shopEntry)));
                 break;
             case UNEXPECTEDLY:
-                NodeEntryResult eventEntry = markNodeEntered(node);
+                NodeEntryResult eventEntry = beginMapNode(node);
                 game.autosaveCurrentRun();
                 // 进入事件
                 game.setScreen(new EventScreen(game, player, randomEventName(), this,
@@ -467,7 +464,7 @@ public class MapScreen implements Screen {
                         entryMessage(eventEntry)));
                 break;
             case REWARD:
-                NodeEntryResult rewardEntry = markNodeEntered(node);
+                NodeEntryResult rewardEntry = beginMapNode(node);
                 game.autosaveCurrentRun();
                 // 宝箱奖励
                 game.setScreen(new EventScreen(game, player, "好诗歪诗", this,
@@ -475,14 +472,14 @@ public class MapScreen implements Screen {
                         entryMessage(rewardEntry)));
                 break;
             case SAFE_HOUSE:
-                NodeEntryResult safeHouseEntry = markNodeEntered(node);
+                NodeEntryResult safeHouseEntry = beginMapNode(node);
                 game.autosaveCurrentRun();
                 // 安全屋
                 game.setScreen(new SafeHouseScreen(game, player, this,
                         entryMessage(safeHouseEntry)));
                 break;
             case DECISION:
-                NodeEntryResult decisionEntry = markNodeEntered(node);
+                NodeEntryResult decisionEntry = beginMapNode(node);
                 game.autosaveCurrentRun();
                 // 命运抉择
                 game.setScreen(new EventScreen(game, player, decisionEventName(), this,
@@ -496,13 +493,10 @@ public class MapScreen implements Screen {
         return currentLayerIdx == 3 ? "命运抉择2" : "命运抉择1";
     }
 
-    private NodeEntryResult markNodeEntered(MapNode node) {
+    private NodeEntryResult beginMapNode(MapNode node) {
         currentNode = node;
-        activeNode = null;
-        runState.clearCombatState();
-        node.visited = true;
-        runState.setCompletedNode(toRef(node));
-        updateAccessibleNodes();
+        activeNode = node;
+        runState.beginNode(toRef(node));
         return new NodeEntryResolver().enterNode(runState, toRef(node));
     }
 

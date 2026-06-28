@@ -6,6 +6,7 @@ import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.card.StarterDeckFactory;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
+import com.fabricatedbook.core.map.LayerMapGraph;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicFactory;
@@ -65,11 +66,18 @@ public class GameRunState {
     public void addMapDamageModifier(int delta) {
         setMapDamageModifier(mapDamageModifier + delta);
     }
-    public boolean isInCombat() { return activeNode != null && combatBaseline != null; }
+    public boolean isNodeActive() { return activeNode != null && combatBaseline != null; }
+    public boolean isInCombat() {
+        return isNodeActive() && LayerMapGraph.fromTypeCode(activeNode.type).isCombat();
+    }
 
-    public void beginCombat(NodeRef nodeRef) {
+    public void beginNode(NodeRef nodeRef) {
         this.activeNode = nodeRef;
         this.combatBaseline = PlayerSnapshot.from(player);
+    }
+
+    public void beginCombat(NodeRef nodeRef) {
+        beginNode(nodeRef);
     }
 
     public void completeActiveNode() {
