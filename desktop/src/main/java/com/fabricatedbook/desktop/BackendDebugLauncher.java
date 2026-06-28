@@ -925,6 +925,18 @@ public class BackendDebugLauncher {
                             + event.getName() + " -> " + option.getText());
                     ok = false;
                 }
+                if (option.hasRandomGoldChange()
+                        && option.getGoldChangeMin() > option.getGoldChangeMax()) {
+                    println("[SELFTEST] 事件随机金币范围反向: " + event.getName()
+                            + " -> " + option.getText());
+                    ok = false;
+                }
+                if (option.hasRandomHpChange()
+                        && option.getHpChangeMin() > option.getHpChangeMax()) {
+                    println("[SELFTEST] 事件随机生命范围反向: " + event.getName()
+                            + " -> " + option.getText());
+                    ok = false;
+                }
                 if (result != null && result.relicId != null
                         && !result.relicId.isBlank()
                         && RelicFactory.createById(result.relicId, player) == null) {

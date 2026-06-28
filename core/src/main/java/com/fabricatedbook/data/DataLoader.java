@@ -240,7 +240,11 @@ public class DataLoader {
         private String result;
         private String outcomeDescription;
         private Integer goldChange;
+        private Integer goldChangeMin;
+        private Integer goldChangeMax;
         private Integer hpChange;
+        private Integer hpChangeMin;
+        private Integer hpChangeMax;
         private boolean fullHeal;
         private String relicId;
         private String outcome;
@@ -250,7 +254,17 @@ public class DataLoader {
         public String getResult() { return result; }
         public String getOutcomeDescription() { return outcomeDescription; }
         public int getGoldChange() { return goldChange != null ? goldChange : 0; }
+        public Integer getGoldChangeMin() { return goldChangeMin; }
+        public Integer getGoldChangeMax() { return goldChangeMax; }
+        public boolean hasRandomGoldChange() {
+            return goldChangeMin != null && goldChangeMax != null;
+        }
         public int getHpChange() { return hpChange != null ? hpChange : 0; }
+        public Integer getHpChangeMin() { return hpChangeMin; }
+        public Integer getHpChangeMax() { return hpChangeMax; }
+        public boolean hasRandomHpChange() {
+            return hpChangeMin != null && hpChangeMax != null;
+        }
         public boolean isFullHeal() { return fullHeal; }
         public String getRelicId() { return relicId; }
         public String getOutcome() { return outcome; }

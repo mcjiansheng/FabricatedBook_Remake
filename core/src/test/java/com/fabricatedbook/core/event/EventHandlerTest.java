@@ -111,10 +111,25 @@ class EventHandlerTest {
     void ordinaryEventWithoutJsonOutcomeFallsBackToJavaHandler() {
         EventHandler handler = new EventHandler(new Random(1));
 
-        EventHandler.EventResult result = handler.executeEvent("翅膀雕像", 1);
+        EventHandler.EventResult result = handler.executeEvent("投资", 0);
 
-        assertTrue(result.goldChange >= 50 && result.goldChange <= 80);
-        assertTrue(result.description.contains("金币"));
+        assertTrue(result.description.contains("投资 0 金币"));
+    }
+
+    @Test
+    void randomEventResultCanComeFromJsonData() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        EventHandler.EventResult statue = handler.executeEvent("翅膀雕像", 1);
+        EventHandler.EventResult slime = handler.executeEvent("黏液世界", 1);
+        EventHandler.EventResult burger = handler.executeEvent("村庄", 2);
+
+        assertTrue(statue.goldChange >= 50 && statue.goldChange <= 80);
+        assertTrue(statue.description.contains("金币"));
+        assertTrue(slime.goldChange >= -75 && slime.goldChange <= -35);
+        assertTrue(slime.description.contains("失去 " + Math.abs(slime.goldChange)));
+        assertTrue(burger.hpChange >= 15 && burger.hpChange <= 30);
+        assertTrue(burger.description.contains("回复 " + burger.hpChange));
     }
 
     @Test

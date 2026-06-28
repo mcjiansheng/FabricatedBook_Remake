@@ -37,7 +37,9 @@
       {
         "text": "🔨 摧毁",
         "result": "获得 50-80 金币",
-        "executor": "java"
+        "outcomeDescription": "你用力砸碎了雕像，金币从裂缝中散落一地。\n获得 %d 金币",
+        "goldChangeMin": 50,
+        "goldChangeMax": 80
       },
       {
         "text": "🚶 离开",
@@ -61,7 +63,9 @@
       {
         "text": "🙌 放手吧",
         "result": "失去 35-75 金币",
-        "executor": "java"
+        "outcomeDescription": "你挣扎着想脱身，但金币从口袋里掉了出来。\n失去 %d 金币",
+        "goldChangeMin": -75,
+        "goldChangeMax": -35
       }
     ]
   },
@@ -126,7 +130,9 @@
       {
         "text": "🍔 板烧鸡腿堡",
         "result": "回复生命值",
-        "executor": "java"
+        "outcomeDescription": "美味的板烧鸡腿堡！你感到精力充沛。\n回复 %d 生命值",
+        "hpChangeMin": 15,
+        "hpChangeMax": 30
       }
     ]
   },

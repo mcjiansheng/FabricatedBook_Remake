@@ -267,7 +267,7 @@ public class EventHandler {
             return null;
         }
         DataLoader.EventOptionData optionData = eventData.getOptions().get(optionIndex);
-        return EventResultResolver.resolve(optionData);
+        return EventResultResolver.resolve(optionData, random);
     }
 
     private List<String> hardcodedEventNames() {

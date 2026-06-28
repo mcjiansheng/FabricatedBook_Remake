@@ -321,4 +321,4 @@ Bug ID：
 
 近期后端进展：effect DSL 已先抽出 `CardEffectParser` 作为执行和预览共用解析入口，并新增 `CardEffectType` 注册体现式记录实战执行/数值预览支持状态、参数数量范围、整数参数位置和关键文字参数约束；卡牌实战执行 switch 已迁入 `CardEffectExecutor`，卡牌数值预览 switch 已迁入 `CardEffectPreviewer`，后端 CLI `selftest` 已能扫描所有已配置职业 JSON 卡牌的未知 effect、未接入实战执行的 effect、参数数量错误、整数参数格式错误和不支持的文字参数。effect 注册式分派仍在后续任务中。
 
-事件系统已先让普通事件的名称、描述、选项展示和部分固定事件结果从 `events.json` 读取，并抽出 `EventResultResolver` 负责固定 JSON 结果转换；“生命回满”已改用显式 `fullHeal` 结果字段，不再依赖 `hpChange = 9999` 哨兵值。后端 CLI `selftest` 会扫描 JSON 固定事件结果字段、藏品引用和 Java executor 标记，`relic_nuke` / `relic_five_cards` 已补为特殊奖励占位。随机事件结果和特殊事件 executor 分层仍待继续。
+事件系统已先让普通事件的名称、描述、选项展示和部分固定/简单随机事件结果从 `events.json` 读取，并抽出 `EventResultResolver` 负责 JSON 结果转换；“生命回满”已改用显式 `fullHeal` 结果字段，不再依赖 `hpChange = 9999` 哨兵值，翅膀雕像摧毁、黏液世界放手、村庄板烧鸡腿堡已迁到 JSON 随机范围。后端 CLI `selftest` 会扫描 JSON 固定/随机事件结果字段、藏品引用和 Java executor 标记，`relic_nuke` / `relic_five_cards` 已补为特殊奖励占位。复杂随机事件结果和特殊事件 executor 分层仍待继续。
