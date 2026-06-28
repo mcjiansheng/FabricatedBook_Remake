@@ -248,6 +248,7 @@ public class DataLoader {
         private boolean fullHeal;
         private String relicId;
         private String outcome;
+        private List<EventOutcomeData> randomOutcomes;
         private String executor;
 
         public String getText() { return text; }
@@ -268,13 +269,38 @@ public class DataLoader {
         public boolean isFullHeal() { return fullHeal; }
         public String getRelicId() { return relicId; }
         public String getOutcome() { return outcome; }
+        public List<EventOutcomeData> getRandomOutcomes() {
+            return randomOutcomes != null ? randomOutcomes : List.of();
+        }
+        public boolean hasRandomOutcomes() {
+            return randomOutcomes != null && !randomOutcomes.isEmpty();
+        }
         public String getExecutor() { return executor; }
         public boolean hasExecutableResult() {
-            return outcomeDescription != null && !outcomeDescription.isBlank();
+            return (outcomeDescription != null && !outcomeDescription.isBlank())
+                    || hasRandomOutcomes();
         }
         public boolean usesJavaExecutor() {
             return "java".equalsIgnoreCase(executor);
         }
+    }
+
+    public static class EventOutcomeData {
+        private int weight;
+        private String outcomeDescription;
+        private Integer goldChange;
+        private Integer hpChange;
+        private boolean fullHeal;
+        private String relicId;
+        private String outcome;
+
+        public int getWeight() { return weight; }
+        public String getOutcomeDescription() { return outcomeDescription; }
+        public int getGoldChange() { return goldChange != null ? goldChange : 0; }
+        public int getHpChange() { return hpChange != null ? hpChange : 0; }
+        public boolean isFullHeal() { return fullHeal; }
+        public String getRelicId() { return relicId; }
+        public String getOutcome() { return outcome; }
     }
 
     public static class LayerMapData {

@@ -111,9 +111,9 @@ class EventHandlerTest {
     void ordinaryEventWithoutJsonOutcomeFallsBackToJavaHandler() {
         EventHandler handler = new EventHandler(new Random(1));
 
-        EventHandler.EventResult result = handler.executeEvent("投资", 0);
+        EventHandler.EventResult result = handler.executeEvent("好诗歪诗", 1);
 
-        assertTrue(result.description.contains("投资 0 金币"));
+        assertEquals("relic_random_leq3", result.relicId);
     }
 
     @Test
@@ -130,6 +130,22 @@ class EventHandlerTest {
         assertTrue(slime.description.contains("失去 " + Math.abs(slime.goldChange)));
         assertTrue(burger.hpChange >= 15 && burger.hpChange <= 30);
         assertTrue(burger.description.contains("回复 " + burger.hpChange));
+    }
+
+    @Test
+    void weightedRandomEventResultCanComeFromJsonData() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        EventHandler.EventResult freeInvestment = handler.executeEvent("投资", 0);
+        EventHandler.EventResult mediumInvestment = handler.executeEvent("投资", 1);
+        EventHandler.EventResult highInvestment = handler.executeEvent("投资", 2);
+
+        assertTrue(List.of(0, 10).contains(freeInvestment.goldChange));
+        assertTrue(freeInvestment.description.contains("投资 0 金币"));
+        assertTrue(List.of(-50, 0, 100).contains(mediumInvestment.goldChange));
+        assertTrue(mediumInvestment.description.contains("投资 50 金币"));
+        assertTrue(List.of(-100, 0, 150, 200, 1000).contains(highInvestment.goldChange));
+        assertTrue(highInvestment.description.contains("投资 100 金币"));
     }
 
     @Test

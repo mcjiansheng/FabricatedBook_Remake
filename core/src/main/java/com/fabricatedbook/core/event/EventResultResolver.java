@@ -20,6 +20,9 @@ public final class EventResultResolver {
             return null;
         }
         Random rng = random == null ? new Random() : random;
+        if (optionData.hasRandomOutcomes()) {
+            return resolveRandomOutcome(optionData, rng);
+        }
         int goldChange = resolveChange(optionData.getGoldChange(),
                 optionData.getGoldChangeMin(), optionData.getGoldChangeMax(), rng);
         int hpChange = resolveChange(optionData.getHpChange(),
@@ -30,6 +33,29 @@ public final class EventResultResolver {
                 goldChange, hpChange,
                 optionData.getRelicId(), optionData.getOutcome(),
                 optionData.isFullHeal());
+    }
+
+    private static EventHandler.EventResult resolveRandomOutcome(
+            DataLoader.EventOptionData optionData, Random random) {
+        int totalWeight = 0;
+        for (DataLoader.EventOutcomeData outcome : optionData.getRandomOutcomes()) {
+            totalWeight += Math.max(0, outcome.getWeight());
+        }
+        if (totalWeight <= 0) {
+            return null;
+        }
+        int roll = random.nextInt(totalWeight);
+        for (DataLoader.EventOutcomeData outcome : optionData.getRandomOutcomes()) {
+            int weight = Math.max(0, outcome.getWeight());
+            if (roll < weight) {
+                return new EventHandler.EventResult(outcome.getOutcomeDescription(),
+                        outcome.getGoldChange(), outcome.getHpChange(),
+                        outcome.getRelicId(), outcome.getOutcome(),
+                        outcome.isFullHeal());
+            }
+            roll -= weight;
+        }
+        return null;
     }
 
     private static int resolveChange(int fixedValue, Integer min, Integer max,

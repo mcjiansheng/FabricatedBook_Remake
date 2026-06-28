@@ -77,17 +77,67 @@
       {
         "text": "0 金币",
         "result": "25% 得 0 / 75% 得 10",
-        "executor": "java"
+        "randomOutcomes": [
+          {
+            "weight": 25,
+            "outcomeDescription": "投资 0 金币：一无所获。"
+          },
+          {
+            "weight": 75,
+            "outcomeDescription": "投资 0 金币：白捡 10 金币。",
+            "goldChange": 10
+          }
+        ]
       },
       {
         "text": "50 金币",
         "result": "25% 得 0 / 50% 得 50 / 25% 得 100",
-        "executor": "java"
+        "randomOutcomes": [
+          {
+            "weight": 25,
+            "outcomeDescription": "投资 50 金币：血本无归。",
+            "goldChange": -50
+          },
+          {
+            "weight": 50,
+            "outcomeDescription": "投资 50 金币：拿回本金。"
+          },
+          {
+            "weight": 25,
+            "outcomeDescription": "投资 50 金币：获得 100 金币！",
+            "goldChange": 100
+          }
+        ]
       },
       {
         "text": "100 金币",
         "result": "50% 得 0 / 25% 得 100 / 20% 得 150 / 4% 得 200 / 1% 得 1000",
-        "executor": "java"
+        "randomOutcomes": [
+          {
+            "weight": 50,
+            "outcomeDescription": "投资 100 金币：血本无归。",
+            "goldChange": -100
+          },
+          {
+            "weight": 25,
+            "outcomeDescription": "投资 100 金币：拿回本金。"
+          },
+          {
+            "weight": 20,
+            "outcomeDescription": "投资 100 金币：获利 150！",
+            "goldChange": 150
+          },
+          {
+            "weight": 4,
+            "outcomeDescription": "投资 100 金币：大赚 200！",
+            "goldChange": 200
+          },
+          {
+            "weight": 1,
+            "outcomeDescription": "投资 100 金币：暴富！获得 1000 金币！",
+            "goldChange": 1000
+          }
+        ]
       }
     ]
   },

@@ -856,7 +856,8 @@ public class BackendDebugLauncher {
 
         EventHandler eventHandler = new EventHandler(new Random(1));
         EventHandler.EventResult fixedEvent = eventHandler.executeEvent("相遇", 0);
-        EventHandler.EventResult randomFallbackEvent = eventHandler.executeEvent("翅膀雕像", 1);
+        EventHandler.EventResult javaFallbackEvent = eventHandler.executeEvent("好诗歪诗", 1);
+        EventHandler.EventResult weightedEvent = eventHandler.executeEvent("投资", 2);
         ok &= assertCheck(fixedEventResultsAreValid(loader.loadEvents()),
                 "JSON 固定事件结果字段可解析");
         ok &= assertCheck(javaEventOptionsAreMarked(loader.loadEvents()),
@@ -864,9 +865,11 @@ public class BackendDebugLauncher {
         ok &= assertCheck("relic_betrayal".equals(fixedEvent.relicId)
                         && fixedEvent.description.contains("背叛"),
                 "固定事件结果可从 JSON 执行");
-        ok &= assertCheck(randomFallbackEvent.goldChange >= 50
-                        && randomFallbackEvent.goldChange <= 80,
-                "随机事件结果保留 Java executor");
+        ok &= assertCheck(List.of(-100, 0, 150, 200, 1000)
+                        .contains(weightedEvent.goldChange),
+                "加权随机事件结果可从 JSON 执行");
+        ok &= assertCheck("relic_random_leq3".equals(javaFallbackEvent.relicId),
+                "复杂随机事件结果保留 Java executor");
 
         Player testPlayer = new Player("selftest", "自检战士", Profession.WARRIOR);
         int oldMaxHp = testPlayer.getMaxHp();
@@ -937,6 +940,7 @@ public class BackendDebugLauncher {
                             + " -> " + option.getText());
                     ok = false;
                 }
+                ok &= randomOutcomesAreValid(event, option);
                 if (result != null && result.relicId != null
                         && !result.relicId.isBlank()
                         && RelicFactory.createById(result.relicId, player) == null) {
@@ -949,6 +953,46 @@ public class BackendDebugLauncher {
         if (count == 0) {
             println("[SELFTEST] 未找到可执行 JSON 固定事件结果");
             return false;
+        }
+        return ok;
+    }
+
+    private boolean randomOutcomesAreValid(DataLoader.EventData event,
+                                           DataLoader.EventOptionData option) {
+        if (!option.hasRandomOutcomes()) {
+            return true;
+        }
+        boolean ok = true;
+        int totalWeight = 0;
+        for (DataLoader.EventOutcomeData outcome : option.getRandomOutcomes()) {
+            if (outcome.getWeight() <= 0) {
+                println("[SELFTEST] 事件随机 outcome 权重无效: " + event.getName()
+                        + " -> " + option.getText());
+                ok = false;
+            }
+            totalWeight += Math.max(0, outcome.getWeight());
+            if (outcome.getOutcomeDescription() == null
+                    || outcome.getOutcomeDescription().isBlank()) {
+                println("[SELFTEST] 事件随机 outcome 缺少描述: " + event.getName()
+                        + " -> " + option.getText());
+                ok = false;
+            }
+            if (outcome.isFullHeal() && outcome.getHpChange() != 0) {
+                println("[SELFTEST] 事件随机 outcome 同时声明 fullHeal 和 hpChange: "
+                        + event.getName() + " -> " + option.getText());
+                ok = false;
+            }
+            if (outcome.getRelicId() != null && !outcome.getRelicId().isBlank()
+                    && RelicFactory.createById(outcome.getRelicId(), player) == null) {
+                println("[SELFTEST] 事件随机 outcome 引用未知藏品: " + event.getName()
+                        + " -> " + option.getText() + " -> " + outcome.getRelicId());
+                ok = false;
+            }
+        }
+        if (totalWeight <= 0) {
+            println("[SELFTEST] 事件随机 outcome 总权重无效: " + event.getName()
+                    + " -> " + option.getText());
+            ok = false;
         }
         return ok;
     }
