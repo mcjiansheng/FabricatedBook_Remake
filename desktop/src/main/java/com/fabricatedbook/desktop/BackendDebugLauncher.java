@@ -13,6 +13,7 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.event.EventResultResolver;
+import com.fabricatedbook.core.event.EventRewardResolver;
 import com.fabricatedbook.core.map.LayerMapConfig;
 import com.fabricatedbook.core.map.LayerMapGraph;
 import com.fabricatedbook.core.map.LayerMapNode;
@@ -393,8 +394,8 @@ public class BackendDebugLauncher {
     }
 
     private void resolveEvent() {
-        EventHandler handler = new EventHandler(randomForNode("event-result",
-                map.getCurrentNode()));
+        Random eventRandom = randomForNode("event-result", map.getCurrentNode());
+        EventHandler handler = new EventHandler(eventRandom);
         List<String> names = handler.getEventNames();
         String eventName = names.get(randomForNode("event-name", map.getCurrentNode())
                 .nextInt(names.size()));
@@ -415,11 +416,11 @@ public class BackendDebugLauncher {
         choice = Math.max(1, Math.min(choice, options.size()));
 
         EventHandler.EventResult result = handler.executeEvent(eventName, choice - 1);
-        applyEventResult(result);
+        applyEventResult(result, eventRandom);
         println(result.description);
     }
 
-    private void applyEventResult(EventHandler.EventResult result) {
+    private void applyEventResult(EventHandler.EventResult result, Random eventRandom) {
         if (result.goldChange > 0) {
             player.gainGold(result.goldChange);
         } else if (result.goldChange < 0) {
@@ -435,7 +436,8 @@ public class BackendDebugLauncher {
         }
 
         if (result.relicId != null && !result.relicId.isBlank()) {
-            Relic relic = RelicFactory.createById(result.relicId, player);
+            Relic relic = EventRewardResolver.resolveRelic(result.relicId, player,
+                    eventRandom);
             if (relic != null) {
                 new RelicManager(player).addRelic(relic);
             }
@@ -860,6 +862,7 @@ public class BackendDebugLauncher {
         EventHandler.EventResult decisionEvent = eventHandler.executeEvent("命运抉择2", 2,
                 new Player("selftest-decision", "自检战士", Profession.WARRIOR));
         EventHandler.EventResult weightedEvent = eventHandler.executeEvent("投资", 2);
+        Player testPlayer = new Player("selftest", "自检战士", Profession.WARRIOR);
         ok &= assertCheck(fixedEventResultsAreValid(loader.loadEvents()),
                 "JSON 固定事件结果字段可解析");
         ok &= assertCheck(javaEventOptionsAreMarked(loader.loadEvents()),
@@ -875,8 +878,19 @@ public class BackendDebugLauncher {
         ok &= assertCheck(decisionEvent.relicId == null
                         && decisionEvent.description.contains("没有作出选择"),
                 "命运抉择条件保留 Java handler");
+        Relic resolvedPlaceholderRelic = EventRewardResolver.resolveRelic(
+                "relic_random_leq3", testPlayer, new Random(1));
+        Relic resolvedCurseRelic = EventRewardResolver.resolveRelic(
+                "relic_curse_random", testPlayer, new Random(1));
+        ok &= assertCheck(resolvedPlaceholderRelic != null
+                        && resolvedPlaceholderRelic.getRarity() != Relic.Rarity.SPECIAL
+                        && resolvedPlaceholderRelic.getRarity() != Relic.Rarity.CURSED
+                        && resolvedPlaceholderRelic.getRarity().getValue() <= 3,
+                "占位低阶藏品可展开为真实藏品");
+        ok &= assertCheck(resolvedCurseRelic != null
+                        && resolvedCurseRelic.getRarity() == Relic.Rarity.CURSED,
+                "占位负面藏品可展开为真实负面藏品");
 
-        Player testPlayer = new Player("selftest", "自检战士", Profession.WARRIOR);
         int oldMaxHp = testPlayer.getMaxHp();
         Relic hotWater = RelicFactory.createById("relic_hot_water_flask", testPlayer);
         new RelicManager(testPlayer).addRelic(hotWater);

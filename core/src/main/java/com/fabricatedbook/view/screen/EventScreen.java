@@ -15,9 +15,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
 import com.fabricatedbook.core.event.EventHandler;
+import com.fabricatedbook.core.event.EventRewardResolver;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.relic.Relic;
-import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
@@ -43,6 +43,7 @@ public class EventScreen implements Screen {
     private final FabricBookGame game;
     private final Player player;
     private final EventHandler eventHandler;
+    private final Random eventRandom;
     private final String eventName;
     private final MapScreen returnMap;
     private final String entryMessage;
@@ -86,7 +87,8 @@ public class EventScreen implements Screen {
                        String entryMessage) {
         this.game = game;
         this.player = player;
-        this.eventHandler = new EventHandler(eventRandom);
+        this.eventRandom = eventRandom == null ? new Random() : eventRandom;
+        this.eventHandler = new EventHandler(this.eventRandom);
         this.eventName = eventName;
         this.returnMap = returnMap;
         this.entryMessage = entryMessage;
@@ -188,7 +190,8 @@ public class EventScreen implements Screen {
                     }
                     String acquiredRelicName = null;
                     if (result.relicId != null && !result.relicId.isBlank()) {
-                        Relic relic = RelicFactory.createById(result.relicId, player);
+                        Relic relic = EventRewardResolver.resolveRelic(result.relicId,
+                                player, EventScreen.this.eventRandom);
                         if (relic != null) {
                             new RelicManager(player).addRelic(relic);
                             acquiredRelicName = relic.getName();

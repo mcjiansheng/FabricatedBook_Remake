@@ -123,6 +123,23 @@ class EventHandlerTest {
     }
 
     @Test
+    void placeholderRelicRewardsResolveToConcreteRelics() {
+        Player player = player();
+
+        Relic lowValue = EventRewardResolver.resolveRelic("relic_random_leq3",
+                player, new Random(1));
+        Relic cursed = EventRewardResolver.resolveRelic("relic_curse_random",
+                player, new Random(1));
+
+        assertTrue(lowValue != null);
+        assertTrue(lowValue.getRarity() != Relic.Rarity.CURSED);
+        assertTrue(lowValue.getRarity() != Relic.Rarity.SPECIAL);
+        assertTrue(lowValue.getRarity().getValue() <= 3);
+        assertTrue(cursed != null);
+        assertEquals(Relic.Rarity.CURSED, cursed.getRarity());
+    }
+
+    @Test
     void randomEventResultCanComeFromJsonData() {
         EventHandler handler = new EventHandler(new Random(1));
 
