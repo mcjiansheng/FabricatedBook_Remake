@@ -59,6 +59,21 @@ class EventHandlerTest {
     }
 
     @Test
+    void decisionDisplayDataComesFromJsonButStaysOutOfRandomPool() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        assertFalse(handler.getEventNames().contains("命运抉择1"));
+        assertFalse(handler.getEventNames().contains("命运抉择2"));
+        assertEquals("迷雾渐起，前途未知，你将何去何从？",
+                handler.getEventDescription("命运抉择1"));
+
+        List<EventHandler.EventOption> options = handler.getOptions("命运抉择1");
+        assertEquals(2, options.size());
+        assertEquals("前进", options.get(0).label);
+        assertEquals("突破迷雾，进入森林", options.get(0).description);
+    }
+
+    @Test
     void ordinaryEventTextComesFromJsonData() {
         EventHandler handler = new EventHandler(new Random(1));
 

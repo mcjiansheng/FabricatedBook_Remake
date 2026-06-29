@@ -225,11 +225,13 @@ public class DataLoader {
         private String id;
         private String name;
         private String description;
+        private Boolean randomPool;
         private List<EventOptionData> options;
 
         public String getId() { return id; }
         public String getName() { return name; }
         public String getDescription() { return description; }
+        public boolean isRandomPool() { return randomPool == null || randomPool; }
         public List<EventOptionData> getOptions() {
             return options != null ? options : List.of();
         }
@@ -250,6 +252,7 @@ public class DataLoader {
         private String outcome;
         private List<EventOutcomeData> randomOutcomes;
         private String executor;
+        private List<String> requiresAnyRelic;
 
         public String getText() { return text; }
         public String getResult() { return result; }
@@ -276,6 +279,9 @@ public class DataLoader {
             return randomOutcomes != null && !randomOutcomes.isEmpty();
         }
         public String getExecutor() { return executor; }
+        public List<String> getRequiresAnyRelic() {
+            return requiresAnyRelic != null ? requiresAnyRelic : List.of();
+        }
         public boolean hasExecutableResult() {
             return (outcomeDescription != null && !outcomeDescription.isBlank())
                     || hasRandomOutcomes();

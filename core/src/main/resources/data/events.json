@@ -231,5 +231,50 @@
         "relicId": "relic_curse_random"
       }
     ]
+  },
+  {
+    "id": "event_decision_1",
+    "name": "命运抉择1",
+    "description": "迷雾渐起，前途未知，你将何去何从？",
+    "randomPool": false,
+    "options": [
+      {
+        "text": "前进",
+        "result": "突破迷雾，进入森林",
+        "executor": "java"
+      },
+      {
+        "text": "回头",
+        "result": "结束游戏，获得隐藏结局「讲述中断」",
+        "executor": "java"
+      }
+    ]
+  },
+  {
+    "id": "event_decision_2",
+    "name": "命运抉择2",
+    "description": "你战胜了强大的敌人，但这只是见到“幕后黑手”的前提。\n他要求你前往高塔帮他“解决”一个麻烦，同时可以给予你一个东西。",
+    "randomPool": false,
+    "options": [
+      {
+        "text": "我要权力",
+        "result": "绝对的集权，皇权至高无上。获得藏品「集权」",
+        "executor": "java"
+      },
+      {
+        "text": "我要财富",
+        "result": "为了利益无所不用其极。获得藏品「寡头」",
+        "executor": "java"
+      },
+      {
+        "text": "没有你，对我很重要",
+        "result": "凡人联合起来对神的挑战。获得藏品「巴别塔」",
+        "executor": "java",
+        "requiresAnyRelic": [
+          "relic_betrayal",
+          "relic_hatred"
+        ]
+      }
+    ]
   }
 ]

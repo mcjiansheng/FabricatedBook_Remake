@@ -874,6 +874,10 @@ public class BackendDebugLauncher {
         ok &= assertCheck(decisionEvent.relicId == null
                         && decisionEvent.description.contains("没有作出选择"),
                 "命运抉择条件保留 Java handler");
+        ok &= assertCheck(!eventHandler.getEventNames().contains("命运抉择1")
+                        && !eventHandler.getEventNames().contains("命运抉择2")
+                        && eventHandler.getOptions("命运抉择1").size() == 2,
+                "命运抉择展示数据来自 JSON 且不进入随机事件池");
         Relic resolvedPlaceholderRelic = EventRewardResolver.resolveRelic(
                 "relic_random_leq3", testPlayer, new Random(1));
         Relic resolvedCurseRelic = EventRewardResolver.resolveRelic(

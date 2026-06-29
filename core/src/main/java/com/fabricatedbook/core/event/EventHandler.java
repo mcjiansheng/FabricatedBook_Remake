@@ -97,7 +97,13 @@ public class EventHandler {
      */
     public List<String> getEventNames() {
         if (!eventsByName.isEmpty()) {
-            return new ArrayList<>(eventsByName.keySet());
+            List<String> names = new ArrayList<>();
+            for (DataLoader.EventData eventData : eventsByName.values()) {
+                if (eventData.isRandomPool()) {
+                    names.add(eventData.getName());
+                }
+            }
+            return names;
         }
         return hardcodedEventNames();
     }
@@ -166,7 +172,7 @@ public class EventHandler {
     }
 
     public List<EventOption> getOptions(String eventName, Player player) {
-        List<EventOption> dataOptions = dataOptions(eventName);
+        List<EventOption> dataOptions = dataOptions(eventName, player);
         if (!dataOptions.isEmpty()) {
             return dataOptions;
         }
@@ -248,16 +254,36 @@ public class EventHandler {
         return events;
     }
 
-    private List<EventOption> dataOptions(String eventName) {
+    private List<EventOption> dataOptions(String eventName, Player player) {
         DataLoader.EventData eventData = eventsByName.get(eventName);
         if (eventData == null || eventData.getOptions().isEmpty()) {
             return List.of();
         }
         List<EventOption> options = new ArrayList<>();
         for (DataLoader.EventOptionData optionData : eventData.getOptions()) {
+            if (!optionConditionMatches(optionData, player)) {
+                continue;
+            }
             options.add(new EventOption(optionData.getText(), optionData.getResult()));
         }
         return options;
+    }
+
+    private boolean optionConditionMatches(DataLoader.EventOptionData optionData,
+                                           Player player) {
+        List<String> requiredRelics = optionData.getRequiresAnyRelic();
+        if (requiredRelics.isEmpty()) {
+            return true;
+        }
+        if (player == null) {
+            return false;
+        }
+        for (String relicId : requiredRelics) {
+            if (player.hasRelic(relicId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private EventResult executeDataEvent(String eventName, int optionIndex) {
@@ -267,6 +293,9 @@ public class EventHandler {
             return null;
         }
         DataLoader.EventOptionData optionData = eventData.getOptions().get(optionIndex);
+        if (optionData.usesJavaExecutor()) {
+            return null;
+        }
         return EventResultResolver.resolve(optionData, random);
     }
 
