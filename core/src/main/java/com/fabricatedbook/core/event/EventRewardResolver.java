@@ -11,7 +11,9 @@ import com.fabricatedbook.core.relic.RelicManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -21,6 +23,9 @@ public final class EventRewardResolver {
     public static final String RANDOM_LEQ3_RELIC = "relic_random_leq3";
     public static final String RANDOM_CURSE_RELIC = "relic_curse_random";
     public static final String FIVE_CARDS_REWARD = "relic_five_cards";
+    public static final String NUKE_REWARD = "relic_nuke";
+    private static final Map<String, SpecialRewardExecutor> SPECIAL_REWARD_EXECUTORS =
+            createSpecialRewardExecutors();
 
     private EventRewardResolver() {}
 
@@ -30,30 +35,35 @@ public final class EventRewardResolver {
                 || owner == null) {
             return EventReward.empty();
         }
-        Random rng = random == null ? new Random() : random;
-        if (FIVE_CARDS_REWARD.equals(result.relicId)) {
-            List<Card> cards = randomCards(owner, rng, 5);
-            owner.getDrawPile().addAll(cards);
-            return new EventReward(null, cards);
+        RewardContext context = new RewardContext(owner,
+                random == null ? new Random() : random);
+        SpecialRewardExecutor executor = SPECIAL_REWARD_EXECUTORS.get(result.relicId);
+        if (executor != null) {
+            return executor.apply(context);
         }
 
-        Relic relic = resolveRelic(result.relicId, owner, rng);
+        Relic relic = RelicFactory.createById(result.relicId, owner);
         if (relic != null) {
             new RelicManager(owner).addRelic(relic);
         }
-        return new EventReward(relic, List.of());
+        return new EventReward(relic, List.of(), null);
     }
 
     public static Relic resolveRelic(String relicId, Player owner, Random random) {
         if (relicId == null || relicId.isBlank() || owner == null) {
             return null;
         }
-        Random rng = random == null ? new Random() : random;
-        return switch (relicId) {
-            case RANDOM_LEQ3_RELIC -> randomRelic(owner, rng, false, 3);
-            case RANDOM_CURSE_RELIC -> randomCursedRelic(owner, rng);
-            default -> RelicFactory.createById(relicId, owner);
-        };
+        RewardContext context = new RewardContext(owner,
+                random == null ? new Random() : random);
+        SpecialRewardExecutor executor = SPECIAL_REWARD_EXECUTORS.get(relicId);
+        if (executor != null) {
+            return executor.resolveRelic(context);
+        }
+        return RelicFactory.createById(relicId, owner);
+    }
+
+    public static boolean isSpecialRewardId(String rewardId) {
+        return rewardId != null && SPECIAL_REWARD_EXECUTORS.containsKey(rewardId);
     }
 
     public static List<Card> randomCards(Player owner, Random random, int count) {
@@ -101,6 +111,60 @@ public final class EventRewardResolver {
         return RelicFactory.create(candidates.get(random.nextInt(candidates.size())), owner);
     }
 
+    private static Map<String, SpecialRewardExecutor> createSpecialRewardExecutors() {
+        Map<String, SpecialRewardExecutor> executors = new HashMap<>();
+        executors.put(RANDOM_LEQ3_RELIC, new SpecialRewardExecutor() {
+            @Override
+            public EventReward apply(RewardContext context) {
+                Relic relic = randomRelic(context.owner(), context.random(), false, 3);
+                addRelic(context.owner(), relic);
+                return new EventReward(relic, List.of(), null);
+            }
+
+            @Override
+            public Relic resolveRelic(RewardContext context) {
+                return randomRelic(context.owner(), context.random(), false, 3);
+            }
+        });
+        executors.put(RANDOM_CURSE_RELIC, new SpecialRewardExecutor() {
+            @Override
+            public EventReward apply(RewardContext context) {
+                Relic relic = randomCursedRelic(context.owner(), context.random());
+                addRelic(context.owner(), relic);
+                return new EventReward(relic, List.of(), null);
+            }
+
+            @Override
+            public Relic resolveRelic(RewardContext context) {
+                return randomCursedRelic(context.owner(), context.random());
+            }
+        });
+        executors.put(FIVE_CARDS_REWARD, context -> {
+            List<Card> cards = randomCards(context.owner(), context.random(), 5);
+            context.owner().getDrawPile().addAll(cards);
+            return new EventReward(null, cards, null);
+        });
+        executors.put(NUKE_REWARD, context ->
+                new EventReward(null, List.of(), NUKE_REWARD));
+        return Map.copyOf(executors);
+    }
+
+    private static void addRelic(Player owner, Relic relic) {
+        if (owner != null && relic != null) {
+            new RelicManager(owner).addRelic(relic);
+        }
+    }
+
+    private interface SpecialRewardExecutor {
+        EventReward apply(RewardContext context);
+
+        default Relic resolveRelic(RewardContext context) {
+            return null;
+        }
+    }
+
+    private record RewardContext(Player owner, Random random) {}
+
     private static Relic randomCursedRelic(Player owner, Random random) {
         List<RelicData> candidates = new ArrayList<>();
         for (RelicData data : RelicFactory.loadRelicData()) {
@@ -116,14 +180,17 @@ public final class EventRewardResolver {
 
     public static final class EventReward {
         private static final EventReward EMPTY =
-                new EventReward(null, Collections.emptyList());
+                new EventReward(null, Collections.emptyList(), null);
 
         private final Relic relic;
         private final List<Card> cards;
+        private final String unresolvedSpecialRewardId;
 
-        private EventReward(Relic relic, List<Card> cards) {
+        private EventReward(Relic relic, List<Card> cards,
+                            String unresolvedSpecialRewardId) {
             this.relic = relic;
             this.cards = List.copyOf(cards);
+            this.unresolvedSpecialRewardId = unresolvedSpecialRewardId;
         }
 
         public static EventReward empty() {
@@ -136,6 +203,10 @@ public final class EventRewardResolver {
 
         public List<Card> getCards() {
             return cards;
+        }
+
+        public String getUnresolvedSpecialRewardId() {
+            return unresolvedSpecialRewardId;
         }
 
         public String getRelicName() {

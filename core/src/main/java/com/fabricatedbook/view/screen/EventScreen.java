@@ -279,6 +279,12 @@ public class EventScreen implements Screen {
             if (summary.length() > 0) summary.append("   ");
             summary.append("获得卡牌：").append(reward.cardNames());
         }
+        if (reward != null && reward.getUnresolvedSpecialRewardId() != null
+                && !reward.getUnresolvedSpecialRewardId().isBlank()) {
+            if (summary.length() > 0) summary.append("   ");
+            summary.append("特殊奖励待接入：")
+                    .append(reward.getUnresolvedSpecialRewardId());
+        }
         return summary.toString();
     }
 

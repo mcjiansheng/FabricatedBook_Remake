@@ -175,6 +175,21 @@ class EventHandlerTest {
     }
 
     @Test
+    void nukeEventRewardUsesExplicitUnsupportedSpecialReward() {
+        Player player = player();
+        EventHandler.EventResult result = new EventHandler.EventResult(
+                "获得 1 个核弹", 0, 0, "relic_nuke");
+
+        EventRewardResolver.EventReward reward =
+                EventRewardResolver.applyRewards(result, player, new Random(1));
+
+        assertNull(reward.getRelic());
+        assertEquals("relic_nuke", reward.getUnresolvedSpecialRewardId());
+        assertFalse(player.hasRelic("relic_nuke"));
+        assertTrue(EventRewardResolver.isSpecialRewardId("relic_nuke"));
+    }
+
+    @Test
     void randomEventResultCanComeFromJsonData() {
         EventHandler handler = new EventHandler(new Random(1));
 
@@ -214,6 +229,9 @@ class EventHandlerTest {
             for (DataLoader.EventOptionData option : event.getOptions()) {
                 if (!option.hasExecutableResult() || option.getRelicId() == null
                         || option.getRelicId().isBlank()) {
+                    continue;
+                }
+                if (EventRewardResolver.isSpecialRewardId(option.getRelicId())) {
                     continue;
                 }
                 assertTrue(RelicFactory.createById(option.getRelicId(), owner) != null,
