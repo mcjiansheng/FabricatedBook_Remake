@@ -37,6 +37,7 @@ public class EndingScreen implements Screen {
 
     @Override
     public void show() {
+        game.abandonCurrentRun();
         stage = new Stage(ResponsiveViewport.create());
         Gdx.input.setInputProcessor(stage);
 
@@ -67,7 +68,6 @@ public class EndingScreen implements Screen {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event,
                                 float x, float y) {
-                game.abandonCurrentRun();
                 game.setScreen(new TitleScreen(game));
             }
         });

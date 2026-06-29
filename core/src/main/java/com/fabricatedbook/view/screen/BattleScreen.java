@@ -851,6 +851,8 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
     private void returnToMapAfterReward() {
         if (returnMap != null) {
             if (returnMap.isFinalLayer()) {
+                commitRewardPhase();
+                game.autosaveCurrentRun();
                 game.setScreen(new EndingScreen(game, returnMap.endingForFinalBoss()));
                 return;
             }
