@@ -901,6 +901,13 @@ public class BackendDebugLauncher {
                         == cardCountBeforeEventReward + 5
                         && !testPlayer.hasRelic("relic_five_cards"),
                 "五张牌事件奖励可展开为真实卡牌");
+        EventRewardResolver.EventReward nukeReward =
+                EventRewardResolver.applyRewards(new EventHandler.EventResult(
+                                "获得 1 个核弹", 0, 0, "relic_nuke"),
+                        testPlayer, new Random(1));
+        ok &= assertCheck("relic_nuke".equals(nukeReward.getUnresolvedSpecialRewardId())
+                        && !testPlayer.hasRelic("relic_nuke"),
+                "核弹特殊奖励保持显式未接入状态");
 
         int oldMaxHp = testPlayer.getMaxHp();
         Relic hotWater = RelicFactory.createById("relic_hot_water_flask", testPlayer);
@@ -973,8 +980,8 @@ public class BackendDebugLauncher {
                 ok &= randomOutcomesAreValid(event, option);
                 if (result != null && result.relicId != null
                         && !result.relicId.isBlank()
-                        && RelicFactory.createById(result.relicId, player) == null) {
-                    println("[SELFTEST] 固定事件结果引用未知藏品: " + event.getName()
+                        && !rewardIdIsKnown(result.relicId)) {
+                    println("[SELFTEST] 固定事件结果引用未知奖励: " + event.getName()
                             + " -> " + option.getText() + " -> " + result.relicId);
                     ok = false;
                 }
@@ -1013,8 +1020,8 @@ public class BackendDebugLauncher {
                 ok = false;
             }
             if (outcome.getRelicId() != null && !outcome.getRelicId().isBlank()
-                    && RelicFactory.createById(outcome.getRelicId(), player) == null) {
-                println("[SELFTEST] 事件随机 outcome 引用未知藏品: " + event.getName()
+                    && !rewardIdIsKnown(outcome.getRelicId())) {
+                println("[SELFTEST] 事件随机 outcome 引用未知奖励: " + event.getName()
                         + " -> " + option.getText() + " -> " + outcome.getRelicId());
                 ok = false;
             }
@@ -1025,6 +1032,11 @@ public class BackendDebugLauncher {
             ok = false;
         }
         return ok;
+    }
+
+    private boolean rewardIdIsKnown(String rewardId) {
+        return EventRewardResolver.isSpecialRewardId(rewardId)
+                || RelicFactory.createById(rewardId, player) != null;
     }
 
     private boolean javaEventOptionsAreMarked(List<DataLoader.EventData> events) {
