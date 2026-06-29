@@ -277,7 +277,7 @@
 
 ## B-006：卡牌 effect DSL 执行与预览重复解析
 
-状态：部分修复。已新增 `CardEffectParser` / `CardEffect`，`CombatEngine.parseCardEffects()` 和 `CombatPreviewCalculator.previewCard()` 现在共用同一个 DSL 拆分入口，不再各自处理空值、split 和 effect type 归一化；`CardEffectType` 已把现有 effect DSL 列成注册表，并记录实战执行、数值预览支持状态、DSL 参数数量范围、整数参数位置和关键文字参数约束。卡牌数值预览 switch 已从 `CombatPreviewCalculator` 抽到 `CardEffectPreviewer`，`CombatPreviewCalculator` 保留入口、目标准备和描述格式化职责；卡牌实战执行逻辑已从 `CombatEngine` 抽到 `CardEffectExecutor`，并进一步改为 `CardEffectType -> EffectHandler` 注册表，`CombatEngine` 只负责传入玩家、敌人、随机源和耗能上下文。`CardEffectPreviewer` 仍先通过 `CardEffectType` 注册表识别 DSL 类型和支持面，再按枚举分派。后端 CLI `selftest` 已扫描所有已配置职业 JSON 卡牌 effect，遇到未知 DSL type、未接入实战执行的 type、参数数量不匹配、整数参数无法解析或文字参数不支持会失败并打印职业与卡牌 ID。剩余工作：继续把 `CardEffectPreviewer` 的 enum switch 收敛为 preview handler/策略，并视需要把执行和预览 handler 的注册信息再上收到统一 effect 描述对象，减少新增 effect 时的重复分支。
+状态：部分修复。已新增 `CardEffectParser` / `CardEffect`，`CombatEngine.parseCardEffects()` 和 `CombatPreviewCalculator.previewCard()` 现在共用同一个 DSL 拆分入口，不再各自处理空值、split 和 effect type 归一化；`CardEffectType` 已把现有 effect DSL 列成注册表，并记录实战执行、数值预览支持状态、DSL 参数数量范围、整数参数位置和关键文字参数约束。卡牌数值预览逻辑已从 `CombatPreviewCalculator` 抽到 `CardEffectPreviewer`，`CombatPreviewCalculator` 保留入口、目标准备和描述格式化职责；卡牌实战执行逻辑已从 `CombatEngine` 抽到 `CardEffectExecutor`，`CombatEngine` 只负责传入玩家、敌人、随机源和耗能上下文。`CardEffectExecutor` 已使用 `CardEffectType -> EffectHandler` 注册表，`CardEffectPreviewer` 已使用 `CardEffectType -> PreviewHandler` 注册表，两者都通过 `CardEffectType` 识别 DSL 类型和支持面后交给对应 handler，不再维护大段 enum switch。后端 CLI `selftest` 已扫描所有已配置职业 JSON 卡牌 effect，遇到未知 DSL type、未接入实战执行的 type、参数数量不匹配、整数参数无法解析或文字参数不支持会失败并打印职业与卡牌 ID。剩余工作：如果继续扩展 effect DSL，可把执行和预览 handler 注册信息再上收到统一 effect 描述对象，减少新增 effect 时在多个类中重复登记。
 
 ### 位置
 
