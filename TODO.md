@@ -237,8 +237,8 @@
 ### P2：数据和内容整理
 
 - [ ] 统一卡牌来源。
-  - [ ] `CardPool` 硬编码战士卡与 `warrior.json` ID/字段不完全一致，需要确认最终来源。
-  - [ ] 若改为 JSON 注册，删除或降级硬编码卡池。
+  - [x] `CardPool` 硬编码战士卡与 `warrior.json` ID/字段不完全一致，需要确认最终来源。（战士主链路已优先 JSON 注册，后端 CLI `selftest` 会校验运行时 CardPool 与 JSON 一致。）
+  - [x] 若改为 JSON 注册，删除或降级硬编码卡池。（硬编码战士卡已降级为 JSON 加载失败时的兜底。）
 - [ ] 统一怪物 action DSL。
   - [ ] 保持 `EnemyActionResolver` 对现有 JSON 的兼容。
   - [ ] 文档化推荐 action 写法。
@@ -309,7 +309,7 @@ Bug ID：
 
 - [x] 第 6 层固定隐藏层暂不作为近期目标。
 - [x] 地图规则最终放在 `MapGraph` 扩展还是新增稀疏图模型。（已新增稀疏图模型，旧 `MapGraph` 暂保留兼容。）
-- [ ] 卡牌数据最终以 JSON 为唯一来源，还是保留 `CardPool` 硬编码兜底。（战士主链路已优先 JSON，硬编码仅作 fallback。）
+- [x] 卡牌数据最终以 JSON 为唯一来源，还是保留 `CardPool` 硬编码兜底。（战士主链路已优先 JSON，硬编码仅作 fallback；法师/女巫完整卡池仍归职业内容任务。）
 - [ ] 事件系统是否全面 JSON 化。
 - [ ] 奖励交互采用重制版便利流程还是原版逐项领取流程。
 - [x] 女巫和其它职业不急于完成；但药水上限必须保留扩展能力，可能超过 5。
@@ -319,6 +319,6 @@ Bug ID：
 
 后端结构问题、修复顺序、影响范围和验证建议集中记录在 [doc/backend_todo.md](doc/backend_todo.md)。当前已完成战斗胜利回调、商店弃牌次数状态、战士卡牌来源统一，以及地图生成/连接规则 core 化；节点进入与环境效果已下沉到 core，节点进入反馈已接入前端目标页面，战斗/未提交非战斗节点中途存档会回到节点入口前快照，事件选择、奖励节点事件、商店购买/删牌、安全屋结算和通用药水条丢弃等已提交非战斗进度会保留玩家变化并记录节点完成，最终 Boss 进入结局前会提交 active combat，结局显示时删除当前 run 存档。后端 CLI 商店节点已接入真实 `ShopManager`，支持商品购买、删牌和进度自动保存；奖励节点已和前端一致采用事件「好诗歪诗」映射；`flowtest` 会脚本化覆盖事件选择、奖励节点事件、商店商品购买、商店删牌、安全屋治疗和非战斗药水丢弃在提交后保存玩家变化并记录 completed node。下一步重点是继续做前端实际点击/截图回归、复杂玩法语义确认和职业内容完整化。
 
-近期后端进展：effect DSL 已先抽出 `CardEffectParser` 作为执行和预览共用解析入口，并新增 `CardEffectType` 注册体现式记录实战执行/数值预览支持状态、参数数量范围、整数参数位置和关键文字参数约束；卡牌实战执行逻辑已迁入 `CardEffectExecutor`，卡牌数值预览逻辑已迁入 `CardEffectPreviewer`，执行器和预览器现在都由各自的已登记 effect 类型集合驱动构建 handler map。后端 CLI `selftest` 已能扫描所有已配置职业 JSON 卡牌的未知 effect、未接入实战执行的 effect、参数数量错误、整数参数格式错误和不支持的文字参数，并会检查 `CardEffectType` 支持声明与执行/预览 handler 登记是否一致，避免新增 DSL 时漏接实际执行或预览。
+近期后端进展：战士运行时 `CardPool` 已优先由 `warrior.json` 注册，硬编码战士池仅作为 JSON 加载失败时的兜底；后端 CLI `selftest` 会校验运行时战士 CardPool 与 JSON 的数量、ID 和关键字段一致。effect DSL 已先抽出 `CardEffectParser` 作为执行和预览共用解析入口，并新增 `CardEffectType` 注册体现式记录实战执行/数值预览支持状态、参数数量范围、整数参数位置和关键文字参数约束；卡牌实战执行逻辑已迁入 `CardEffectExecutor`，卡牌数值预览逻辑已迁入 `CardEffectPreviewer`，执行器和预览器现在都由各自的已登记 effect 类型集合驱动构建 handler map。后端 CLI `selftest` 已能扫描所有已配置职业 JSON 卡牌的未知 effect、未接入实战执行的 effect、参数数量错误、整数参数格式错误和不支持的文字参数，并会检查 `CardEffectType` 支持声明与执行/预览 handler 登记是否一致，避免新增 DSL 时漏接实际执行或预览。
 
 事件系统已让普通事件和命运抉择的名称、描述、选项展示、固定结果、简单随机范围结果、加权随机结果、条件选项和结局 outcome 从 `events.json` 读取，并抽出 `EventResultResolver` 负责 JSON 结果转换；`EventRewardResolver` 已建立特殊奖励 executor 注册表，随机低阶/负面藏品占位会展开为真实藏品，五张牌事件奖励会展开为真实卡牌，`relic_nuke` 暂时返回显式未接入特殊奖励状态而不再伪装成普通藏品。`EventHandler` 已收敛为数据调度器，旧的硬编码事件名称、描述、选项和结果 fallback 已移除；当前 JSON 中没有选项依赖 Java executor，未来真正复杂事件需显式标记 `executor: "java"` 并登记专用 executor。后端 CLI 的普通事件和命运抉择也已复用 `EventHandler` / `events.json`，传入玩家上下文展示条件选项并处理 outcome。后端 CLI `selftest` 会扫描 JSON 固定/随机事件结果字段、藏品引用或特殊奖励 ID、五张牌奖励展开、命运抉择随机池边界、条件选项和 Java executor 标记。核弹真实玩法 executor 仍需在语义确认后接入。

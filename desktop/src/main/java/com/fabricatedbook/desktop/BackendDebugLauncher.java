@@ -2,6 +2,7 @@ package com.fabricatedbook.desktop;
 
 import com.fabricatedbook.core.action.CombatAction;
 import com.fabricatedbook.core.card.Card;
+import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.engine.CardEffect;
 import com.fabricatedbook.core.engine.CardEffectParser;
 import com.fabricatedbook.core.engine.CombatEngine;
@@ -979,6 +980,7 @@ public class BackendDebugLauncher {
 
         List<Card> cards = loader.loadCards("warrior");
         ok &= assertCheck(!cards.isEmpty(), "战士 JSON 卡牌可加载: " + cards.size());
+        ok &= assertCheck(cardPoolMatchesJson(cards), "运行时战士 CardPool 与 JSON 一致");
         ok &= assertCheck(availableCardEffectsAreKnown(loader),
                 "已配置职业 JSON 卡牌 effect 均已接入实战 DSL");
         ok &= assertCheck(cardEffectHandlersMatchRegistry(),
@@ -1221,6 +1223,35 @@ public class BackendDebugLauncher {
                 continue;
             }
             ok &= cardEffectsAreKnown(profession.getDisplayName(), cards);
+        }
+        return ok;
+    }
+
+    private boolean cardPoolMatchesJson(List<Card> jsonCards) {
+        List<Card> runtimeCards = CardPool.getCardsByProfession("warrior");
+        boolean ok = true;
+        if (runtimeCards.size() != jsonCards.size()) {
+            println("[SELFTEST] 战士 CardPool 数量与 JSON 不一致: runtime="
+                    + runtimeCards.size() + ", json=" + jsonCards.size());
+            ok = false;
+        }
+        for (Card jsonCard : jsonCards) {
+            Card runtimeCard = CardPool.findById(jsonCard.getId());
+            if (runtimeCard == null) {
+                println("[SELFTEST] 战士 CardPool 缺少 JSON 卡牌: " + jsonCard.getId());
+                ok = false;
+                continue;
+            }
+            if (!runtimeCard.getName().equals(jsonCard.getName())
+                    || runtimeCard.getCost() != jsonCard.getCost()
+                    || runtimeCard.getType() != jsonCard.getType()
+                    || runtimeCard.getRarity() != jsonCard.getRarity()
+                    || runtimeCard.getValue() != jsonCard.getValue()
+                    || !runtimeCard.getEffects().equals(jsonCard.getEffects())) {
+                println("[SELFTEST] 战士 CardPool 卡牌字段与 JSON 不一致: "
+                        + jsonCard.getId());
+                ok = false;
+            }
         }
         return ok;
     }

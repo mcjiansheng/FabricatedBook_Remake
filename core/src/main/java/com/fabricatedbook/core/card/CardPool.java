@@ -13,8 +13,8 @@ import java.util.Random;
  * CardPool — 卡牌池
  * <p>
  * 按职业分组的卡牌池，提供按职业和稀有度的卡牌检索。
- * 战士卡牌在此硬编码。
- * 法师和女巫的卡牌池当前留空，由 JSON 配置补充。
+ * 战士运行池优先从 data/cards/warrior.json 注册；硬编码战士数据只作为
+ * JSON 加载失败时的兜底。法师和女巫的完整卡池由后续 JSON 配置补充。
  * <p>
  * 引用方：CardFactory（注册卡牌）、ShopManager（生成商店卡牌）、
  *         CombatEngine（战斗奖励等）
