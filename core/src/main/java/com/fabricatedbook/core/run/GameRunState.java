@@ -27,6 +27,7 @@ public class GameRunState {
     private NodeRef completedNode;
     private NodeRef activeNode;
     private PlayerSnapshot combatBaseline;
+    private boolean activeNodeProgressCommitted;
     private int shopRemoveCount;
     private int mapDamageModifier;
 
@@ -52,6 +53,7 @@ public class GameRunState {
     public NodeRef getActiveNode() { return activeNode; }
     public void setActiveNode(NodeRef activeNode) { this.activeNode = activeNode; }
     public PlayerSnapshot getCombatBaseline() { return combatBaseline; }
+    public boolean isActiveNodeProgressCommitted() { return activeNodeProgressCommitted; }
     public int getShopRemoveCount() { return shopRemoveCount; }
     public void setShopRemoveCount(int shopRemoveCount) {
         this.shopRemoveCount = Math.max(0, shopRemoveCount);
@@ -74,6 +76,7 @@ public class GameRunState {
     public void beginNode(NodeRef nodeRef) {
         this.activeNode = nodeRef;
         this.combatBaseline = PlayerSnapshot.from(player);
+        this.activeNodeProgressCommitted = false;
     }
 
     public void beginCombat(NodeRef nodeRef) {
@@ -86,11 +89,19 @@ public class GameRunState {
             activeNode = null;
         }
         combatBaseline = null;
+        activeNodeProgressCommitted = false;
     }
 
     public void clearCombatState() {
         activeNode = null;
         combatBaseline = null;
+        activeNodeProgressCommitted = false;
+    }
+
+    public void markActiveNodeProgressCommitted() {
+        if (isNodeActive() && !isInCombat()) {
+            activeNodeProgressCommitted = true;
+        }
     }
 
     public Random randomFor(String key) {

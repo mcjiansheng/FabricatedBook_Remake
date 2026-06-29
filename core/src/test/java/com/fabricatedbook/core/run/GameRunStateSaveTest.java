@@ -51,4 +51,30 @@ class GameRunStateSaveTest {
         assertNull(restored.getCompletedNode());
         assertNull(restored.getActiveNode());
     }
+
+    @Test
+    void committedNonCombatActiveNodeSaveKeepsPlayerProgress() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        player.setGold(80);
+        GameRunState runState = new GameRunState(123L, player);
+        GameRunState.NodeRef shopNode = new GameRunState.NodeRef(1, 2, 0, 6);
+        runState.beginNode(shopNode);
+
+        player.spendGold(25);
+        runState.markActiveNodeProgressCommitted();
+
+        SaveManager saveManager = new SaveManager(tempDir.resolve("save.json").toString());
+
+        assertTrue(saveManager.saveRun(runState));
+        GameRunState restored = saveManager.loadRun();
+
+        assertNotNull(restored);
+        assertEquals(55, restored.getPlayer().getGold());
+        assertNotNull(restored.getCompletedNode());
+        assertEquals(shopNode.layer, restored.getCompletedNode().layer);
+        assertEquals(shopNode.col, restored.getCompletedNode().col);
+        assertEquals(shopNode.row, restored.getCompletedNode().row);
+        assertEquals(shopNode.type, restored.getCompletedNode().type);
+        assertNull(restored.getActiveNode());
+    }
 }

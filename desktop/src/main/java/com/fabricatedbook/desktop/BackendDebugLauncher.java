@@ -1162,6 +1162,28 @@ public class BackendDebugLauncher {
             ok &= assertCheck(loadedNonCombat.getActiveNode() == null,
                     "读档后不保留未完成节点过程状态");
         }
+
+        startNewRun(seed + 2);
+        player.setGold(90);
+        GameRunState.NodeRef committedShopNode = new GameRunState.NodeRef(1, 2, 0, 6);
+        runState.beginNode(committedShopNode);
+        player.spendGold(25);
+        runState.markActiveNodeProgressCommitted();
+        ok &= assertCheck(saveManager.saveRun(runState),
+                "已提交非战斗节点进度可以保存对局");
+
+        GameRunState loadedCommittedNonCombat = saveManager.loadRun();
+        ok &= assertCheck(loadedCommittedNonCombat != null,
+                "可以读取已提交非战斗节点存档");
+        if (loadedCommittedNonCombat != null) {
+            ok &= assertCheck(loadedCommittedNonCombat.getPlayer().getGold() == 65,
+                    "已提交非战斗节点存档保留玩家变化: "
+                            + loadedCommittedNonCombat.getPlayer().getGold());
+            ok &= assertCheck(loadedCommittedNonCombat.getCompletedNode() != null,
+                    "已提交非战斗节点存档记录节点完成");
+            ok &= assertCheck(loadedCommittedNonCombat.getActiveNode() == null,
+                    "读档后不恢复已提交节点过程状态");
+        }
         println(ok ? "SAVETEST PASS" : "SAVETEST FAIL");
     }
 

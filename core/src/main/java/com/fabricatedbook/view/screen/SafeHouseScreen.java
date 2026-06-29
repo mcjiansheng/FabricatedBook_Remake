@@ -183,6 +183,9 @@ public class SafeHouseScreen implements Screen {
         if (statusLabel != null) {
             statusLabel.setText(message);
         }
+        if (game.getCurrentRun() != null) {
+            game.getCurrentRun().markActiveNodeProgressCommitted();
+        }
         game.autosaveCurrentRun();
         if (returnMap != null) {
             returnMap.completeCurrentNodeAndReturn();

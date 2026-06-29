@@ -392,11 +392,18 @@ public class ShopScreen implements Screen {
         }
         if (shopManager.purchase(index)) {
             feedbackLabel.show("已购买：" + item.getName(), UiFeedback.Tone.SUCCESS);
+            markNodeProgressCommitted();
             game.autosaveCurrentRun();
             rememberItemScroll();
             renderItems();
         } else {
             feedbackLabel.show("购买失败，请检查商品状态。", UiFeedback.Tone.ERROR);
+        }
+    }
+
+    private void markNodeProgressCommitted() {
+        if (game.getCurrentRun() != null) {
+            game.getCurrentRun().markActiveNodeProgressCommitted();
         }
     }
 
@@ -456,6 +463,7 @@ public class ShopScreen implements Screen {
                 Card selected = player.getDrawPile().get(selectedRemoveIndex);
                 if (shopManager.purchaseRemove(selectedRemoveIndex)) {
                     feedbackLabel.show("已移除：" + selected.getName(), UiFeedback.Tone.SUCCESS);
+                    markNodeProgressCommitted();
                     game.autosaveCurrentRun();
                     rememberItemScroll();
                     renderItems();

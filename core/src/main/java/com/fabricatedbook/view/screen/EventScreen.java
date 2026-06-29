@@ -189,6 +189,7 @@ public class EventScreen implements Screen {
                     EventRewardResolver.EventReward eventReward =
                             EventRewardResolver.applyRewards(result, player,
                                     EventScreen.this.eventRandom);
+                    markNodeProgressCommitted();
 
                     // 显示结果
                     game.autosaveCurrentRun();
@@ -292,6 +293,12 @@ public class EventScreen implements Screen {
         };
         game.setScreen(new EndingScreen(game, endingType));
         return true;
+    }
+
+    private void markNodeProgressCommitted() {
+        if (game.getCurrentRun() != null) {
+            game.getCurrentRun().markActiveNodeProgressCommitted();
+        }
     }
 
     private String cleanLabel(String label) {

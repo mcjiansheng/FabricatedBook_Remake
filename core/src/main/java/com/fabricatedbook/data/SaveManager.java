@@ -135,14 +135,20 @@ public class SaveManager {
         if (runState == null || runState.getPlayer() == null) {
             return false;
         }
+        boolean activeNodeCommitted = runState.isNodeActive()
+                && runState.isActiveNodeProgressCommitted();
         GameRunState.PlayerSnapshot playerSnapshot = runState.isNodeActive()
+                && !activeNodeCommitted
                 ? runState.getCombatBaseline()
                 : GameRunState.PlayerSnapshot.from(runState.getPlayer());
-        GameRunState.NodeRef activeNode = runState.isNodeActive()
+        GameRunState.NodeRef completedNode = activeNodeCommitted
+                ? runState.getActiveNode()
+                : runState.getCompletedNode();
+        GameRunState.NodeRef activeNode = runState.isNodeActive() && !activeNodeCommitted
                 ? runState.getActiveNode()
                 : null;
         return saveSnapshot(playerSnapshot, runState.getSeed(),
-                runState.getCurrentLayerIdx(), runState.getCompletedNode(),
+                runState.getCurrentLayerIdx(), completedNode,
                 activeNode, runState.getCombatBaseline(), runState.getShopRemoveCount(),
                 runState.getMapDamageModifier());
     }
