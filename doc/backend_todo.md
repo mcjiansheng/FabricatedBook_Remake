@@ -277,7 +277,7 @@
 
 ## B-006：卡牌 effect DSL 执行与预览重复解析
 
-状态：部分修复。已新增 `CardEffectParser` / `CardEffect`，`CombatEngine.parseCardEffects()` 和 `CombatPreviewCalculator.previewCard()` 现在共用同一个 DSL 拆分入口，不再各自处理空值、split 和 effect type 归一化；`CardEffectType` 已把现有 effect DSL 列成注册表，并记录实战执行、数值预览支持状态、DSL 参数数量范围、整数参数位置和关键文字参数约束。卡牌数值预览逻辑已从 `CombatPreviewCalculator` 抽到 `CardEffectPreviewer`，`CombatPreviewCalculator` 保留入口、目标准备和描述格式化职责；卡牌实战执行逻辑已从 `CombatEngine` 抽到 `CardEffectExecutor`，`CombatEngine` 只负责传入玩家、敌人、随机源和耗能上下文。`CardEffectExecutor` 已使用 `CardEffectType -> EffectHandler` 注册表，`CardEffectPreviewer` 已使用 `CardEffectType -> PreviewHandler` 注册表，两者都通过 `CardEffectType` 识别 DSL 类型和支持面后交给对应 handler，不再维护大段 enum switch。后端 CLI `selftest` 已扫描所有已配置职业 JSON 卡牌 effect，遇到未知 DSL type、未接入实战执行的 type、参数数量不匹配、整数参数无法解析或文字参数不支持会失败并打印职业与卡牌 ID。剩余工作：如果继续扩展 effect DSL，可把执行和预览 handler 注册信息再上收到统一 effect 描述对象，减少新增 effect 时在多个类中重复登记。
+状态：已修复主链路。已新增 `CardEffectParser` / `CardEffect`，`CombatEngine.parseCardEffects()` 和 `CombatPreviewCalculator.previewCard()` 现在共用同一个 DSL 拆分入口，不再各自处理空值、split 和 effect type 归一化；`CardEffectType` 已把现有 effect DSL 列成注册表，并记录实战执行、数值预览支持状态、DSL 参数数量范围、整数参数位置和关键文字参数约束。卡牌数值预览逻辑已从 `CombatPreviewCalculator` 抽到 `CardEffectPreviewer`，`CombatPreviewCalculator` 保留入口、目标准备和描述格式化职责；卡牌实战执行逻辑已从 `CombatEngine` 抽到 `CardEffectExecutor`，`CombatEngine` 只负责传入玩家、敌人、随机源和耗能上下文。`CardEffectExecutor` / `CardEffectPreviewer` 现在都由各自的已登记 effect 类型集合驱动构建 handler map，`CardEffectParser` 会汇总 `CardEffectType` 支持声明与运行时 handler 登记之间的缺口；核心单元测试和后端 CLI `selftest` 都会检查执行/预览 handler 与注册表一致。后端 CLI `selftest` 同时扫描所有已配置职业 JSON 卡牌 effect，遇到未知 DSL type、未接入实战执行的 type、参数数量不匹配、整数参数无法解析、文字参数不支持，或支持声明缺少对应 handler 时会失败并打印原因。
 
 ### 位置
 
@@ -322,6 +322,7 @@
 4. 让 `CombatPreviewCalculator` 使用 parser 的结果。（已完成）
 5. 扩展 `selftest`：扫描已配置职业 JSON 卡牌，发现未知 effect 或未接入实战执行的 effect 直接报错。（已完成）
 6. 下一步再把 `CombatEngine` 的执行 switch 和 `CombatPreviewCalculator` 的预览 switch 拆到专用 executor/previewer，减少继续扩展职业卡牌时的重复分支。（已完成：执行 switch 已迁入 `CardEffectExecutor`，预览 switch 已迁入 `CardEffectPreviewer`）
+7. 防止 `CardEffectType` 支持声明与执行/预览 handler 登记漂移。（已完成：执行器和预览器暴露登记集合，单元测试和 CLI `selftest` 会检查缺口）
 
 ### 影响面
 

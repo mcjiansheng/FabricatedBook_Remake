@@ -862,6 +862,8 @@ public class BackendDebugLauncher {
         ok &= assertCheck(!cards.isEmpty(), "战士 JSON 卡牌可加载: " + cards.size());
         ok &= assertCheck(availableCardEffectsAreKnown(loader),
                 "已配置职业 JSON 卡牌 effect 均已接入实战 DSL");
+        ok &= assertCheck(cardEffectHandlersMatchRegistry(),
+                "卡牌 effect 执行/预览 handler 与注册表一致");
         ok &= assertCheck(configs.size() == 5
                         && configs.get(3).getEndType() == NodeType.DECISION
                         && configs.get(3).getSpecialBossColumn() == 5,
@@ -1100,6 +1102,21 @@ public class BackendDebugLauncher {
                 continue;
             }
             ok &= cardEffectsAreKnown(profession.getDisplayName(), cards);
+        }
+        return ok;
+    }
+
+    private boolean cardEffectHandlersMatchRegistry() {
+        boolean ok = true;
+        if (!CardEffectParser.missingExecutionHandlers().isEmpty()) {
+            println("[SELFTEST] 缺少卡牌 effect 执行 handler: "
+                    + CardEffectParser.missingExecutionHandlers());
+            ok = false;
+        }
+        if (!CardEffectParser.missingPreviewHandlers().isEmpty()) {
+            println("[SELFTEST] 缺少卡牌 effect 预览 handler: "
+                    + CardEffectParser.missingPreviewHandlers());
+            ok = false;
         }
         return ok;
     }

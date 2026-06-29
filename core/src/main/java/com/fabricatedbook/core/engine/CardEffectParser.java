@@ -1,8 +1,10 @@
 package com.fabricatedbook.core.engine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Parser for the card effect DSL used by execution and preview code.
@@ -46,10 +48,38 @@ public final class CardEffectParser {
                 .orElse(false);
     }
 
+    public static boolean hasExecutionHandler(String type) {
+        return CardEffectType.fromType(type)
+                .map(CardEffectExecutor::hasRegisteredHandler)
+                .orElse(false);
+    }
+
+    public static Set<String> missingExecutionHandlers() {
+        return Arrays.stream(CardEffectType.values())
+                .filter(CardEffectType::supportsExecution)
+                .filter(type -> !CardEffectExecutor.hasRegisteredHandler(type))
+                .map(CardEffectType::id)
+                .collect(Collectors.toUnmodifiableSet());
+    }
+
     public static boolean isPreviewSupported(String type) {
         return CardEffectType.fromType(type)
                 .map(CardEffectType::supportsPreview)
                 .orElse(false);
+    }
+
+    public static boolean hasPreviewHandler(String type) {
+        return CardEffectType.fromType(type)
+                .map(CardEffectPreviewer::hasRegisteredHandler)
+                .orElse(false);
+    }
+
+    public static Set<String> missingPreviewHandlers() {
+        return Arrays.stream(CardEffectType.values())
+                .filter(CardEffectType::supportsPreview)
+                .filter(type -> !CardEffectPreviewer.hasRegisteredHandler(type))
+                .map(CardEffectType::id)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     public static boolean hasValidArity(CardEffect effect) {

@@ -37,12 +37,24 @@ class CardEffectParserTest {
     void registryTracksExecutionAndPreviewSupportSeparately() {
         assertTrue(CardEffectParser.isExecutionSupported("damage"));
         assertTrue(CardEffectParser.isPreviewSupported("damage"));
+        assertTrue(CardEffectParser.hasExecutionHandler("damage"));
+        assertTrue(CardEffectParser.hasPreviewHandler("damage"));
 
         assertTrue(CardEffectParser.isExecutionSupported("end_turn_damage"));
         assertFalse(CardEffectParser.isPreviewSupported("end_turn_damage"));
+        assertTrue(CardEffectParser.hasExecutionHandler("end_turn_damage"));
+        assertFalse(CardEffectParser.hasPreviewHandler("end_turn_damage"));
 
         assertFalse(CardEffectParser.isExecutionSupported("mystery_effect"));
         assertFalse(CardEffectParser.isPreviewSupported("mystery_effect"));
+        assertFalse(CardEffectParser.hasExecutionHandler("mystery_effect"));
+        assertFalse(CardEffectParser.hasPreviewHandler("mystery_effect"));
+    }
+
+    @Test
+    void supportedEffectTypesHaveRegisteredRuntimeHandlers() {
+        assertTrue(CardEffectParser.missingExecutionHandlers().isEmpty());
+        assertTrue(CardEffectParser.missingPreviewHandlers().isEmpty());
     }
 
     @Test

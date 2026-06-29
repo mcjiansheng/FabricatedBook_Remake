@@ -21,15 +21,46 @@ import com.fabricatedbook.core.entity.Player;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Converts parsed card effect DSL into combat actions or immediate combat-side mutations.
  */
 class CardEffectExecutor {
+    private static final Set<CardEffectType> REGISTERED_EFFECT_TYPES = EnumSet.of(
+            CardEffectType.DAMAGE,
+            CardEffectType.DAMAGE_X,
+            CardEffectType.DAMAGE_ALL,
+            CardEffectType.DAMAGE_ALL_ATTACKING_INTENT,
+            CardEffectType.BLOCK,
+            CardEffectType.HEAL,
+            CardEffectType.DRAW,
+            CardEffectType.ENERGY,
+            CardEffectType.DEBUFF,
+            CardEffectType.DEBUFF_ALL,
+            CardEffectType.BUFF,
+            CardEffectType.PURIFY,
+            CardEffectType.COUNTER,
+            CardEffectType.BONUS_PER_ATTACK,
+            CardEffectType.BONUS_LOW_HP,
+            CardEffectType.DETONATE_WITHERING,
+            CardEffectType.DOUBLE_POISON,
+            CardEffectType.BLOCK_PER_TARGET,
+            CardEffectType.BONUS_PER_DAMAGE_TAKEN,
+            CardEffectType.ADD_RANDOM_ATTACK,
+            CardEffectType.ADD_CARD_TO_DISCARD,
+            CardEffectType.STUN_CHANCE,
+            CardEffectType.ESCALATING,
+            CardEffectType.CHANCE_DEBUFF,
+            CardEffectType.POISON_CHANCE,
+            CardEffectType.TRIGGER_WITHERING,
+            CardEffectType.END_TURN_DAMAGE);
+
     private final Player player;
     private final List<Enemy> enemies;
     private final Random random;
@@ -72,36 +103,46 @@ class CardEffectExecutor {
 
     private Map<CardEffectType, EffectHandler> createHandlers() {
         Map<CardEffectType, EffectHandler> registered = new EnumMap<>(CardEffectType.class);
-        registered.put(CardEffectType.DAMAGE, this::applyDamage);
-        registered.put(CardEffectType.DAMAGE_X, this::applyDamageX);
-        registered.put(CardEffectType.DAMAGE_ALL, this::applyDamageAll);
-        registered.put(CardEffectType.DAMAGE_ALL_ATTACKING_INTENT,
-                this::applyDamageAllAttackingIntent);
-        registered.put(CardEffectType.BLOCK, this::applyBlock);
-        registered.put(CardEffectType.HEAL, this::applyHeal);
-        registered.put(CardEffectType.DRAW, this::applyDraw);
-        registered.put(CardEffectType.ENERGY, this::applyEnergy);
-        registered.put(CardEffectType.DEBUFF, this::applyDebuff);
-        registered.put(CardEffectType.DEBUFF_ALL, this::applyDebuffAll);
-        registered.put(CardEffectType.BUFF, this::applyBuff);
-        registered.put(CardEffectType.PURIFY, this::applyPurify);
-        registered.put(CardEffectType.COUNTER, this::applyCounter);
-        registered.put(CardEffectType.BONUS_PER_ATTACK, this::applyBonusPerAttack);
-        registered.put(CardEffectType.BONUS_LOW_HP, this::applyBonusLowHp);
-        registered.put(CardEffectType.DETONATE_WITHERING, this::applyDetonateWithering);
-        registered.put(CardEffectType.DOUBLE_POISON, this::applyDoublePoison);
-        registered.put(CardEffectType.BLOCK_PER_TARGET, this::applyBlockPerTarget);
-        registered.put(CardEffectType.BONUS_PER_DAMAGE_TAKEN,
-                this::applyBonusPerDamageTaken);
-        registered.put(CardEffectType.ADD_RANDOM_ATTACK, this::applyAddRandomAttack);
-        registered.put(CardEffectType.ADD_CARD_TO_DISCARD, this::applyAddCardToDiscard);
-        registered.put(CardEffectType.STUN_CHANCE, this::applyStunChance);
-        registered.put(CardEffectType.ESCALATING, this::applyEscalating);
-        registered.put(CardEffectType.CHANCE_DEBUFF, this::applyChanceDebuff);
-        registered.put(CardEffectType.POISON_CHANCE, this::applyPoisonChance);
-        registered.put(CardEffectType.TRIGGER_WITHERING, this::applyTriggerWithering);
-        registered.put(CardEffectType.END_TURN_DAMAGE, context -> {});
+        for (CardEffectType type : REGISTERED_EFFECT_TYPES) {
+            registered.put(type, handlerFor(type));
+        }
         return Map.copyOf(registered);
+    }
+
+    static boolean hasRegisteredHandler(CardEffectType type) {
+        return REGISTERED_EFFECT_TYPES.contains(type);
+    }
+
+    private EffectHandler handlerFor(CardEffectType type) {
+        return switch (type) {
+            case DAMAGE -> this::applyDamage;
+            case DAMAGE_X -> this::applyDamageX;
+            case DAMAGE_ALL -> this::applyDamageAll;
+            case DAMAGE_ALL_ATTACKING_INTENT -> this::applyDamageAllAttackingIntent;
+            case BLOCK -> this::applyBlock;
+            case HEAL -> this::applyHeal;
+            case DRAW -> this::applyDraw;
+            case ENERGY -> this::applyEnergy;
+            case DEBUFF -> this::applyDebuff;
+            case DEBUFF_ALL -> this::applyDebuffAll;
+            case BUFF -> this::applyBuff;
+            case PURIFY -> this::applyPurify;
+            case COUNTER -> this::applyCounter;
+            case BONUS_PER_ATTACK -> this::applyBonusPerAttack;
+            case BONUS_LOW_HP -> this::applyBonusLowHp;
+            case DETONATE_WITHERING -> this::applyDetonateWithering;
+            case DOUBLE_POISON -> this::applyDoublePoison;
+            case BLOCK_PER_TARGET -> this::applyBlockPerTarget;
+            case BONUS_PER_DAMAGE_TAKEN -> this::applyBonusPerDamageTaken;
+            case ADD_RANDOM_ATTACK -> this::applyAddRandomAttack;
+            case ADD_CARD_TO_DISCARD -> this::applyAddCardToDiscard;
+            case STUN_CHANCE -> this::applyStunChance;
+            case ESCALATING -> this::applyEscalating;
+            case CHANCE_DEBUFF -> this::applyChanceDebuff;
+            case POISON_CHANCE -> this::applyPoisonChance;
+            case TRIGGER_WITHERING -> this::applyTriggerWithering;
+            case END_TURN_DAMAGE -> context -> {};
+        };
     }
 
     private void applyDamage(ExecutionContext context) {

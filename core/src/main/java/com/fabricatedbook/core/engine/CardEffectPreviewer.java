@@ -8,14 +8,32 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.relic.RelicManager;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Applies parsed card effect DSL to deterministic combat preview totals.
  */
 class CardEffectPreviewer {
+    private static final Set<CardEffectType> REGISTERED_EFFECT_TYPES = EnumSet.of(
+            CardEffectType.DAMAGE,
+            CardEffectType.DAMAGE_X,
+            CardEffectType.DAMAGE_ALL,
+            CardEffectType.DAMAGE_ALL_ATTACKING_INTENT,
+            CardEffectType.COUNTER,
+            CardEffectType.BONUS_PER_ATTACK,
+            CardEffectType.BONUS_LOW_HP,
+            CardEffectType.BONUS_PER_DAMAGE_TAKEN,
+            CardEffectType.ESCALATING,
+            CardEffectType.BLOCK,
+            CardEffectType.BLOCK_PER_TARGET,
+            CardEffectType.BUFF,
+            CardEffectType.DEBUFF,
+            CardEffectType.DEBUFF_ALL);
+
     private final Card card;
     private final Player player;
     private final List<Enemy> aliveEnemies;
@@ -62,23 +80,35 @@ class CardEffectPreviewer {
 
     private Map<CardEffectType, PreviewHandler> createHandlers() {
         Map<CardEffectType, PreviewHandler> registered = new EnumMap<>(CardEffectType.class);
-        registered.put(CardEffectType.DAMAGE, this::previewDamage);
-        registered.put(CardEffectType.DAMAGE_X, this::previewDamageX);
-        registered.put(CardEffectType.DAMAGE_ALL, this::previewDamageAll);
-        registered.put(CardEffectType.DAMAGE_ALL_ATTACKING_INTENT,
-                this::previewDamageAllAttackingIntent);
-        registered.put(CardEffectType.COUNTER, this::previewCounter);
-        registered.put(CardEffectType.BONUS_PER_ATTACK, this::previewBonusPerAttack);
-        registered.put(CardEffectType.BONUS_LOW_HP, this::previewBonusLowHp);
-        registered.put(CardEffectType.BONUS_PER_DAMAGE_TAKEN,
-                this::previewBonusPerDamageTaken);
-        registered.put(CardEffectType.ESCALATING, this::previewEscalating);
-        registered.put(CardEffectType.BLOCK, this::previewBlock);
-        registered.put(CardEffectType.BLOCK_PER_TARGET, this::previewBlockPerTarget);
-        registered.put(CardEffectType.BUFF, this::previewBuff);
-        registered.put(CardEffectType.DEBUFF, this::previewDebuff);
-        registered.put(CardEffectType.DEBUFF_ALL, this::previewDebuffAll);
+        for (CardEffectType type : REGISTERED_EFFECT_TYPES) {
+            registered.put(type, handlerFor(type));
+        }
         return Map.copyOf(registered);
+    }
+
+    static boolean hasRegisteredHandler(CardEffectType type) {
+        return REGISTERED_EFFECT_TYPES.contains(type);
+    }
+
+    private PreviewHandler handlerFor(CardEffectType type) {
+        return switch (type) {
+            case DAMAGE -> this::previewDamage;
+            case DAMAGE_X -> this::previewDamageX;
+            case DAMAGE_ALL -> this::previewDamageAll;
+            case DAMAGE_ALL_ATTACKING_INTENT -> this::previewDamageAllAttackingIntent;
+            case COUNTER -> this::previewCounter;
+            case BONUS_PER_ATTACK -> this::previewBonusPerAttack;
+            case BONUS_LOW_HP -> this::previewBonusLowHp;
+            case BONUS_PER_DAMAGE_TAKEN -> this::previewBonusPerDamageTaken;
+            case ESCALATING -> this::previewEscalating;
+            case BLOCK -> this::previewBlock;
+            case BLOCK_PER_TARGET -> this::previewBlockPerTarget;
+            case BUFF -> this::previewBuff;
+            case DEBUFF -> this::previewDebuff;
+            case DEBUFF_ALL -> this::previewDebuffAll;
+            default -> throw new IllegalArgumentException(
+                    "No preview handler for " + type.id());
+        };
     }
 
     private void previewDamage(PreviewContext context) {
