@@ -369,9 +369,7 @@ public class BackendDebugLauncher {
         } else if (type == NodeType.SHOP) {
             resolveShop(node);
         } else if (type == NodeType.REWARD) {
-            int gain = 25;
-            player.gainGold(gain);
-            println("奖励调试: 获得 " + gain + " 金币。");
+            resolveReward();
         } else if (type == NodeType.SAFEHOUSE) {
             int healed = player.heal(12);
             println("安全屋: 回复 " + healed + " 生命值。");
@@ -495,16 +493,26 @@ public class BackendDebugLauncher {
 
     private void resolveDecision() {
         Random eventRandom = randomForNode("decision-result", map.getCurrentNode());
-        EventHandler handler = new EventHandler(eventRandom);
         String eventName = levelIndex >= 3 ? "命运抉择2" : "命运抉择1";
+        resolveNamedEvent("命运抉择", eventName, eventRandom);
+    }
+
+    private void resolveReward() {
+        resolveNamedEvent("奖励事件", "好诗歪诗",
+                randomForNode("reward-result", map.getCurrentNode()));
+    }
+
+    private void resolveNamedEvent(String label, String eventName, Random eventRandom) {
+        EventHandler handler = new EventHandler(eventRandom);
         List<EventHandler.EventOption> options = handler.getOptions(eventName, player);
-        println("命运抉择: " + handler.getEventDescription(eventName));
+        println(label + ": " + eventName);
+        println(handler.getEventDescription(eventName));
         for (int i = 0; i < options.size(); i++) {
             EventHandler.EventOption option = options.get(i);
             println("  " + (i + 1) + ". " + option.label + " - " + option.description);
         }
-        println("输入抉择编号，或回车选择 1。");
-        print("decision> ");
+        println("输入选项编号，或回车选择 1。");
+        print("event> ");
         String line = readLine();
         if (line == null) {
             line = "";
@@ -521,31 +529,10 @@ public class BackendDebugLauncher {
 
     private void resolveEvent() {
         Random eventRandom = randomForNode("event-result", map.getCurrentNode());
-        EventHandler handler = new EventHandler(eventRandom);
-        List<String> names = handler.getEventNames();
+        List<String> names = new EventHandler(eventRandom).getEventNames();
         String eventName = names.get(randomForNode("event-name", map.getCurrentNode())
                 .nextInt(names.size()));
-        List<EventHandler.EventOption> options = handler.getOptions(eventName, player);
-        println("事件: " + eventName);
-        for (int i = 0; i < options.size(); i++) {
-            EventHandler.EventOption option = options.get(i);
-            println("  " + (i + 1) + ". " + option.label + " - " + option.description);
-        }
-        println("输入事件选项编号，或回车选择 1。");
-        print("event> ");
-        String line = readLine();
-        if (line == null) {
-            line = "";
-        }
-        line = line.trim();
-        int choice = line.isEmpty() ? 1 : parseInt(line, 1);
-        choice = Math.max(1, Math.min(choice, options.size()));
-
-        EventHandler.EventResult result = handler.executeEvent(eventName,
-                choice - 1, player);
-        applyEventResult(result, eventRandom);
-        println(result.description);
-        handleEventOutcome(result);
+        resolveNamedEvent("事件", eventName, eventRandom);
     }
 
     private void applyEventResult(EventHandler.EventResult result, Random eventRandom) {
@@ -1416,6 +1403,7 @@ public class BackendDebugLauncher {
         SaveManager flowSave = new SaveManager("build/backend-flowtest-save.json");
         boolean ok = true;
         ok &= eventChoiceFlowPersists(flowSave);
+        ok &= rewardEventFlowPersists(flowSave);
         ok &= shopPurchaseFlowPersists(flowSave);
         ok &= shopRemoveFlowPersists(flowSave);
         ok &= safeHouseFlowPersists(flowSave);
@@ -1441,6 +1429,31 @@ public class BackendDebugLauncher {
                     "事件选择奖励藏品写入存档");
             ok &= assertCheck(isCompletedNode(loaded, eventNode),
                     "事件选择提交后记录节点完成");
+        }
+        return ok;
+    }
+
+    private boolean rewardEventFlowPersists(SaveManager flowSave) {
+        startNewRun(515006L);
+        int beforeDeckSize = player.getDrawPile().size();
+        GameRunState.NodeRef rewardNode = nodeRef(NodeType.REWARD, 1, 0);
+        runState.beginNode(rewardNode);
+        Random rewardRandom = new Random(2);
+        EventHandler.EventResult result = new EventHandler(rewardRandom)
+                .executeEvent("好诗歪诗", 0, player);
+        applyEventResult(result, rewardRandom);
+        runState.markActiveNodeProgressCommitted();
+
+        boolean ok = assertCheck(flowSave.saveRun(runState),
+                "奖励节点事件提交后可以保存对局");
+        GameRunState loaded = flowSave.loadRun();
+        ok &= assertCheck(loaded != null, "奖励节点事件提交后可以读档");
+        if (loaded != null) {
+            ok &= assertCheck(loaded.getPlayer().getDrawPile().size()
+                            >= beforeDeckSize + 5,
+                    "奖励节点事件奖励写入存档");
+            ok &= assertCheck(isCompletedNode(loaded, rewardNode),
+                    "奖励节点事件提交后记录节点完成");
         }
         return ok;
     }
