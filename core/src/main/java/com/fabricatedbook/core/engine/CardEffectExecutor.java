@@ -21,6 +21,7 @@ import com.fabricatedbook.core.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 /**
@@ -43,10 +44,18 @@ class CardEffectExecutor {
 
         for (CardEffect effect : CardEffectParser.parse(card.getEffects())) {
             String[] parts = effect.parts();
-            String type = effect.getType();
+            Optional<CardEffectType> effectType = CardEffectType.fromType(effect.getType());
+            if (effectType.isEmpty()) {
+                System.out.println("[CombatEngine] 未知效果: " + effect.getRaw());
+                continue;
+            }
+            if (!effectType.get().supportsExecution()) {
+                System.out.println("[CombatEngine] 未接入执行效果: " + effect.getRaw());
+                continue;
+            }
 
-            switch (type) {
-                case "damage": {
+            switch (effectType.get()) {
+                case DAMAGE: {
                     int dmg = Integer.parseInt(parts[1]);
                     int repeat = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
                     for (int i = 0; i < repeat; i++) {
@@ -58,7 +67,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "damage_x": {
+                case DAMAGE_X: {
                     int dmg = Integer.parseInt(parts[1]);
                     for (int i = 0; i < energySpent; i++) {
                         List<AbstractEntity> singleTarget = singleTarget(target, aliveEnemies);
@@ -68,7 +77,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "damage_all": {
+                case DAMAGE_ALL: {
                     int dmg = Integer.parseInt(parts[1]);
                     int repeat = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
                     for (int i = 0; i < repeat; i++) {
@@ -77,7 +86,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "damage_all_attacking_intent": {
+                case DAMAGE_ALL_ATTACKING_INTENT: {
                     int dmg = Integer.parseInt(parts[1]);
                     List<AbstractEntity> targets = new ArrayList<>();
                     for (Enemy enemy : enemies) {
@@ -91,27 +100,27 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "block": {
+                case BLOCK: {
                     int block = Integer.parseInt(parts[1]);
                     actions.add(new GainBlockAction(player, block));
                     break;
                 }
-                case "heal": {
+                case HEAL: {
                     int amount = Integer.parseInt(parts[1]);
                     actions.add(new HealAction(player, amount));
                     break;
                 }
-                case "draw": {
+                case DRAW: {
                     int count = Integer.parseInt(parts[1]);
                     actions.add(new DrawCardAction(player, count));
                     break;
                 }
-                case "energy": {
+                case ENERGY: {
                     int amount = Integer.parseInt(parts[1]);
                     actions.add(new GainEnergyAction(player, amount));
                     break;
                 }
-                case "debuff": {
+                case DEBUFF: {
                     String buffName = parts[1];
                     int stack = Integer.parseInt(parts[2]);
                     List<AbstractEntity> singleTarget = singleTarget(target, aliveEnemies);
@@ -120,7 +129,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "debuff_all": {
+                case DEBUFF_ALL: {
                     String buffName = parts[1];
                     int stack = Integer.parseInt(parts[2]);
                     for (AbstractEntity enemy : aliveEnemies) {
@@ -128,7 +137,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "buff": {
+                case BUFF: {
                     String buffName = parts[2];
                     int stack = parts.length > 3 ? Integer.parseInt(parts[3]) : 1;
                     if (isExtraEnergyBuff(buffName) && parts.length > 4) {
@@ -140,7 +149,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "purify": {
+                case PURIFY: {
                     for (BuffHook buff : new ArrayList<>(player.getBuffs())) {
                         String bName = buff.getBuffName();
                         if (bName.equals("Fragile") || bName.equals("BlockReduction")
@@ -151,7 +160,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "counter": {
+                case COUNTER: {
                     int blockDamage = player.getBlock();
                     if (blockDamage > 0) {
                         List<AbstractEntity> targets = singleTarget(target, aliveEnemies);
@@ -161,7 +170,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "bonus_per_attack": {
+                case BONUS_PER_ATTACK: {
                     int bonus = Integer.parseInt(parts[1]);
                     int attackCount = (int) player.getHand().stream()
                             .filter(c -> c.getType() == Card.CardType.ATTACK)
@@ -169,7 +178,7 @@ class CardEffectExecutor {
                     addBaseDamageToLastDamageAction(actions, bonus * attackCount);
                     break;
                 }
-                case "bonus_low_hp": {
+                case BONUS_LOW_HP: {
                     int threshold = Integer.parseInt(parts[1]);
                     int bonus = Integer.parseInt(parts[2]);
                     if (target != null && target.getHp() < threshold && target.isAlive()) {
@@ -177,25 +186,25 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "detonate_withering": {
+                case DETONATE_WITHERING: {
                     int times = Integer.parseInt(parts[1]);
                     if (target != null && target.isAlive()) {
                         actions.add(new TriggerWitheringAction(target, times));
                     }
                     break;
                 }
-                case "double_poison": {
+                case DOUBLE_POISON: {
                     int multiplier = parts.length > 1 ? Integer.parseInt(parts[1]) : 2;
                     actions.add(new DoublePoisonAction(new ArrayList<>(aliveEnemies),
                             multiplier));
                     break;
                 }
-                case "block_per_target": {
+                case BLOCK_PER_TARGET: {
                     int block = Integer.parseInt(parts[1]);
                     actions.add(new GainBlockAction(player, block * aliveEnemies.size()));
                     break;
                 }
-                case "bonus_per_damage_taken": {
+                case BONUS_PER_DAMAGE_TAKEN: {
                     int threshold = Integer.parseInt(parts[1]);
                     int bonus = Integer.parseInt(parts[2]);
                     int lostHp = player.getMaxHp() - player.getHp();
@@ -205,7 +214,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "add_random_attack": {
+                case ADD_RANDOM_ATTACK: {
                     List<Card> attackCards = CardPool.getObtainableCardsByProfession(
                                     player.getProfession().name().toLowerCase())
                             .stream().filter(c -> c.getType() == Card.CardType.ATTACK).toList();
@@ -217,7 +226,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "add_card_to_discard": {
+                case ADD_CARD_TO_DISCARD: {
                     if (parts.length > 1) {
                         Card template = CardPool.findById(parts[1]);
                         if (template != null) {
@@ -226,14 +235,14 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "stun_chance": {
+                case STUN_CHANCE: {
                     int chance = Integer.parseInt(parts[1]);
                     if (random.nextInt(100) < chance && target != null && target.isAlive()) {
                         target.setDizzy(true);
                     }
                     break;
                 }
-                case "escalating": {
+                case ESCALATING: {
                     int bonus = Integer.parseInt(parts[1]);
                     card.addEscalatingBonus(bonus);
                     List<AbstractEntity> escTargets = singleTarget(target, aliveEnemies);
@@ -243,7 +252,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "chance_debuff": {
+                case CHANCE_DEBUFF: {
                     String buffName = parts[1];
                     int stack = Integer.parseInt(parts[2]);
                     int chance = Integer.parseInt(parts[3]);
@@ -260,7 +269,7 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "poison_chance": {
+                case POISON_CHANCE: {
                     int chance = Integer.parseInt(parts[1]);
                     int stack = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
                     int attempts = Math.max(1, countTrailingDamageActions(actions));
@@ -276,15 +285,14 @@ class CardEffectExecutor {
                     }
                     break;
                 }
-                case "trigger_withering": {
+                case TRIGGER_WITHERING: {
                     int times = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
                     if (target != null && target.isAlive()) {
                         actions.add(new TriggerWitheringAction(target, times));
                     }
                     break;
                 }
-                default:
-                    System.out.println("[CombatEngine] 未知效果: " + effect.getRaw());
+                case END_TURN_DAMAGE:
                     break;
             }
         }

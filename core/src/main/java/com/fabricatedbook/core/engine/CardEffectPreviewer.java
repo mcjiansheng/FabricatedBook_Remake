@@ -8,6 +8,7 @@ import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.relic.RelicManager;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Applies parsed card effect DSL to deterministic combat preview totals.
@@ -44,10 +45,13 @@ class CardEffectPreviewer {
 
     private void apply(CardEffect effect, CombatPreviewCalculator.PreviewTotals totals) {
         String[] parts = effect.parts();
-        String type = effect.getType();
+        Optional<CardEffectType> effectType = CardEffectType.fromType(effect.getType());
+        if (effectType.isEmpty() || !effectType.get().supportsPreview()) {
+            return;
+        }
 
-        switch (type) {
-            case "damage" -> {
+        switch (effectType.get()) {
+            case DAMAGE -> {
                 if (damageTarget == null || parts.length < 2) break;
                 int baseDamage = CombatPreviewCalculator.parseInt(parts[1], 0);
                 int repeat = parts.length > 2
@@ -55,7 +59,7 @@ class CardEffectPreviewer {
                         : 1;
                 addDamage(totals, baseDamage, repeat, damageTarget);
             }
-            case "damage_x" -> {
+            case DAMAGE_X -> {
                 if (damageTarget == null || parts.length < 2) break;
                 int baseDamage = CombatPreviewCalculator.parseInt(parts[1], 0);
                 int repeat = Math.max(0, player.getEnergy());
@@ -63,7 +67,7 @@ class CardEffectPreviewer {
                     addDamage(totals, baseDamage, repeat, damageTarget);
                 }
             }
-            case "damage_all" -> {
+            case DAMAGE_ALL -> {
                 if (aliveEnemies.isEmpty() || parts.length < 2) break;
                 int baseDamage = CombatPreviewCalculator.parseInt(parts[1], 0);
                 int repeat = parts.length > 2
@@ -72,7 +76,7 @@ class CardEffectPreviewer {
                 addDamage(totals, baseDamage, repeat,
                         CombatPreviewCalculator.commonEnemyTarget(aliveEnemies));
             }
-            case "damage_all_attacking_intent" -> {
+            case DAMAGE_ALL_ATTACKING_INTENT -> {
                 if (aliveEnemies.isEmpty() || parts.length < 2) break;
                 List<Enemy> attackingEnemies = aliveEnemies.stream()
                         .filter(enemy -> enemy.getIntent() == IntentType.ATTACK)
@@ -83,13 +87,13 @@ class CardEffectPreviewer {
                 addDamage(totals, baseDamage, attackingCount,
                         CombatPreviewCalculator.commonEnemyTarget(attackingEnemies));
             }
-            case "counter" -> {
+            case COUNTER -> {
                 if (damageTarget == null || parts.length < 2) break;
                 if ("block".equalsIgnoreCase(parts[1]) && player.getBlock() > 0) {
                     addDamage(totals, player.getBlock(), 1, damageTarget);
                 }
             }
-            case "bonus_per_attack" -> {
+            case BONUS_PER_ATTACK -> {
                 if (damageTarget == null || parts.length < 2 || !totals.hasDamage()) {
                     break;
                 }
@@ -100,7 +104,7 @@ class CardEffectPreviewer {
                 CombatPreviewCalculator.addBaseDamageToLastPreview(totals,
                         bonus * attackCount);
             }
-            case "bonus_low_hp" -> {
+            case BONUS_LOW_HP -> {
                 if (selectedTarget == null || !selectedTarget.isAlive()
                         || parts.length < 3) {
                     break;
@@ -111,7 +115,7 @@ class CardEffectPreviewer {
                     CombatPreviewCalculator.addBaseDamageToLastPreview(totals, bonus);
                 }
             }
-            case "bonus_per_damage_taken" -> {
+            case BONUS_PER_DAMAGE_TAKEN -> {
                 if (damageTarget == null || parts.length < 3) break;
                 int threshold = CombatPreviewCalculator.parseInt(parts[1], 1);
                 int bonus = CombatPreviewCalculator.parseInt(parts[2], 0);
@@ -121,7 +125,7 @@ class CardEffectPreviewer {
                     CombatPreviewCalculator.addBaseDamageToLastPreview(totals, extraDamage);
                 }
             }
-            case "escalating" -> {
+            case ESCALATING -> {
                 if (damageTarget == null || card.getEscalatingBonus() <= 0) break;
                 int bonus = CombatPreviewCalculator.parseInt(
                         parts.length > 1 ? parts[1] : "0", 0);
@@ -131,18 +135,18 @@ class CardEffectPreviewer {
                             alreadyStoredBonus);
                 }
             }
-            case "block" -> {
+            case BLOCK -> {
                 if (parts.length < 2) break;
                 totals.addBlock(DamageCalculator.calculateBlock(
                         CombatPreviewCalculator.parseInt(parts[1], 0), previewPlayer));
             }
-            case "block_per_target" -> {
+            case BLOCK_PER_TARGET -> {
                 if (parts.length < 2) break;
                 int baseBlock = CombatPreviewCalculator.parseInt(parts[1], 0)
                         * aliveEnemies.size();
                 totals.addBlock(DamageCalculator.calculateBlock(baseBlock, previewPlayer));
             }
-            case "buff" -> {
+            case BUFF -> {
                 if (parts.length >= 3 && "self".equalsIgnoreCase(parts[1])) {
                     int stack = parts.length > 3
                             ? CombatPreviewCalculator.parseInt(parts[3], 1)
@@ -150,21 +154,19 @@ class CardEffectPreviewer {
                     CombatPreviewCalculator.applyBuff(previewPlayer, parts[2], stack);
                 }
             }
-            case "debuff" -> {
+            case DEBUFF -> {
                 if (damageTarget != null && parts.length >= 3) {
                     CombatPreviewCalculator.applyBuff(damageTarget, parts[1],
                             CombatPreviewCalculator.parseInt(parts[2], 1));
                 }
             }
-            case "debuff_all" -> {
+            case DEBUFF_ALL -> {
                 if (damageTarget != null && parts.length >= 3) {
                     CombatPreviewCalculator.applyBuff(damageTarget, parts[1],
                             CombatPreviewCalculator.parseInt(parts[2], 1));
                 }
             }
-            default -> {
-                // Non-deterministic and non-number effects do not alter preview text.
-            }
+            default -> {}
         }
     }
 
