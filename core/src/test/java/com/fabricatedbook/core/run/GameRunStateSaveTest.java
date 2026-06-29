@@ -3,11 +3,13 @@ package com.fabricatedbook.core.run;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.map.NodeEntryResolver;
+import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.data.SaveManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -75,6 +77,29 @@ class GameRunStateSaveTest {
         assertEquals(shopNode.col, restored.getCompletedNode().col);
         assertEquals(shopNode.row, restored.getCompletedNode().row);
         assertEquals(shopNode.type, restored.getCompletedNode().type);
+        assertNull(restored.getActiveNode());
+    }
+
+    @Test
+    void committedNonCombatPotionChangeIsSaved() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        player.addPotion(new Potion("potion_test", "测试药水", "测试", List.of()));
+        GameRunState runState = new GameRunState(123L, player);
+        GameRunState.NodeRef eventNode = new GameRunState.NodeRef(1, 2, 0, 5);
+        runState.beginNode(eventNode);
+
+        player.removePotion(0);
+        runState.markActiveNodeProgressCommitted();
+
+        SaveManager saveManager = new SaveManager(tempDir.resolve("save.json").toString());
+
+        assertTrue(saveManager.saveRun(runState));
+        GameRunState restored = saveManager.loadRun();
+
+        assertNotNull(restored);
+        assertTrue(restored.getPlayer().getPotions().isEmpty());
+        assertNotNull(restored.getCompletedNode());
+        assertEquals(eventNode.type, restored.getCompletedNode().type);
         assertNull(restored.getActiveNode());
     }
 }

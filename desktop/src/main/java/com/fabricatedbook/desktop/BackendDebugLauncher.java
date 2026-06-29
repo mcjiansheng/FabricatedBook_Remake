@@ -1184,6 +1184,30 @@ public class BackendDebugLauncher {
             ok &= assertCheck(loadedCommittedNonCombat.getActiveNode() == null,
                     "读档后不恢复已提交节点过程状态");
         }
+
+        startNewRun(seed + 3);
+        List<Potion> potions = new DataLoader().loadPotions();
+        if (!potions.isEmpty()) {
+            player.addPotion(potions.get(0).copy());
+        }
+        GameRunState.NodeRef potionEventNode = new GameRunState.NodeRef(1, 2, 0, 5);
+        runState.beginNode(potionEventNode);
+        if (!player.getPotions().isEmpty()) {
+            player.removePotion(0);
+        }
+        runState.markActiveNodeProgressCommitted();
+        ok &= assertCheck(saveManager.saveRun(runState),
+                "已提交非战斗药水变化可以保存对局");
+
+        GameRunState loadedPotionChange = saveManager.loadRun();
+        ok &= assertCheck(loadedPotionChange != null,
+                "可以读取已提交药水变化存档");
+        if (loadedPotionChange != null) {
+            ok &= assertCheck(loadedPotionChange.getPlayer().getPotions().isEmpty(),
+                    "已提交非战斗药水变化会写入存档");
+            ok &= assertCheck(loadedPotionChange.getCompletedNode() != null,
+                    "已提交药水变化会记录节点完成");
+        }
         println(ok ? "SAVETEST PASS" : "SAVETEST FAIL");
     }
 

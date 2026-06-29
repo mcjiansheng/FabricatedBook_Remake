@@ -66,7 +66,7 @@ public final class PotionActionBar extends Table {
         discard.addListener(new ClickListener() {
             @Override public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent e, float x, float y) {
                 player.removePotion(index);
-                game.autosaveCurrentRun();
+                autosavePotionChange();
                 closeActions();
                 changed();
             }
@@ -94,6 +94,13 @@ public final class PotionActionBar extends Table {
     private void closeActions() {
         if (actionMenu != null) actionMenu.remove();
         actionMenu = null;
+    }
+
+    private void autosavePotionChange() {
+        if (game.getCurrentRun() != null) {
+            game.getCurrentRun().markActiveNodeProgressCommitted();
+        }
+        game.autosaveCurrentRun();
     }
 
     private void changed() { rebuild(); if (onChanged != null) onChanged.run(); }
