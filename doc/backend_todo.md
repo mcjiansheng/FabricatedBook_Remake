@@ -55,7 +55,7 @@
 
 ## B-002：商店弃牌次数使用 JVM 静态状态
 
-状态：已修复。弃牌次数已迁入 `GameRunState.shopRemoveCount`，正式商店和后端 CLI 商店都通过 `GameRunState` 读写该计数；`SaveManager` 已保存/恢复该字段，并支持测试传入临时存档路径。旧的无对局构造器仅保留实例内计数，不再使用 JVM 静态状态。后端 CLI 进入商店节点时现在会创建真实 `ShopManager`，支持 `list`、`buy <编号>`、`remove <牌序号>`、`save` 和 `leave`，成功购买商品或删牌会标记非战斗节点进度并自动保存。
+状态：已修复。弃牌次数已迁入 `GameRunState.shopRemoveCount`，正式商店和后端 CLI 商店都通过 `GameRunState` 读写该计数；`SaveManager` 已保存/恢复该字段，并支持测试传入临时存档路径。旧的无对局构造器仅保留实例内计数，不再使用 JVM 静态状态。后端 CLI 进入商店节点时现在会创建真实 `ShopManager`，支持 `list`、`buy <编号>`、`remove <牌序号>`、`save` 和 `leave`，成功购买商品或删牌会标记非战斗节点进度并自动保存。`ShopManagerTest` 已补齐卡牌、藏品、药水购买，重复购买拦截，金币不足不变式，药水栏满退款，以及弃牌购买计数和存档恢复测试。
 
 ### 位置
 
