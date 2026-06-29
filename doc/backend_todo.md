@@ -14,7 +14,7 @@
 3. 统一卡牌来源和职业初始牌组创建方式。
 4. 下沉地图生成、节点进入和环境效果规则。
 5. 收敛卡牌 effect DSL 的执行与预览解析。
-6. 决定事件系统是否继续 Java handler，还是逐步 JSON/DSL 化。
+6. 事件系统主链路已决定采用 JSON/DSL 调度；后续只在 JSON 明确标记 `executor: "java"` 时补专用 Java executor。
 
 ## B-001：战斗胜利回调触发位置错误
 
@@ -331,7 +331,13 @@
 
 ## B-007：事件系统仍是 Java 硬编码，数据文件没有成为规则来源
 
-状态：部分修复。`DataLoader` 已新增 `loadEvents()`，普通事件的名称、描述和选项展示现在由 `events.json` 驱动；`events.json` 也开始承载固定事件结果字段（`outcomeDescription`、`goldChange`、`hpChange`、`fullHeal`、`relicId`、`outcome`）、简单随机范围字段（`goldChangeMin/Max`、`hpChangeMin/Max`）和加权随机结果列表（`randomOutcomes`）。`EventResultResolver` 会把可执行 JSON 选项转换为 `EventResult`，`EventRewardResolver` 已新增特殊奖励 executor 注册表：`relic_random_leq3` / `relic_curse_random` 会展开为真实藏品，`relic_five_cards` 会展开为 5 张真实可获得卡牌，`relic_nuke` 暂时返回显式未接入特殊奖励状态而不再伪装成普通藏品；前端事件页和后端 CLI 共用该奖励入口。`EventHandler` 已收敛为数据调度器，旧的硬编码事件名称、描述、选项和结果 fallback 已移除，只保留显式 Java executor 注册表作为未来复杂事件扩展点；当前 `events.json` 中没有选项依赖 Java executor。“生命回满”已从 `hpChange = 9999` 哨兵值改为显式 `fullHeal` 字段，并由前端事件页和后端 CLI 共用；翅膀雕像摧毁、黏液世界放手、村庄板烧鸡腿堡已从 Java 随机分支迁到 JSON 随机范围，投资三个选项已迁到 JSON 加权随机结果，追猎逃跑与好诗歪诗的随机藏品占位结果也已迁到 JSON。命运抉择的描述、选项、固定结果、回头结局 outcome、三种藏品奖励和巴别塔选项可见条件已迁入 JSON，`EventHandler.executeEvent()` 现在按玩家可见选项解析数据结果，避免条件选项和点击索引错位；已存在于 JSON 的事件如果选择索引无效，会直接返回“没有作出选择”，不再落回旧 Java fallback 的默认分支；命运抉择使用 `randomPool: false` 避免进入普通随机事件池。后端 CLI 的普通事件和命运抉择现在也通过 `EventHandler` 读取 `events.json`，传入玩家上下文展示条件选项，并处理事件 `outcome`。后端 CLI `selftest` 会扫描所有 JSON 固定/随机事件结果，确认字段可解析、随机范围顺序有效、加权 outcome 权重和描述有效、`relicId` 可创建或是已注册特殊奖励、`fullHeal` 不与普通 `hpChange` 混用，并验证占位低阶/负面藏品可展开为真实藏品、五张牌奖励可展开为真实卡牌、核弹保持显式未接入状态、命运抉择不会进入随机事件池、条件选项会按玩家藏品展示。测试覆盖普通事件文本来自 JSON、固定结果来自 JSON、随机范围结果来自 JSON、加权随机结果来自 JSON、占位藏品结果来自 JSON、占位藏品展开、五张牌展开、核弹特殊奖励未接入状态、命运抉择展示数据/结果/随机池边界、数据事件无效选项不会触发旧 fallback、固定字段解析、显式回满、固定结果藏品 ID，以及命运抉择条件仍按玩家藏品判断。剩余工作：确认核弹的真实玩法语义后，为 `relic_nuke` executor 实现对应效果；如果后续新增真正复杂事件，需要在 JSON 上标记 `executor: "java"` 并在 `EventHandler` 的 Java executor 注册表中显式登记。
+状态：主链路已修复，剩余玩法语义待确认。`DataLoader` 已新增 `loadEvents()`，普通事件和命运抉择的名称、描述、选项展示、固定结果、简单随机范围结果、加权随机结果、条件选项和结局 `outcome` 都由 `events.json` 驱动。`EventHandler` 已收敛为数据调度器，旧的硬编码事件名称、描述、选项和结果 fallback 已移除；当前 `events.json` 中没有选项依赖 Java executor，未来真正复杂事件必须在 JSON 选项上显式标记 `executor: "java"` 并在注册表中登记。
+
+已完成的结构收口包括：`EventResultResolver` 负责把 JSON 选项转换为 `EventResult`；`EventRewardResolver` 建立特殊奖励 executor 注册表，`relic_random_leq3` / `relic_curse_random` 会展开为真实藏品，`relic_five_cards` 会展开为 5 张真实可获得卡牌，`relic_nuke` 暂时返回显式未接入特殊奖励状态而不再伪装成普通藏品；前端事件页和后端 CLI 共用同一奖励入口。“生命回满”已从 `hpChange = 9999` 哨兵值改为显式 `fullHeal` 字段；翅膀雕像摧毁、黏液世界放手、村庄板烧鸡腿堡已迁到 JSON 随机范围，投资已迁到 JSON 加权随机结果，追猎逃跑与好诗歪诗的随机藏品占位结果也已迁到 JSON。命运抉择通过 `randomPool: false` 排除普通随机事件池，`EventHandler.executeEvent()` 会按玩家可见选项解析数据结果，避免条件选项和点击索引错位；已存在于 JSON 的事件如果选择索引无效，会直接返回“没有作出选择”。
+
+后端 CLI 的普通事件和命运抉择现在也通过 `EventHandler` 读取 `events.json`，传入玩家上下文展示条件选项，并处理事件 `outcome`。后端 CLI `selftest` 会扫描所有 JSON 固定/随机事件结果，确认字段可解析、随机范围顺序有效、加权 outcome 权重和描述有效、`relicId` 可创建或是已注册特殊奖励、`fullHeal` 不与普通 `hpChange` 混用，并验证占位低阶/负面藏品可展开为真实藏品、五张牌奖励可展开为真实卡牌、核弹保持显式未接入状态、命运抉择不会进入随机事件池、条件选项会按玩家藏品展示。测试覆盖普通事件文本来自 JSON、固定结果来自 JSON、随机范围结果来自 JSON、加权随机结果来自 JSON、占位藏品结果来自 JSON、占位藏品展开、五张牌展开、核弹特殊奖励未接入状态、命运抉择展示数据/结果/随机池边界、数据事件无效选项不会触发旧 fallback、固定字段解析、显式回满、固定结果藏品 ID，以及命运抉择条件仍按玩家藏品判断。
+
+不可继续静默实现的剩余点：`relic_nuke` 的真实玩法语义尚未定义。它现在只是“曼哈顿计划”事件的特殊奖励 ID，代码会把它识别为未接入特殊奖励并展示/记录该状态。期望先确认核弹到底是藏品、一次性道具、路线标记、战斗效果还是结局条件，再为 `relic_nuke` executor 实现对应效果；在确认前不应把它当普通藏品塞入玩家背包。
 
 ### 位置
 
