@@ -42,6 +42,8 @@ class EventHandlerTest {
         assertEquals("我要权力", options.get(0).label);
         assertEquals("我要财富", options.get(1).label);
         assertNull(result.relicId);
+        assertEquals(0, result.goldChange);
+        assertEquals(0, result.hpChange);
     }
 
     @Test
@@ -208,6 +210,18 @@ class EventHandlerTest {
         assertTrue(slime.description.contains("失去 " + Math.abs(slime.goldChange)));
         assertTrue(burger.hpChange >= 15 && burger.hpChange <= 30);
         assertTrue(burger.description.contains("回复 " + burger.hpChange));
+    }
+
+    @Test
+    void invalidDataEventOptionDoesNotFallBackToHardcodedDefault() {
+        EventHandler handler = new EventHandler(new Random(1));
+
+        EventHandler.EventResult result = handler.executeEvent("村庄", 99);
+
+        assertEquals("你没有作出选择。", result.description);
+        assertEquals(0, result.goldChange);
+        assertEquals(0, result.hpChange);
+        assertNull(result.relicId);
     }
 
     @Test

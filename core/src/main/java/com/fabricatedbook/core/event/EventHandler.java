@@ -141,9 +141,9 @@ public class EventHandler {
     }
 
     public EventResult executeEvent(String eventName, int optionIndex, Player player) {
-        EventResult dataResult = executeDataEvent(eventName, optionIndex, player);
-        if (dataResult != null) {
-            return dataResult;
+        DataExecution dataExecution = executeDataEvent(eventName, optionIndex, player);
+        if (dataExecution.handled()) {
+            return dataExecution.result();
         }
         switch (eventName) {
             case "命运抉择1": return firstDecision(optionIndex);
@@ -286,17 +286,26 @@ public class EventHandler {
         return false;
     }
 
-    private EventResult executeDataEvent(String eventName, int optionIndex,
-                                         Player player) {
+    private DataExecution executeDataEvent(String eventName, int optionIndex,
+                                           Player player) {
         List<DataLoader.EventOptionData> options = visibleOptionData(eventName, player);
         if (optionIndex < 0 || optionIndex >= options.size()) {
-            return null;
+            if (eventsByName.containsKey(eventName)) {
+                return DataExecution.handled(
+                        new EventResult("你没有作出选择。", 0, 0, null));
+            }
+            return DataExecution.unhandled();
         }
         DataLoader.EventOptionData optionData = options.get(optionIndex);
         if (optionData.usesJavaExecutor()) {
-            return null;
+            return DataExecution.unhandled();
         }
-        return EventResultResolver.resolve(optionData, random);
+        EventResult result = EventResultResolver.resolve(optionData, random);
+        if (result == null) {
+            return DataExecution.handled(
+                    new EventResult("你没有作出选择。", 0, 0, null));
+        }
+        return DataExecution.handled(result);
     }
 
     private List<DataLoader.EventOptionData> visibleOptionData(String eventName,
@@ -317,6 +326,16 @@ public class EventHandler {
     private List<String> hardcodedEventNames() {
         return List.of("相遇", "翅膀雕像", "黏液世界", "投资",
                 "追猎", "村庄", "人生意义", "好诗歪诗");
+    }
+
+    private record DataExecution(boolean handled, EventResult result) {
+        static DataExecution handled(EventResult result) {
+            return new DataExecution(true, result);
+        }
+
+        static DataExecution unhandled() {
+            return new DataExecution(false, null);
+        }
     }
 
     // ==================== 具体事件实现 ====================
