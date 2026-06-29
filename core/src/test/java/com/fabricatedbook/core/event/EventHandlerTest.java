@@ -56,6 +56,7 @@ class EventHandlerTest {
         assertEquals(3, options.size());
         assertEquals("没有你，对我很重要", options.get(2).label);
         assertEquals("relic_babel_tower", result.relicId);
+        assertTrue(result.description.contains("获得藏品「巴别塔」"));
     }
 
     @Test
@@ -71,6 +72,10 @@ class EventHandlerTest {
         assertEquals(2, options.size());
         assertEquals("前进", options.get(0).label);
         assertEquals("突破迷雾，进入森林", options.get(0).description);
+
+        EventHandler.EventResult interrupted = handler.executeEvent("命运抉择1", 1);
+        assertEquals("ENDING_INTERRUPTED", interrupted.outcome);
+        assertTrue(interrupted.description.contains("故事在此中断"));
     }
 
     @Test

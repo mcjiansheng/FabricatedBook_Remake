@@ -141,7 +141,7 @@ public class EventHandler {
     }
 
     public EventResult executeEvent(String eventName, int optionIndex, Player player) {
-        EventResult dataResult = executeDataEvent(eventName, optionIndex);
+        EventResult dataResult = executeDataEvent(eventName, optionIndex, player);
         if (dataResult != null) {
             return dataResult;
         }
@@ -286,17 +286,32 @@ public class EventHandler {
         return false;
     }
 
-    private EventResult executeDataEvent(String eventName, int optionIndex) {
-        DataLoader.EventData eventData = eventsByName.get(eventName);
-        if (eventData == null || optionIndex < 0
-                || optionIndex >= eventData.getOptions().size()) {
+    private EventResult executeDataEvent(String eventName, int optionIndex,
+                                         Player player) {
+        List<DataLoader.EventOptionData> options = visibleOptionData(eventName, player);
+        if (optionIndex < 0 || optionIndex >= options.size()) {
             return null;
         }
-        DataLoader.EventOptionData optionData = eventData.getOptions().get(optionIndex);
+        DataLoader.EventOptionData optionData = options.get(optionIndex);
         if (optionData.usesJavaExecutor()) {
             return null;
         }
         return EventResultResolver.resolve(optionData, random);
+    }
+
+    private List<DataLoader.EventOptionData> visibleOptionData(String eventName,
+                                                               Player player) {
+        DataLoader.EventData eventData = eventsByName.get(eventName);
+        if (eventData == null || eventData.getOptions().isEmpty()) {
+            return List.of();
+        }
+        List<DataLoader.EventOptionData> options = new ArrayList<>();
+        for (DataLoader.EventOptionData optionData : eventData.getOptions()) {
+            if (optionConditionMatches(optionData, player)) {
+                options.add(optionData);
+            }
+        }
+        return options;
     }
 
     private List<String> hardcodedEventNames() {

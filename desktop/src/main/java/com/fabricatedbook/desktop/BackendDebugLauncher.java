@@ -861,8 +861,8 @@ public class BackendDebugLauncher {
         Player testPlayer = new Player("selftest", "自检战士", Profession.WARRIOR);
         ok &= assertCheck(fixedEventResultsAreValid(loader.loadEvents()),
                 "JSON 固定事件结果字段可解析");
-        ok &= assertCheck(javaEventOptionsAreMarked(loader.loadEvents()),
-                "复杂事件选项已标记 Java executor");
+        ok &= assertCheck(eventOptionsDeclareExecution(loader.loadEvents()),
+                "事件选项均声明 JSON 结果或 Java executor");
         ok &= assertCheck("relic_betrayal".equals(fixedEvent.relicId)
                         && fixedEvent.description.contains("背叛"),
                 "固定事件结果可从 JSON 执行");
@@ -873,7 +873,7 @@ public class BackendDebugLauncher {
                 "占位藏品事件结果可从 JSON 执行");
         ok &= assertCheck(decisionEvent.relicId == null
                         && decisionEvent.description.contains("没有作出选择"),
-                "命运抉择条件保留 Java handler");
+                "命运抉择条件按玩家藏品过滤");
         ok &= assertCheck(!eventHandler.getEventNames().contains("命运抉择1")
                         && !eventHandler.getEventNames().contains("命运抉择2")
                         && eventHandler.getOptions("命运抉择1").size() == 2,
@@ -1039,7 +1039,7 @@ public class BackendDebugLauncher {
                 || RelicFactory.createById(rewardId, player) != null;
     }
 
-    private boolean javaEventOptionsAreMarked(List<DataLoader.EventData> events) {
+    private boolean eventOptionsDeclareExecution(List<DataLoader.EventData> events) {
         boolean ok = true;
         for (DataLoader.EventData event : events) {
             for (DataLoader.EventOptionData option : event.getOptions()) {

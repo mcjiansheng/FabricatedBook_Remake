@@ -241,12 +241,13 @@
       {
         "text": "前进",
         "result": "突破迷雾，进入森林",
-        "executor": "java"
+        "outcomeDescription": "你拨开迷雾，继续向森林深处前进。"
       },
       {
         "text": "回头",
         "result": "结束游戏，获得隐藏结局「讲述中断」",
-        "executor": "java"
+        "outcomeDescription": "你选择回头，离开这本荒诞的书。故事在此中断。",
+        "outcome": "ENDING_INTERRUPTED"
       }
     ]
   },
@@ -259,17 +260,20 @@
       {
         "text": "我要权力",
         "result": "绝对的集权，皇权至高无上。获得藏品「集权」",
-        "executor": "java"
+        "outcomeDescription": "你接受了权力的许诺。\n获得藏品「集权」",
+        "relicId": "relic_centralization"
       },
       {
         "text": "我要财富",
         "result": "为了利益无所不用其极。获得藏品「寡头」",
-        "executor": "java"
+        "outcomeDescription": "你接受了财富的诱惑。\n获得藏品「寡头」",
+        "relicId": "relic_oligarch"
       },
       {
         "text": "没有你，对我很重要",
         "result": "凡人联合起来对神的挑战。获得藏品「巴别塔」",
-        "executor": "java",
+        "outcomeDescription": "你拒绝了他的交易，选择记住那座跨过语言、文化与阶级阻隔的塔。\n获得藏品「巴别塔」",
+        "relicId": "relic_babel_tower",
         "requiresAnyRelic": [
           "relic_betrayal",
           "relic_hatred"
