@@ -152,6 +152,9 @@ public class BackendDebugLauncher {
             case "savetest":
                 runSaveTest();
                 break;
+            case "flowtest":
+                runNodeFlowTest();
+                break;
             case "newmap":
                 createMap();
                 printMap();
@@ -187,6 +190,7 @@ public class BackendDebugLauncher {
         println("  selftest           运行数据/卡牌/怪物/药水/藏品自检");
         println("  seedtest [seed]    验证同种子地图和战斗抽牌顺序可复现");
         println("  savetest           验证战斗中存档回到战斗前快照");
+        println("  flowtest           验证非战斗节点提交后的自动保存语义");
         println("  newmap             重新生成当前层地图");
         println("  quit               退出调试控制台");
         println("");
@@ -1277,6 +1281,142 @@ public class BackendDebugLauncher {
                     "已提交药水变化会记录节点完成");
         }
         println(ok ? "SAVETEST PASS" : "SAVETEST FAIL");
+    }
+
+    private void runNodeFlowTest() {
+        println("开始节点流程自检...");
+        SaveManager flowSave = new SaveManager("build/backend-flowtest-save.json");
+        boolean ok = true;
+        ok &= eventChoiceFlowPersists(flowSave);
+        ok &= shopRemoveFlowPersists(flowSave);
+        ok &= safeHouseFlowPersists(flowSave);
+        ok &= nonCombatPotionDiscardFlowPersists(flowSave);
+        println(ok ? "FLOWTEST PASS" : "FLOWTEST FAIL");
+    }
+
+    private boolean eventChoiceFlowPersists(SaveManager flowSave) {
+        startNewRun(515001L);
+        GameRunState.NodeRef eventNode = nodeRef(NodeType.UNEXPECTED, 1, 0);
+        runState.beginNode(eventNode);
+        EventHandler.EventResult result = new EventHandler(new Random(1))
+                .executeEvent("相遇", 0, player);
+        applyEventResult(result, new Random(1));
+        runState.markActiveNodeProgressCommitted();
+
+        boolean ok = assertCheck(flowSave.saveRun(runState),
+                "事件选择提交后可以保存对局");
+        GameRunState loaded = flowSave.loadRun();
+        ok &= assertCheck(loaded != null, "事件选择提交后可以读档");
+        if (loaded != null) {
+            ok &= assertCheck(loaded.getPlayer().hasRelic("relic_betrayal"),
+                    "事件选择奖励藏品写入存档");
+            ok &= assertCheck(isCompletedNode(loaded, eventNode),
+                    "事件选择提交后记录节点完成");
+        }
+        return ok;
+    }
+
+    private boolean shopRemoveFlowPersists(SaveManager flowSave) {
+        startNewRun(515002L);
+        player.setGold(150);
+        int beforeDeckSize = player.getDrawPile().size();
+        GameRunState.NodeRef shopNode = nodeRef(NodeType.SHOP, 1, 0);
+        runState.beginNode(shopNode);
+        ShopManager shop = new ShopManager(player, new RelicManager(player), runState,
+                "flowtest-shop");
+        shop.generateItems();
+        boolean removed = shop.purchaseRemove(0);
+        if (removed) {
+            runState.markActiveNodeProgressCommitted();
+        }
+
+        boolean ok = assertCheck(removed, "商店删牌服务可执行");
+        ok &= assertCheck(flowSave.saveRun(runState), "商店删牌提交后可以保存对局");
+        GameRunState loaded = flowSave.loadRun();
+        ok &= assertCheck(loaded != null, "商店删牌提交后可以读档");
+        if (loaded != null) {
+            ok &= assertCheck(loaded.getPlayer().getDrawPile().size() == beforeDeckSize - 1,
+                    "商店删牌结果写入存档");
+            ok &= assertCheck(loaded.getShopRemoveCount() == 1,
+                    "商店删牌次数写入存档");
+            ok &= assertCheck(isCompletedNode(loaded, shopNode),
+                    "商店删牌提交后记录节点完成");
+        }
+        return ok;
+    }
+
+    private boolean safeHouseFlowPersists(SaveManager flowSave) {
+        startNewRun(515003L);
+        player.takeDamage(30);
+        int beforeHeal = player.getHp();
+        GameRunState.NodeRef safeHouseNode = nodeRef(NodeType.SAFEHOUSE, 1, 0);
+        runState.beginNode(safeHouseNode);
+        player.heal(12);
+        runState.markActiveNodeProgressCommitted();
+
+        boolean ok = assertCheck(flowSave.saveRun(runState),
+                "安全屋结算提交后可以保存对局");
+        GameRunState loaded = flowSave.loadRun();
+        ok &= assertCheck(loaded != null, "安全屋结算提交后可以读档");
+        if (loaded != null) {
+            ok &= assertCheck(loaded.getPlayer().getHp() > beforeHeal,
+                    "安全屋治疗结果写入存档");
+            ok &= assertCheck(isCompletedNode(loaded, safeHouseNode),
+                    "安全屋结算提交后记录节点完成");
+        }
+        return ok;
+    }
+
+    private boolean nonCombatPotionDiscardFlowPersists(SaveManager flowSave) {
+        startNewRun(515004L);
+        List<Potion> potions = new DataLoader().loadPotions();
+        if (!potions.isEmpty()) {
+            player.addPotion(potions.get(0).copy());
+        }
+        GameRunState.NodeRef eventNode = nodeRef(NodeType.UNEXPECTED, 1, 0);
+        runState.beginNode(eventNode);
+        if (!player.getPotions().isEmpty()) {
+            player.removePotion(0);
+        }
+        runState.markActiveNodeProgressCommitted();
+
+        boolean ok = assertCheck(flowSave.saveRun(runState),
+                "非战斗药水丢弃提交后可以保存对局");
+        GameRunState loaded = flowSave.loadRun();
+        ok &= assertCheck(loaded != null, "非战斗药水丢弃提交后可以读档");
+        if (loaded != null) {
+            ok &= assertCheck(loaded.getPlayer().getPotions().isEmpty(),
+                    "非战斗药水丢弃结果写入存档");
+            ok &= assertCheck(isCompletedNode(loaded, eventNode),
+                    "非战斗药水丢弃提交后记录节点完成");
+        }
+        return ok;
+    }
+
+    private GameRunState.NodeRef nodeRef(NodeType type, int col, int row) {
+        return new GameRunState.NodeRef(levelIndex, col, row, nodeTypeCode(type));
+    }
+
+    private int nodeTypeCode(NodeType type) {
+        return switch (type) {
+            case FIGHT -> 1;
+            case EMERGENCY -> 2;
+            case BOSS -> 3;
+            case UNEXPECTED -> 4;
+            case REWARD -> 5;
+            case SHOP -> 6;
+            case DECISION -> 8;
+            case SAFEHOUSE -> 9;
+        };
+    }
+
+    private boolean isCompletedNode(GameRunState state, GameRunState.NodeRef expected) {
+        GameRunState.NodeRef actual = state.getCompletedNode();
+        return actual != null
+                && actual.layer == expected.layer
+                && actual.col == expected.col
+                && actual.row == expected.row
+                && actual.type == expected.type;
     }
 
     private String mapSignature(long seed, int layer) {
