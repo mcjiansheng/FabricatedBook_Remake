@@ -375,9 +375,15 @@ public class BackendDebugLauncher {
     }
 
     private void resolveDecision() {
-        println("命运抉择: 迷雾挡住了来路。");
-        println("  1. 前进 - 突破迷雾，继续旅程");
-        println("  2. 回头 - 结束游戏，获得隐藏结局「讲述中断」");
+        Random eventRandom = randomForNode("decision-result", map.getCurrentNode());
+        EventHandler handler = new EventHandler(eventRandom);
+        String eventName = levelIndex >= 3 ? "命运抉择2" : "命运抉择1";
+        List<EventHandler.EventOption> options = handler.getOptions(eventName, player);
+        println("命运抉择: " + handler.getEventDescription(eventName));
+        for (int i = 0; i < options.size(); i++) {
+            EventHandler.EventOption option = options.get(i);
+            println("  " + (i + 1) + ". " + option.label + " - " + option.description);
+        }
         println("输入抉择编号，或回车选择 1。");
         print("decision> ");
         String line = readLine();
@@ -385,12 +391,13 @@ public class BackendDebugLauncher {
             line = "";
         }
         int choice = line.trim().isEmpty() ? 1 : parseInt(line.trim(), 1);
-        if (choice == 2) {
-            println("隐藏结局: 讲述中断。");
-            running = false;
-        } else {
-            println("你选择继续前进。");
-        }
+        choice = Math.max(1, Math.min(choice, options.size()));
+
+        EventHandler.EventResult result = handler.executeEvent(eventName,
+                choice - 1, player);
+        applyEventResult(result, eventRandom);
+        println(result.description);
+        handleEventOutcome(result);
     }
 
     private void resolveEvent() {
@@ -399,7 +406,7 @@ public class BackendDebugLauncher {
         List<String> names = handler.getEventNames();
         String eventName = names.get(randomForNode("event-name", map.getCurrentNode())
                 .nextInt(names.size()));
-        List<EventHandler.EventOption> options = handler.getOptions(eventName);
+        List<EventHandler.EventOption> options = handler.getOptions(eventName, player);
         println("事件: " + eventName);
         for (int i = 0; i < options.size(); i++) {
             EventHandler.EventOption option = options.get(i);
@@ -415,9 +422,11 @@ public class BackendDebugLauncher {
         int choice = line.isEmpty() ? 1 : parseInt(line, 1);
         choice = Math.max(1, Math.min(choice, options.size()));
 
-        EventHandler.EventResult result = handler.executeEvent(eventName, choice - 1);
+        EventHandler.EventResult result = handler.executeEvent(eventName,
+                choice - 1, player);
         applyEventResult(result, eventRandom);
         println(result.description);
+        handleEventOutcome(result);
     }
 
     private void applyEventResult(EventHandler.EventResult result, Random eventRandom) {
@@ -437,6 +446,23 @@ public class BackendDebugLauncher {
 
         if (result.relicId != null && !result.relicId.isBlank()) {
             EventRewardResolver.applyRewards(result, player, eventRandom);
+        }
+    }
+
+    private void handleEventOutcome(EventHandler.EventResult result) {
+        if (result.outcome == null || result.outcome.isBlank()) {
+            return;
+        }
+        switch (result.outcome) {
+            case "ENDING_INTERRUPTED" -> {
+                println("隐藏结局: 讲述中断。");
+                running = false;
+            }
+            case "ENDING_HIDDEN" -> {
+                println("隐藏结局触发。");
+                running = false;
+            }
+            default -> println("事件 outcome: " + result.outcome);
         }
     }
 
@@ -878,6 +904,15 @@ public class BackendDebugLauncher {
                         && !eventHandler.getEventNames().contains("命运抉择2")
                         && eventHandler.getOptions("命运抉择1").size() == 2,
                 "命运抉择展示数据来自 JSON 且不进入随机事件池");
+        Player decisionPlayer = new Player("selftest-decision-relic",
+                "自检战士", Profession.WARRIOR);
+        Relic betrayal = RelicFactory.createById("relic_betrayal", decisionPlayer);
+        if (betrayal != null) {
+            decisionPlayer.addRelic(betrayal);
+        }
+        ok &= assertCheck(eventHandler.getOptions("命运抉择2", decisionPlayer)
+                        .size() == 3,
+                "命运抉择条件选项按玩家藏品展示");
         Relic resolvedPlaceholderRelic = EventRewardResolver.resolveRelic(
                 "relic_random_leq3", testPlayer, new Random(1));
         Relic resolvedCurseRelic = EventRewardResolver.resolveRelic(
