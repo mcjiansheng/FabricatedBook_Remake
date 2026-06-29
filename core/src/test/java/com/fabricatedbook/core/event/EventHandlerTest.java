@@ -3,6 +3,7 @@ package com.fabricatedbook.core.event;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.potion.Potion;
+import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.relic.EventBus;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicFactory;
@@ -137,6 +138,25 @@ class EventHandlerTest {
         assertTrue(lowValue.getRarity().getValue() <= 3);
         assertTrue(cursed != null);
         assertEquals(Relic.Rarity.CURSED, cursed.getRarity());
+    }
+
+    @Test
+    void fiveCardEventRewardAddsCardsInsteadOfPlaceholderRelic() {
+        Player player = player();
+        EventHandler.EventResult result = new EventHandler.EventResult(
+                "获得 5 张牌", 0, 0, "relic_five_cards");
+
+        EventRewardResolver.EventReward reward =
+                EventRewardResolver.applyRewards(result, player, new Random(1));
+
+        assertEquals(5, reward.getCards().size());
+        assertEquals(5, player.getDrawPile().size());
+        assertFalse(player.hasRelic("relic_five_cards"));
+        for (Card card : player.getDrawPile()) {
+            assertTrue(card.getProfession().equals("warrior"));
+            assertTrue(card.getRarity() != Card.Rarity.BASIC);
+            assertFalse(card.isUnplayable());
+        }
     }
 
     @Test

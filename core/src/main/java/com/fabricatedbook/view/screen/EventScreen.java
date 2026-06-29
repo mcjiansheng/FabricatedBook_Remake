@@ -17,8 +17,6 @@ import com.badlogic.gdx.utils.Align;
 import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.event.EventRewardResolver;
 import com.fabricatedbook.core.entity.Player;
-import com.fabricatedbook.core.relic.Relic;
-import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.view.FabricBookGame;
 import com.fabricatedbook.view.ui.ResponsiveViewport;
 import com.fabricatedbook.view.ui.EscapeMenu;
@@ -188,22 +186,16 @@ public class EventScreen implements Screen {
                             player.takeDamage(-result.hpChange);
                         }
                     }
-                    String acquiredRelicName = null;
-                    if (result.relicId != null && !result.relicId.isBlank()) {
-                        Relic relic = EventRewardResolver.resolveRelic(result.relicId,
-                                player, EventScreen.this.eventRandom);
-                        if (relic != null) {
-                            new RelicManager(player).addRelic(relic);
-                            acquiredRelicName = relic.getName();
-                        }
-                    }
+                    EventRewardResolver.EventReward eventReward =
+                            EventRewardResolver.applyRewards(result, player,
+                                    EventScreen.this.eventRandom);
 
                     // 显示结果
                     game.autosaveCurrentRun();
                     if (showEndingIfNeeded(result)) {
                         return;
                     }
-                    showResult(result, acquiredRelicName);
+                    showResult(result, eventReward);
                 }
             });
             optionTable.add(btn).width(480).height(OPTION_HEIGHT)
@@ -216,9 +208,10 @@ public class EventScreen implements Screen {
      * 显示事件结果并添加返回按钮。
      *
      * @param result 已结算的事件结果
-     * @param acquiredRelicName 本次获得的藏品名；无则为 null
+     * @param reward 本次应用的事件奖励摘要。
      */
-    private void showResult(EventHandler.EventResult result, String acquiredRelicName) {
+    private void showResult(EventHandler.EventResult result,
+                            EventRewardResolver.EventReward reward) {
         optionTable.clear();
 
         Label resultLabel = new Label(result.description, new Label.LabelStyle(
@@ -228,7 +221,7 @@ public class EventScreen implements Screen {
         optionTable.add(resultLabel).width(480).left().padBottom(20);
         optionTable.row();
 
-        String summary = resultSummary(result, acquiredRelicName);
+        String summary = resultSummary(result, reward);
         if (!summary.isBlank()) {
             Label summaryLabel = new Label(summary, new Label.LabelStyle(game.getFont(), UiTheme.ACCENT_GOLD));
             summaryLabel.setWrap(true);
@@ -260,7 +253,8 @@ public class EventScreen implements Screen {
         return entryMessage + "\n\n" + description;
     }
 
-    private String resultSummary(EventHandler.EventResult result, String relicName) {
+    private String resultSummary(EventHandler.EventResult result,
+                                 EventRewardResolver.EventReward reward) {
         StringBuilder summary = new StringBuilder();
         if (result.goldChange != 0) {
             summary.append(result.goldChange > 0 ? "金币 +" : "金币 ")
@@ -275,9 +269,14 @@ public class EventScreen implements Screen {
                     ? "生命 +" + result.hpChange
                     : "生命 " + result.hpChange);
         }
-        if (relicName != null && !relicName.isBlank()) {
+        if (reward != null && reward.getRelicName() != null
+                && !reward.getRelicName().isBlank()) {
             if (summary.length() > 0) summary.append("   ");
-            summary.append("获得藏品：").append(relicName);
+            summary.append("获得藏品：").append(reward.getRelicName());
+        }
+        if (reward != null && !reward.cardNames().isBlank()) {
+            if (summary.length() > 0) summary.append("   ");
+            summary.append("获得卡牌：").append(reward.cardNames());
         }
         return summary.toString();
     }

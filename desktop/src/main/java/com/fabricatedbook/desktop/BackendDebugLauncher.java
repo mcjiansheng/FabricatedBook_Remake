@@ -436,11 +436,7 @@ public class BackendDebugLauncher {
         }
 
         if (result.relicId != null && !result.relicId.isBlank()) {
-            Relic relic = EventRewardResolver.resolveRelic(result.relicId, player,
-                    eventRandom);
-            if (relic != null) {
-                new RelicManager(player).addRelic(relic);
-            }
+            EventRewardResolver.applyRewards(result, player, eventRandom);
         }
     }
 
@@ -890,6 +886,17 @@ public class BackendDebugLauncher {
         ok &= assertCheck(resolvedCurseRelic != null
                         && resolvedCurseRelic.getRarity() == Relic.Rarity.CURSED,
                 "占位负面藏品可展开为真实负面藏品");
+        int cardCountBeforeEventReward = testPlayer.getDrawPile().size();
+        EventHandler.EventResult fiveCardsResult = new EventHandler.EventResult(
+                "获得 5 张牌", 0, 0, "relic_five_cards");
+        EventRewardResolver.EventReward fiveCardsReward =
+                EventRewardResolver.applyRewards(fiveCardsResult, testPlayer,
+                        new Random(1));
+        ok &= assertCheck(fiveCardsReward.getCards().size() == 5
+                        && testPlayer.getDrawPile().size()
+                        == cardCountBeforeEventReward + 5
+                        && !testPlayer.hasRelic("relic_five_cards"),
+                "五张牌事件奖励可展开为真实卡牌");
 
         int oldMaxHp = testPlayer.getMaxHp();
         Relic hotWater = RelicFactory.createById("relic_hot_water_flask", testPlayer);

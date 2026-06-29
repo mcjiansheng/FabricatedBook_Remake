@@ -289,7 +289,7 @@
     "id": "relic_five_cards",
     "name": "五张牌",
     "rarity": "SPECIAL",
-    "description": "好诗事件获得的特殊奖励标记。后续将替换为正式选牌奖励流程",
+    "description": "好诗事件奖励路由标记，由 EventRewardResolver 展开为 5 张真实卡牌，不作为藏品发放",
     "effectValue": 0
   },
   {
