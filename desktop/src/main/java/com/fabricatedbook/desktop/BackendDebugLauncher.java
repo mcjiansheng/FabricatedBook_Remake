@@ -266,6 +266,12 @@ public class BackendDebugLauncher {
                 node.getTypeCode());
     }
 
+    private String nodeKey(LayerMapNode node) {
+        if (node == null) return levelIndex + ":none";
+        return levelIndex + ":" + node.getCol() + ":" + node.getRow()
+                + ":" + node.getTypeCode();
+    }
+
     private Random randomForNode(String purpose, LayerMapNode node) {
         if (node == null) {
             return runState.randomFor(purpose, levelIndex, "none");
@@ -361,9 +367,7 @@ public class BackendDebugLauncher {
         if (type.isCombat()) {
             runBattle(type);
         } else if (type == NodeType.SHOP) {
-            int gain = 15;
-            player.gainGold(gain);
-            println("商店调试: 暂未进入购买流程，补偿获得 " + gain + " 金币。");
+            resolveShop(node);
         } else if (type == NodeType.REWARD) {
             int gain = 25;
             player.gainGold(gain);
@@ -375,6 +379,117 @@ public class BackendDebugLauncher {
             resolveDecision();
         } else {
             resolveEvent();
+        }
+    }
+
+    private void resolveShop(LayerMapNode node) {
+        ShopManager shop = new ShopManager(player, new RelicManager(player), runState,
+                "shop:" + nodeKey(node));
+        shop.generateItems();
+        println("进入商店。金币: " + player.getGold()
+                + "，删牌价格: " + shop.getRemoveCost());
+        printShopHelp();
+        printShop(shop);
+        while (running) {
+            print("shop> ");
+            String line = readLine();
+            if (line == null) {
+                running = false;
+                println("");
+                println("输入结束，已退出。");
+                break;
+            }
+            line = line.trim();
+            if (line.isEmpty() || "leave".equalsIgnoreCase(line)
+                    || "exit".equalsIgnoreCase(line)) {
+                break;
+            }
+            handleShopCommand(shop, line);
+        }
+    }
+
+    private void handleShopCommand(ShopManager shop, String line) {
+        String[] parts = line.split("\\s+");
+        String command = parts[0].toLowerCase();
+        switch (command) {
+            case "help" -> printShopHelp();
+            case "list" -> printShop(shop);
+            case "deck" -> printDeck();
+            case "potions" -> printPotions();
+            case "buy" -> buyShopItem(shop, parts);
+            case "remove" -> removeShopCard(shop, parts);
+            case "save" -> saveRun();
+            default -> {
+                println("未知商店命令: " + command);
+                printShopHelp();
+            }
+        }
+    }
+
+    private void printShopHelp() {
+        println("商店命令:");
+        println("  list              查看商品");
+        println("  buy <编号>         购买商品");
+        println("  remove <牌序号>    支付删牌服务移除抽牌堆中的牌");
+        println("  deck              查看当前牌堆");
+        println("  potions           查看药水栏");
+        println("  save              保存当前对局");
+        println("  leave             离开商店");
+    }
+
+    private void printShop(ShopManager shop) {
+        println("商品列表（金币 " + player.getGold() + "）:");
+        List<ShopManager.ShopItem> items = shop.getItems();
+        for (int i = 0; i < items.size(); i++) {
+            ShopManager.ShopItem item = items.get(i);
+            println("  " + (i + 1) + ". [" + item.getType() + "] "
+                    + item.getName() + " - " + item.getPrice() + " 金币"
+                    + (item.isPurchased() ? " (已购买)" : ""));
+        }
+        println("  remove. 删牌服务 - " + shop.getRemoveCost() + " 金币"
+                + (shop.isRemovePurchased() ? " (已购买)" : ""));
+    }
+
+    private void buyShopItem(ShopManager shop, String[] parts) {
+        if (parts.length < 2) {
+            println("用法: buy <商品编号>");
+            return;
+        }
+        int index = parseInt(parts[1], -1) - 1;
+        if (shop.purchase(index)) {
+            ShopManager.ShopItem item = shop.getItems().get(index);
+            println("购买成功: " + item.getName());
+            markShopProgressCommittedAndSave();
+            printShop(shop);
+        } else {
+            println("购买失败，请检查编号、金币、药水栏或购买状态。");
+        }
+    }
+
+    private void removeShopCard(ShopManager shop, String[] parts) {
+        if (parts.length < 2) {
+            println("用法: remove <抽牌堆牌序号>");
+            printDrawPile();
+            return;
+        }
+        int index = parseInt(parts[1], -1) - 1;
+        if (shop.purchaseRemove(index)) {
+            println("删牌成功。");
+            markShopProgressCommittedAndSave();
+            printDrawPile();
+            printShop(shop);
+        } else {
+            println("删牌失败，请检查牌序号、金币或是否已购买删牌服务。");
+            printDrawPile();
+        }
+    }
+
+    private void markShopProgressCommittedAndSave() {
+        runState.markActiveNodeProgressCommitted();
+        if (saveManager.saveRun(runState)) {
+            println("商店进度已自动保存。");
+        } else {
+            println("商店进度自动保存失败。");
         }
     }
 
@@ -794,6 +909,19 @@ public class BackendDebugLauncher {
         println("牌堆: 抽牌堆 " + player.getDrawPile().size()
                 + " / 手牌 " + player.getHand().size()
                 + " / 弃牌堆 " + player.getDiscardPile().size());
+    }
+
+    private void printDrawPile() {
+        println("抽牌堆:");
+        if (player.getDrawPile().isEmpty()) {
+            println("  (空)");
+            return;
+        }
+        for (int i = 0; i < player.getDrawPile().size(); i++) {
+            Card card = player.getDrawPile().get(i);
+            println("  " + (i + 1) + ". [" + card.getCost() + "] "
+                    + cardLabel(card, player.getDrawPile()));
+        }
     }
 
     private void printPotions() {
@@ -1288,6 +1416,7 @@ public class BackendDebugLauncher {
         SaveManager flowSave = new SaveManager("build/backend-flowtest-save.json");
         boolean ok = true;
         ok &= eventChoiceFlowPersists(flowSave);
+        ok &= shopPurchaseFlowPersists(flowSave);
         ok &= shopRemoveFlowPersists(flowSave);
         ok &= safeHouseFlowPersists(flowSave);
         ok &= nonCombatPotionDiscardFlowPersists(flowSave);
@@ -1316,8 +1445,40 @@ public class BackendDebugLauncher {
         return ok;
     }
 
-    private boolean shopRemoveFlowPersists(SaveManager flowSave) {
+    private boolean shopPurchaseFlowPersists(SaveManager flowSave) {
         startNewRun(515002L);
+        player.setGold(1000);
+        int beforeDeckSize = player.getDrawPile().size();
+        int beforeRelics = player.getRelics().size();
+        int beforePotions = player.getPotions().size();
+        GameRunState.NodeRef shopNode = nodeRef(NodeType.SHOP, 1, 0);
+        runState.beginNode(shopNode);
+        ShopManager shop = new ShopManager(player, new RelicManager(player), runState,
+                "flowtest-shop-buy");
+        shop.generateItems();
+        ShopManager.ShopItem firstItem = shop.getItems().isEmpty() ? null
+                : shop.getItems().get(0);
+        boolean purchased = firstItem != null && shop.purchase(0);
+        if (purchased) {
+            runState.markActiveNodeProgressCommitted();
+        }
+
+        boolean ok = assertCheck(purchased, "商店商品可购买");
+        ok &= assertCheck(flowSave.saveRun(runState), "商店商品购买提交后可以保存对局");
+        GameRunState loaded = flowSave.loadRun();
+        ok &= assertCheck(loaded != null, "商店商品购买提交后可以读档");
+        if (loaded != null && firstItem != null) {
+            ok &= assertCheck(shopPurchasePersisted(loaded.getPlayer(), firstItem,
+                            beforeDeckSize, beforeRelics, beforePotions),
+                    "商店商品购买结果写入存档");
+            ok &= assertCheck(isCompletedNode(loaded, shopNode),
+                    "商店商品购买提交后记录节点完成");
+        }
+        return ok;
+    }
+
+    private boolean shopRemoveFlowPersists(SaveManager flowSave) {
+        startNewRun(515005L);
         player.setGold(150);
         int beforeDeckSize = player.getDrawPile().size();
         GameRunState.NodeRef shopNode = nodeRef(NodeType.SHOP, 1, 0);
@@ -1343,6 +1504,18 @@ public class BackendDebugLauncher {
                     "商店删牌提交后记录节点完成");
         }
         return ok;
+    }
+
+    private boolean shopPurchasePersisted(Player loadedPlayer,
+                                          ShopManager.ShopItem purchasedItem,
+                                          int beforeDeckSize,
+                                          int beforeRelics,
+                                          int beforePotions) {
+        return switch (purchasedItem.getType()) {
+            case CARD -> loadedPlayer.getDrawPile().size() == beforeDeckSize + 1;
+            case RELIC -> loadedPlayer.getRelics().size() == beforeRelics + 1;
+            case POTION -> loadedPlayer.getPotions().size() == beforePotions + 1;
+        };
     }
 
     private boolean safeHouseFlowPersists(SaveManager flowSave) {
