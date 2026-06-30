@@ -6,6 +6,7 @@ import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.engine.CardEffect;
 import com.fabricatedbook.core.engine.CardEffectParser;
 import com.fabricatedbook.core.engine.CombatEngine;
+import com.fabricatedbook.core.engine.EnemyActionResolver;
 import com.fabricatedbook.core.engine.ViewNotifier;
 import com.fabricatedbook.core.entity.AbstractEntity;
 import com.fabricatedbook.core.entity.Enemy;
@@ -1000,6 +1001,8 @@ public class BackendDebugLauncher {
             List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
             ok &= assertCheck(!groups.isEmpty(), "第 " + level + " 层怪物组可加载: " + groups.size());
         }
+        ok &= assertCheck(allEnemyActionsAreResolvable(loader),
+                "已配置怪物 actionScript 均已接入 EnemyActionResolver");
 
         EventHandler eventHandler = new EventHandler(new Random(1));
         EventHandler.EventResult fixedEvent = eventHandler.executeEvent("相遇", 0);
@@ -1223,6 +1226,39 @@ public class BackendDebugLauncher {
                 continue;
             }
             ok &= cardEffectsAreKnown(profession.getDisplayName(), cards);
+        }
+        return ok;
+    }
+
+    private boolean allEnemyActionsAreResolvable(DataLoader loader) {
+        boolean ok = true;
+        Player testPlayer = new Player("selftest-enemy-actions",
+                "敌人行动自检", Profession.WARRIOR);
+        for (int level = 1; level <= 5; level++) {
+            for (DataLoader.EnemyGroup group : loader.loadMonsters(level)) {
+                List<Enemy> enemies = new ArrayList<>();
+                for (DataLoader.EnemyData enemyData : group.getEnemies()) {
+                    enemies.add(enemyData.toEnemy());
+                }
+                for (Enemy enemy : enemies) {
+                    if (enemy.getActionScript() == null) {
+                        println("[SELFTEST] 怪物缺少 actionScript: level" + level
+                                + "/" + group.getId() + "/" + enemy.getId());
+                        ok = false;
+                        continue;
+                    }
+                    for (String actionId : enemy.getActionScript()) {
+                        List<CombatAction> actions = EnemyActionResolver.resolve(enemy,
+                                actionId, testPlayer, enemies, new Random(1));
+                        if (actions == null) {
+                            println("[SELFTEST] 怪物 actionScript 未接入 resolver: level"
+                                    + level + "/" + group.getId() + "/"
+                                    + enemy.getId() + " -> " + actionId);
+                            ok = false;
+                        }
+                    }
+                }
+            }
         }
         return ok;
     }

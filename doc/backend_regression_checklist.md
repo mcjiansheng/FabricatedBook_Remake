@@ -44,6 +44,7 @@ printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nquit\n' | ./gradlew runBac
 - 改藏品拾取、战斗 hook 或奖励展开：加看 `DataRelicTest`、`CombatPreviewCalculatorTest`、`EventHandlerTest` 中相关用例。
 - 改卡牌 JSON 或 effect DSL：加看 `CardEffectParserTest`、`CombatPreviewCalculatorTest`，并运行 `selftest`。
 - 改事件 JSON 或命运抉择：加看 `EventHandlerTest`，并运行 `selftest` 和 `flowtest`。
+- 改怪物 JSON、敌人 actionScript 或敌人立绘：加看 `EnemyActionResolverTest` 和 [enemy_action_dsl.md](enemy_action_dsl.md)，并运行 `selftest`。
 
 ## 记录要求
 

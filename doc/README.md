@@ -33,6 +33,12 @@
 3. [map_test_report.md](map_test_report.md) - 后端 CLI 地图专项测试报告，记录过首尾行硬编码、DECISION 处理、迷雾后抉择等问题。
 4. [layer_by_layer_test.md](layer_by_layer_test.md) - 第 1 层逐层地图测试记录，是地图专项报告的早期简版。
 
+### 准备做怪物或敌人行为
+
+1. [game_encyclopedia/monsters.md](game_encyclopedia/monsters.md) - 各层敌人、Boss 和隐藏 Boss 图鉴。
+2. [enemy_action_dsl.md](enemy_action_dsl.md) - 怪物 `actionScript` 兼容格式、推荐写法、数据自检和图片映射规范。
+3. [ai_original_content_migration_guide.md](ai_original_content_migration_guide.md) - 内容迁移时涉及的怪物 JSON 字段和历史迁移说明。
+
 ### 准备做随机种子、存档或回归验证
 
 1. [backend_regression_checklist.md](backend_regression_checklist.md) - 后端提交前最小回归命令、通过标志、失败处理和专项加跑清单。
@@ -61,6 +67,7 @@
 | [game_encyclopedia/monsters.md](game_encyclopedia/monsters.md) | 各层敌人、Boss 和隐藏 Boss 图鉴 | 补怪物、改行动或核对 Boss 解锁条件 |
 | [game_encyclopedia/nodes_events.md](game_encyclopedia/nodes_events.md) | 节点系统、事件列表、命运抉择 | 修改节点、事件、商店、命运抉择时 |
 | [ai_original_content_migration_guide.md](ai_original_content_migration_guide.md) | 原版内容迁移指南，说明 JSON 字段、支持的 effect/action DSL、迁移顺序和验收 | 补卡牌、怪物、藏品、药水、事件或地图数据 |
+| [enemy_action_dsl.md](enemy_action_dsl.md) | 怪物 actionScript 运行时入口、推荐 action 命名、resolver 自检和图片映射规范 | 新增怪物、改敌人行动或接入敌人立绘时 |
 
 ### 前端设计与调试
 

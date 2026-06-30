@@ -239,10 +239,10 @@
 - [ ] 统一卡牌来源。
   - [x] `CardPool` 硬编码战士卡与 `warrior.json` ID/字段不完全一致，需要确认最终来源。（战士主链路已优先 JSON 注册，后端 CLI `selftest` 会校验运行时 CardPool 与 JSON 一致。）
   - [x] 若改为 JSON 注册，删除或降级硬编码卡池。（硬编码战士卡已降级为 JSON 加载失败时的兜底。）
-- [ ] 统一怪物 action DSL。
-  - [ ] 保持 `EnemyActionResolver` 对现有 JSON 的兼容。
-  - [ ] 文档化推荐 action 写法。
-  - [ ] 为新增敌人提供图片映射规范。
+- [x] 统一怪物 action DSL。（已保留现有原版风格 actionId，并用 resolver/test/selftest 固定兼容边界。）
+  - [x] 保持 `EnemyActionResolver` 对现有 JSON 的兼容。（`EnemyActionResolverTest` 和 CLI `selftest` 会扫描 level1-5 全部 actionScript。）
+  - [x] 文档化推荐 action 写法。（见 [doc/enemy_action_dsl.md](doc/enemy_action_dsl.md)。）
+  - [x] 为新增敌人提供图片映射规范。（见 [doc/enemy_action_dsl.md](doc/enemy_action_dsl.md)。）
 - [ ] 统一地图文档。
   - [ ] `game_encyclopedia/overview.md`、`game_encyclopedia/nodes_events.md`、`original_map_analysis.md`、`frontend_design.md`、`run_seed_and_save.md` 中地图描述需在规则下沉后同步。
 - [ ] 更新迁移指南。

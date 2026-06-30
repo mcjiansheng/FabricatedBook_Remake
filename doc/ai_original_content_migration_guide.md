@@ -319,72 +319,61 @@ ExtraEnergy / ExtraEnergyBuff / extra_energy / extraenergy / 额外能量
 一个 `EnemyGroup` 表示一场战斗，`enemies` 内可有多个敌人。
 `passive` 字段会保留到 `Enemy` 实体，并由 `CombatEngine` 在战斗开始、回合开始、敌人攻击后和死亡检查阶段结算。
 
-### 6.2 当前支持的敌人 actionScript DSL
+### 6.2 当前支持的敌人 actionScript
 
-由 `CombatEngine.parseEnemyAction` 解析：
-
-```text
-atkN               对玩家造成 N 点伤害
-atkNxM             对玩家造成 N 点伤害，重复 M 次
-attackN            同 atkN
-attackNxM          同 atkNxM
-defN               获得 N 格挡
-blockN             获得 N 格挡
-buff:BuffName:N    给敌人自己施加 N 层 Buff
-inc                默认给敌人自己施加 3 层 Strength
-inc:BuffName:N     因为 startsWith("inc")，split 后也可用
-debuff:BuffName:N  当前代码错误地给敌人自己施加 Debuff，不是给玩家
-curse:BuffName:N   同上
-healN              敌人回复 N 点生命值
-idle               什么都不做
-stun               什么都不做
-```
-
-### 6.3 必须修正的现有怪物 action
-
-当前 JSON 中已有大量原版风格 action，例如：
+当前主入口是 `EnemyActionResolver`。`CombatEngine` 会优先调用 resolver；resolver 未识别时才回退到旧基础 DSL。现有 `level1` 到 `level5` 的 JSON 保留原版风格 actionId，例如：
 
 ```text
 atk_double_3
 inc_strength_3
 atk_debuff_blockred
-def_fly
-atk_peck
-atk_dive
-buff_resist_strength
-curse_debuffs
-atk_trigger_wither
 def_block_10
+atk_wither_strike
+def_team_shield
+heal_emergency
+trigger_wither_puppet
 ```
 
-这些大多不能被当前 `parseEnemyAction` 正确解析，会 fallback 成默认 6 点攻击。
+旧基础 DSL 仍可兼容简单动作：
 
-迁移时有两种做法：
+```text
+atkN / attackN      对玩家造成 N 点伤害
+atkNxM / attackNxM  对玩家造成 N 点伤害，重复 M 次
+defN / blockN       敌人获得 N 格挡
+idle / stun         无行动
+```
 
-1. 把 JSON actionScript 统一转换为当前 DSL，例如 `atk_double_3` -> `atk3x2`。
-2. 更推荐：扩展 `parseEnemyAction` 支持原版命名，保持 JSON 更接近原作语义。
+### 6.3 当前校验
 
-推荐新增一层 `EnemyActionResolver`，把 actionId 映射为 `List<CombatAction>`，不要让 `CombatEngine` 继续变大。
+现有怪物 action 兼容性已由自动化测试固定：
+
+```bash
+./gradlew :core:test --tests com.fabricatedbook.core.engine.EnemyActionResolverTest
+printf 'selftest\nquit\n' | ./gradlew runBackendDebug
+```
+
+如果新增 JSON action 未接入 resolver，测试和后端 CLI 会打印具体的 `level/group/enemy -> actionId`。
 
 ### 6.4 推荐的敌人 action 设计
 
-建议把敌人动作统一为可读 DSL：
+新增怪物时优先沿用可读的语义化 id，而不是把复杂行为塞进基础字符串解析：
 
 ```text
-attack:damage=6
-attack:damage=3:times=2
-block:amount=8
-self_buff:Strength:3
-player_debuff:Weak:2
-attack_and_debuff:damage=5:buff=BlockReduction:stack=2
+atk_*
+def_*
+buff_* / inc_*
+curse_*
+heal_*
+steal_block
+transfer_curse
 ```
 
-如果采用此方案，需要：
+新增 actionId 必须同步：
 
-- 新增 `EnemyActionResolver`
-- 让 `Enemy.deduceIntent` 识别新格式
-- 更新所有 `level*.json`
-- 保留旧格式兼容一段时间
+- `EnemyActionResolver.resolve(...)`：登记实际动作。
+- `EnemyActionResolver.describeIntent(...)`：补玩家可读意图。
+- `doc/enemy_action_dsl.md`：如新增一类命名约定，同步说明。
+- `EnemyActionResolverTest` 和 CLI `selftest`。
 
 ### 6.5 怪物图片映射
 
