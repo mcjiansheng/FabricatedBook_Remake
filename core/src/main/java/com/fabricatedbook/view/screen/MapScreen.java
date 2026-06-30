@@ -18,8 +18,8 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.fabricatedbook.core.engine.CombatEngine;
+import com.fabricatedbook.core.encounter.EnemyEncounterResolver;
 import com.fabricatedbook.core.entity.Enemy;
-import com.fabricatedbook.core.entity.EntityFactory;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.event.EventHandler;
 import com.fabricatedbook.core.map.LayerMapConfig;
@@ -633,185 +633,28 @@ public class MapScreen implements Screen {
         int level = currentLayerIdx + 1;
         List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
 
-        if (nodeType == BOSS) {
-            List<Enemy> forcedBoss = selectForcedBoss(groups, level);
-            if (!forcedBoss.isEmpty()) {
-                return forcedBoss;
-            }
-        }
-
-        // 筛选匹配的怪物组。普通战斗不能混入 emergency 专用组。
-        List<DataLoader.EnemyGroup> matched = new ArrayList<>();
-        for (DataLoader.EnemyGroup group : groups) {
-            if (!matchesNodeType(group, nodeType)) {
-                continue;
-            }
-            matched.add(group);
-        }
-
-        // 如果紧急作战暂时没有专用组，才退回到非 Boss 高 HP 组。
-        if (matched.isEmpty() && nodeType == EMERGENCY) {
-            for (DataLoader.EnemyGroup group : groups) {
-                if (!group.isBoss() && !isEmergencyGroup(group)) {
-                    matched.add(group);
-                }
-            }
-        }
-
-        // 紧急作战：优先尝试从同层中挑选精英级或更高 HP 的组
-        // 若没有专门的精英标记，则使用所有非 Boss 组
-        if (!matched.isEmpty()) {
-            DataLoader.EnemyGroup selected;
-            if (nodeType == EMERGENCY) {
-                // 优先选敌人数量多/HP 高的组作为精英
-                selected = matched.get(encounterRandom.nextInt(matched.size()));
-                // 尝试偏向选总 HP 更高的
-                for (int attempt = 0; attempt < 3; attempt++) {
-                    DataLoader.EnemyGroup candidate = matched.get(encounterRandom.nextInt(matched.size()));
-                    if (totalHp(candidate) > totalHp(selected)) {
-                        selected = candidate;
-                    }
-                }
-            } else {
-                selected = matched.get(encounterRandom.nextInt(matched.size()));
-            }
-
-            List<Enemy> enemies = new ArrayList<>();
-            if (selected.getEnemies() != null) {
-                for (DataLoader.EnemyData data : selected.getEnemies()) {
-                    enemies.add(data.toEnemy());
-                }
-            }
-            addBabelTowerEnemy(enemies, groups, selected, nodeType, encounterRandom);
-            if (!enemies.isEmpty()) return enemies;
-        }
-
-        // 跨层 fallback：尝试相邻层
-        for (int fallbackLevel : new int[]{level - 1, level + 1}) {
-            if (fallbackLevel < 1 || fallbackLevel > 5) continue;
-            List<DataLoader.EnemyGroup> fbGroups = loader.loadMonsters(fallbackLevel);
-            for (DataLoader.EnemyGroup group : fbGroups) {
-                if (!matchesNodeType(group, nodeType)) {
-                    continue;
-                }
-                if (group.getEnemies() != null && !group.getEnemies().isEmpty()) {
-                    List<Enemy> enemies = new ArrayList<>();
-                    for (DataLoader.EnemyData data : group.getEnemies()) {
-                        enemies.add(data.toEnemy());
-                    }
-                    return enemies;
-                }
-            }
-        }
-
-        if (nodeType == EMERGENCY) {
-            for (int fallbackLevel : new int[]{level - 1, level + 1}) {
-                if (fallbackLevel < 1 || fallbackLevel > 5) continue;
-                List<DataLoader.EnemyGroup> fbGroups = loader.loadMonsters(fallbackLevel);
-                for (DataLoader.EnemyGroup group : fbGroups) {
-                    if (group.isBoss() || isEmergencyGroup(group)
-                            || group.getEnemies() == null || group.getEnemies().isEmpty()) {
-                        continue;
-                    }
-                    List<Enemy> enemies = new ArrayList<>();
-                    for (DataLoader.EnemyData data : group.getEnemies()) {
-                        enemies.add(data.toEnemy());
-                    }
-                    return enemies;
-                }
-            }
+        EnemyEncounterResolver.EncounterResult result = EnemyEncounterResolver.resolve(
+                player, groups, level, toNodeType(nodeType), encounterRandom);
+        if (!result.isFallback()) {
+            return result.getEnemies();
         }
 
         // 最终 fallback：训练假人
         System.out.println("[MapScreen] 楼层 " + level + " 无匹配敌人组，使用训练假人");
-        List<Enemy> enemies = new ArrayList<>();
-        if (nodeType == BOSS) {
-            enemies.add(new Enemy("boss_training", "训练首领", 60,
-                    List.of("atk8", "def6", "atk10")));
-        } else if (nodeType == EMERGENCY) {
-            enemies.add(new Enemy("elite_training", "精英训练假人", 42,
-                    List.of("atk7", "atk5x2", "def8")));
-        } else {
-            enemies.add(EntityFactory.createSimpleEnemy("training_dummy",
-                    "训练假人", 32));
-        }
-        return enemies;
+        return result.getEnemies();
     }
 
-    /** 计算怪物组的总生命值（用于精英偏好选择） */
-    private static int totalHp(DataLoader.EnemyGroup group) {
-        if (group.getEnemies() == null) return 0;
-        int total = 0;
-        for (DataLoader.EnemyData data : group.getEnemies()) {
-            total += data.getMaxHp();
-        }
-        return total;
-    }
-
-    private static boolean matchesNodeType(DataLoader.EnemyGroup group, int nodeType) {
-        boolean emergency = isEmergencyGroup(group);
-        if (nodeType == BOSS) {
-            return group.isBoss();
-        }
-        if (nodeType == EMERGENCY) {
-            return !group.isBoss() && emergency;
-        }
-        return !group.isBoss() && !emergency;
-    }
-
-    private static boolean isEmergencyGroup(DataLoader.EnemyGroup group) {
-        String id = group.getId() == null ? "" : group.getId().toLowerCase();
-        String name = group.getName() == null ? "" : group.getName();
-        return id.contains("emergency") || name.contains("紧急");
-    }
-
-    private List<Enemy> selectForcedBoss(List<DataLoader.EnemyGroup> groups, int level) {
-        String forcedName = null;
-        if (level == 3 && player.hasRelic("relic_avenger")) {
-            forcedName = "迷失的守林人";
-        } else if (level == 5) {
-            forcedName = player.hasRelic("relic_babel_tower")
-                    && (player.hasRelic("relic_betrayal") || player.hasRelic("relic_hatred"))
-                    ? "幕后黑手" : "魔王";
-        }
-        if (forcedName == null) {
-            return List.of();
-        }
-        for (DataLoader.EnemyGroup group : groups) {
-            if (!group.isBoss() || !forcedName.equals(group.getName())
-                    || group.getEnemies() == null || group.getEnemies().isEmpty()) {
-                continue;
-            }
-            List<Enemy> enemies = new ArrayList<>();
-            for (DataLoader.EnemyData data : group.getEnemies()) {
-                enemies.add(data.toEnemy());
-            }
-            return enemies;
-        }
-        return List.of();
-    }
-
-    private void addBabelTowerEnemy(List<Enemy> enemies,
-                                    List<DataLoader.EnemyGroup> groups,
-                                    DataLoader.EnemyGroup selected,
-                                    int nodeType,
-                                    Random encounterRandom) {
-        if (nodeType != EMERGENCY || !player.hasRelic("relic_babel_tower")
-                || groups == null) {
-            return;
-        }
-        List<DataLoader.EnemyData> candidates = new ArrayList<>();
-        for (DataLoader.EnemyGroup group : groups) {
-            if (group == selected || group.isBoss() || group.getEnemies() == null) {
-                continue;
-            }
-            for (DataLoader.EnemyData data : group.getEnemies()) {
-                if (data != null) candidates.add(data);
-            }
-        }
-        if (!candidates.isEmpty()) {
-            enemies.add(candidates.get(encounterRandom.nextInt(candidates.size())).toEnemy());
-        }
+    private static NodeType toNodeType(int nodeType) {
+        return switch (nodeType) {
+            case EMERGENCY -> NodeType.EMERGENCY;
+            case BOSS -> NodeType.BOSS;
+            case REWARD -> NodeType.REWARD;
+            case SHOP -> NodeType.SHOP;
+            case DECISION -> NodeType.DECISION;
+            case SAFE_HOUSE -> NodeType.SAFEHOUSE;
+            case UNEXPECTEDLY, ANOTHER_PATH -> NodeType.UNEXPECTED;
+            default -> NodeType.FIGHT;
+        };
     }
 
     private String randomEventName() {

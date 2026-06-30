@@ -722,9 +722,9 @@ rg '"effects"|actionScript|damage_per_attack|damage_scaling|energy_per_turn|trig
 2. 先核查当前代码和本文档中的已完成状态是否一致。
 3. 迁移新卡牌时，保证 JSON effect 能被 CombatEngine 正确解析；如需新增 effect，优先在核心逻辑小范围实现，并保持旧 effect 兼容。
 4. 迁移新怪物时，优先把语义化 actionId 接入 EnemyActionResolver，并同步 doc/enemy_action_dsl.md、EnemyActionResolverTest 和后端 CLI selftest。
-5. 保持 MapScreen.createEnemiesFor 从 DataLoader.loadMonsters(currentLayerIdx + 1) 读取对应楼层怪物组；如果调整地图或节点类型，必须同步前端生成逻辑和测试文档。
+5. 保持敌人遭遇选择通过 EnemyEncounterResolver 从 DataLoader.loadMonsters(currentLayerIdx + 1) 读取对应楼层怪物组；如果调整地图或节点类型，必须同步前端生成逻辑和测试文档。
 6. 新增敌人图片时，同步 EnemyActor.NAME_TO_FILE，保证怪物名称能匹配 img 目录中贴图。
-7. 每完成一个阶段运行 ./gradlew test，并用 printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nquit\n' | ./gradlew runBackendDebug 做后端 CLI 回归。
+7. 每完成一个阶段运行 ./gradlew test，并用 printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nroutetest\nquit\n' | ./gradlew runBackendDebug 做后端 CLI 回归。
 8. 最后汇报改了哪些文件、哪些效果或动作仍未完全实现、下一步建议。
 
 约束：

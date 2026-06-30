@@ -8,6 +8,7 @@ import com.fabricatedbook.core.engine.CardEffectParser;
 import com.fabricatedbook.core.engine.CombatEngine;
 import com.fabricatedbook.core.engine.EnemyActionResolver;
 import com.fabricatedbook.core.engine.ViewNotifier;
+import com.fabricatedbook.core.encounter.EnemyEncounterResolver;
 import com.fabricatedbook.core.entity.AbstractEntity;
 import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.EntityFactory;
@@ -157,6 +158,9 @@ public class BackendDebugLauncher {
             case "flowtest":
                 runNodeFlowTest();
                 break;
+            case "routetest":
+                runRouteTest();
+                break;
             case "newmap":
                 createMap();
                 printMap();
@@ -193,6 +197,7 @@ public class BackendDebugLauncher {
         println("  seedtest [seed]    验证同种子地图和战斗抽牌顺序可复现");
         println("  savetest           验证战斗中存档回到战斗前快照");
         println("  flowtest           验证非战斗节点提交后的自动保存语义");
+        println("  routetest          验证隐藏路线、隐藏 Boss 和结局条件");
         println("  newmap             重新生成当前层地图");
         println("  quit               退出调试控制台");
         println("");
@@ -770,77 +775,19 @@ public class BackendDebugLauncher {
         DataLoader loader = new DataLoader();
         int level = configs.get(levelIndex).getLevel();
         List<DataLoader.EnemyGroup> groups = loader.loadMonsters(level);
-        List<DataLoader.EnemyGroup> matched = new ArrayList<>();
-        for (DataLoader.EnemyGroup group : groups) {
-            if (matchesNodeType(group, nodeType)) {
-                matched.add(group);
+        EnemyEncounterResolver.EncounterResult result = EnemyEncounterResolver.resolve(
+                player, groups, level, nodeType,
+                runState.randomFor("backend-enemies", levelIndex, nodeType.name()));
+        if (!result.isFallback()) {
+            DataLoader.EnemyGroup group = result.getGroup();
+            if (group != null) {
+                println("敌人组: " + group.getName() + " (" + group.getId() + ")");
             }
-        }
-        if (matched.isEmpty() && nodeType == NodeType.EMERGENCY) {
-            for (DataLoader.EnemyGroup group : groups) {
-                if (!group.isBoss() && !isEmergencyGroup(group)) {
-                    matched.add(group);
-                }
-            }
-        }
-        if (!matched.isEmpty()) {
-            Random enemyRandom = runState.randomFor("backend-enemies", levelIndex, nodeType.name());
-            DataLoader.EnemyGroup selected = matched.get(enemyRandom.nextInt(matched.size()));
-            if (nodeType == NodeType.EMERGENCY) {
-                for (int i = 0; i < 3; i++) {
-                    DataLoader.EnemyGroup candidate = matched.get(enemyRandom.nextInt(matched.size()));
-                    if (totalHp(candidate) > totalHp(selected)) {
-                        selected = candidate;
-                    }
-                }
-            }
-            List<Enemy> enemies = new ArrayList<>();
-            for (DataLoader.EnemyData data : selected.getEnemies()) {
-                enemies.add(data.toEnemy());
-            }
-            if (!enemies.isEmpty()) {
-                println("敌人组: " + selected.getName() + " (" + selected.getId() + ")");
-                return enemies;
-            }
+            return result.getEnemies();
         }
 
-        List<Enemy> fallback = new ArrayList<>();
-        switch (nodeType) {
-            case BOSS -> fallback.add(new Enemy("debug_boss", "命令行首领", 70,
-                    List.of("atk8", "def8", "atk12")));
-            case EMERGENCY -> fallback.add(new Enemy("debug_elite", "命令行精英", 48,
-                    List.of("atk7", "atk5x2", "def10")));
-            default -> fallback.add(EntityFactory.createSimpleEnemy("debug_dummy", "命令行假人", 36));
-        }
         println("未找到 JSON 敌人组，使用 fallback 调试敌人。");
-        return fallback;
-    }
-
-    private boolean matchesNodeType(DataLoader.EnemyGroup group, NodeType nodeType) {
-        boolean emergency = isEmergencyGroup(group);
-        if (nodeType == NodeType.BOSS) {
-            return group.isBoss();
-        }
-        if (nodeType == NodeType.EMERGENCY) {
-            return !group.isBoss() && emergency;
-        }
-        return !group.isBoss() && !emergency;
-    }
-
-    private boolean isEmergencyGroup(DataLoader.EnemyGroup group) {
-        String id = group.getId() == null ? "" : group.getId().toLowerCase();
-        String name = group.getName() == null ? "" : group.getName();
-        return id.contains("emergency") || name.contains("紧急");
-    }
-
-    private static int totalHp(DataLoader.EnemyGroup group) {
-        int total = 0;
-        if (group.getEnemies() != null) {
-            for (DataLoader.EnemyData data : group.getEnemies()) {
-                total += data.getMaxHp();
-            }
-        }
-        return total;
+        return result.getEnemies();
     }
 
     private void printBattleHelp() {
@@ -1476,6 +1423,61 @@ public class BackendDebugLauncher {
         ok &= safeHouseFlowPersists(flowSave);
         ok &= nonCombatPotionDiscardFlowPersists(flowSave);
         println(ok ? "FLOWTEST PASS" : "FLOWTEST FAIL");
+    }
+
+    private void runRouteTest() {
+        println("开始隐藏路线自检...");
+        boolean ok = true;
+        DataLoader loader = new DataLoader();
+
+        Player ordinaryPlayer = new Player("route-normal", "普通路线战士", Profession.WARRIOR);
+        EnemyEncounterResolver.EncounterResult normalBoss =
+                EnemyEncounterResolver.resolve(ordinaryPlayer, loader.loadMonsters(5),
+                        5, NodeType.BOSS, new Random(1));
+        ok &= assertCheck(groupName(normalBoss).equals("魔王"),
+                "普通路线第 5 层 Boss 为魔王");
+
+        Player hiddenPlayer = new Player("route-hidden", "隐藏路线战士", Profession.WARRIOR);
+        addRelicById(hiddenPlayer, "relic_betrayal");
+        addRelicById(hiddenPlayer, "relic_babel_tower");
+        EnemyEncounterResolver.EncounterResult hiddenBoss =
+                EnemyEncounterResolver.resolve(hiddenPlayer, loader.loadMonsters(5),
+                        5, NodeType.BOSS, new Random(1));
+        ok &= assertCheck(groupName(hiddenBoss).equals("幕后黑手"),
+                "背叛/仇恨 + 巴别塔路线第 5 层 Boss 为幕后黑手");
+        ok &= assertCheck(hiddenBoss.getEnemies().stream()
+                        .anyMatch(enemy -> "puppet_master".equals(enemy.getId())),
+                "隐藏 Boss 敌人组包含幕后黑手实体");
+        ok &= assertCheck(EnemyEncounterResolver.isHiddenBossRoute(hiddenPlayer),
+                "隐藏路线条件由 core 统一判断");
+
+        EventHandler handler = new EventHandler(new Random(1));
+        Player decisionPlayer = new Player("route-decision", "抉择战士", Profession.WARRIOR);
+        addRelicById(decisionPlayer, "relic_hatred");
+        List<EventHandler.EventOption> options = handler.getOptions("命运抉择2", decisionPlayer);
+        EventHandler.EventResult result = handler.executeEvent("命运抉择2", 2, decisionPlayer);
+        EventRewardResolver.applyRewards(result, decisionPlayer, new Random(1));
+        ok &= assertCheck(options.size() == 3 && "relic_babel_tower".equals(result.relicId)
+                        && decisionPlayer.hasRelic("relic_babel_tower"),
+                "门扉隐藏选项可授予巴别塔并开启隐藏 Boss 路线");
+
+        EventHandler.EventResult interrupted = handler.executeEvent("命运抉择1", 1);
+        ok &= assertCheck("ENDING_INTERRUPTED".equals(interrupted.outcome),
+                "第一层回头仍触发讲述中断结局");
+
+        println(ok ? "ROUTETEST PASS" : "ROUTETEST FAIL");
+    }
+
+    private String groupName(EnemyEncounterResolver.EncounterResult result) {
+        return result != null && result.getGroup() != null
+                ? result.getGroup().getName() : "";
+    }
+
+    private void addRelicById(Player target, String relicId) {
+        Relic relic = RelicFactory.createById(relicId, target);
+        if (relic != null) {
+            target.addRelic(relic);
+        }
     }
 
     private boolean eventChoiceFlowPersists(SaveManager flowSave) {

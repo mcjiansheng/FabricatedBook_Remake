@@ -43,7 +43,7 @@
 
 1. [backend_regression_checklist.md](backend_regression_checklist.md) - 后端提交前最小回归命令、通过标志、失败处理和专项加跑清单。
 2. [run_seed_and_save.md](run_seed_and_save.md) - 对局种子、随机流 key、战斗中退出规则、单槽位存档和 CLI 验证方式。
-3. [backend_cli_debug.md](backend_cli_debug.md) - `runBackendDebug` 命令、地图/战斗命令、自检、`seedtest` 和 `savetest`。
+3. [backend_cli_debug.md](backend_cli_debug.md) - `runBackendDebug` 命令、地图/战斗命令、自检、`seedtest`、`savetest`、`flowtest` 和 `routetest`。
 4. [debug_test_report.md](debug_test_report.md) - 2026-05-31 后端 CLI 五层通关测试报告和历史 Bug 记录。
 
 ## 文档分类

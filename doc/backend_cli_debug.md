@@ -85,6 +85,8 @@ gradlew.bat runBackendDebug
 | `selftest` | 运行卡牌、怪物、药水、藏品和商店自检 |
 | `seedtest [seed]` | 验证同种子地图和战斗起手抽牌顺序可复现 |
 | `savetest` | 验证战斗中存档会回到战斗前快照 |
+| `flowtest` | 验证非战斗节点提交后的保存语义 |
+| `routetest` | 验证隐藏路线、隐藏 Boss 和结局条件 |
 | `newmap` | 重新生成当前层地图 |
 | `quit` / `exit` | 退出调试控制台 |
 
@@ -233,15 +235,7 @@ BackendDebugLauncher
 - 普通战斗：选择当前层非 Boss 组。
 - 紧急作战：在非 Boss 组中偏向总 HP 更高的组。
 - Boss：选择 `isBoss=true` 的组。
-- 如果 JSON 没有可用组，才 fallback 到轻量测试敌人。
-
-fallback 敌人如下：
-
-| 节点类型 | 敌人 | HP | 行动脚本 |
-|:--|:--|--:|:--|
-| `FIGHT` | 命令行假人 | 36 | `atk1` |
-| `EMERGENCY` | 命令行精英 | 48 | `atk7`, `atk5x2`, `def10` |
-| `BOSS` | 命令行首领 | 70 | `atk8`, `def8`, `atk12` |
+战斗节点会通过 core 的 `EnemyEncounterResolver` 从当前楼层 JSON 怪物组生成敌人；只有当前层没有匹配组时才使用训练敌人 fallback。
 
 ## 九、自检命令
 
@@ -253,6 +247,7 @@ fallback 敌人如下：
 - `relics.json` 藏品可加载并能执行即时效果。
 - `ShopManager` 能生成真实藏品和药水商品。
 - 命令行战斗能从 JSON 怪物池创建敌人。
+- `routetest` 会检查门扉隐藏选项、巴别塔隐藏路线、第 5 层 Boss 分流和第一层回头结局。
 
 示例：
 
@@ -290,6 +285,18 @@ printf 'savetest\nquit\n' | ./gradlew runBackendDebug --args="--seed=12345"
 
 ```text
 SAVETEST PASS
+```
+
+隐藏路线回归：
+
+```bash
+printf 'routetest\nquit\n' | ./gradlew runBackendDebug --args="--seed=12345"
+```
+
+成功时会输出：
+
+```text
+ROUTETEST PASS
 ```
 
 `savetest` 会模拟进入战斗后修改玩家 HP 和金币，再保存并读取。期望读档结果回到战斗前 HP/金币，且不记录该战斗节点已完成。

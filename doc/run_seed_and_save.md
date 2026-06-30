@@ -164,11 +164,12 @@ CLI 入口：
 | `seedtest [seed]` | 验证同种子地图和战斗起手抽牌可复现 |
 | `savetest` | 验证战斗中存档回到战斗前快照 |
 | `flowtest` | 验证事件、奖励节点、商店、安全屋和药水丢弃等非战斗节点提交后保存语义 |
+| `routetest` | 验证隐藏路线、门扉隐藏选项、第 5 层隐藏 Boss 和回头结局条件 |
 
 推荐回归命令：
 
 ```bash
-printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nquit\n' \
+printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nroutetest\nquit\n' \
   | ./gradlew runBackendDebug --args="--seed=12345"
 ```
 
@@ -179,6 +180,7 @@ SELFTEST PASS
 SEEDTEST PASS
 SAVETEST PASS
 FLOWTEST PASS
+ROUTETEST PASS
 ```
 
 手动保存/读档回归：
@@ -194,5 +196,5 @@ printf 'save\nload\nseed\nstatus\nquit\n' \
 
 - 存档当前为单槽位 `saves/save.json`。
 - `GameRunState.randomFor(key)` 是按 key 派生随机流，不保存随机调用次数；应为独立随机事件使用独立 key，避免把无关事件放进同一个随机流。
-- 后端 CLI 与前端地图已共用 `LayerMapGraph` 生成节点和连接；`MapScreen` 仍保留渲染用节点包装，节点进入副作用后续继续下沉。
+- 后端 CLI 与前端地图已共用 `LayerMapGraph` 生成节点和连接，节点进入副作用共用 `NodeEntryResolver`，敌人遭遇选择共用 `EnemyEncounterResolver`；`MapScreen` 仍保留渲染用节点包装。
 - CLI 的 `savetest` 会写入测试存档；测试后如不需要该存档，可以删除对应运行目录下的 `saves/save.json`。

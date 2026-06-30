@@ -9,14 +9,14 @@
 ```bash
 ./gradlew test
 git diff --check
-printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nquit\n' | ./gradlew runBackendDebug --args="--seed=12345"
+printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nroutetest\nquit\n' | ./gradlew runBackendDebug --args="--seed=12345"
 ```
 
 期望结果：
 
 - `./gradlew test` 输出 `BUILD SUCCESSFUL`。
 - `git diff --check` 没有输出。
-- 后端 CLI 输出 `SELFTEST PASS`、`SEEDTEST PASS`、`SAVETEST PASS`、`FLOWTEST PASS`。
+- 后端 CLI 输出 `SELFTEST PASS`、`SEEDTEST PASS`、`SAVETEST PASS`、`FLOWTEST PASS`、`ROUTETEST PASS`。
 
 失败处理：
 
@@ -35,6 +35,7 @@ printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nquit\n' | ./gradlew runBac
 | 随机可复现 | CLI `seedtest 12345` | `SEEDTEST PASS` | 同 seed 地图和战斗起手稳定，不同 seed 通常不同 |
 | 存档语义 | CLI `savetest` | `SAVETEST PASS` | 战斗/非战斗节点中途保存、已提交非战斗节点保存 |
 | 节点流程 | CLI `flowtest` | `FLOWTEST PASS` | 事件、奖励节点、商店购买/删牌、安全屋、药水丢弃提交后保存 |
+| 隐藏路线 | CLI `routetest` | `ROUTETEST PASS` | 门扉隐藏选项、巴别塔路线、第 5 层隐藏 Boss、第一层回头结局 |
 
 ## 变更专项加跑
 
@@ -45,6 +46,7 @@ printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nquit\n' | ./gradlew runBac
 - 改卡牌 JSON 或 effect DSL：加看 `CardEffectParserTest`、`CombatPreviewCalculatorTest`，并运行 `selftest`。
 - 改事件 JSON 或命运抉择：加看 `EventHandlerTest`，并运行 `selftest` 和 `flowtest`。
 - 改怪物 JSON、敌人 actionScript 或敌人立绘：加看 `EnemyActionResolverTest` 和 [enemy_action_dsl.md](enemy_action_dsl.md)，并运行 `selftest`。
+- 改隐藏路线、Boss 分流或特殊路线藏品：加看 `EnemyEncounterResolverTest`，并运行 `routetest`。
 
 ## 记录要求
 
