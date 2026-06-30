@@ -239,14 +239,25 @@ public class DataRelic implements Relic {
     }
 
     public void modifyEnemyAtCombatStart(List<Enemy> enemies) {
-        if (!"relic_sea_metabolism".equals(getId()) || enemies == null) {
+        if (enemies == null) {
             return;
         }
         for (Enemy enemy : enemies) {
             if (enemy == null) continue;
-            int increase = Math.max(1, enemy.getMaxHp() * getEffectValue() / 100);
-            enemy.setMaxHp(enemy.getMaxHp() + increase);
-            enemy.setHp(enemy.getHp() + increase);
+            if ("relic_sea_metabolism".equals(getId())) {
+                int increase = Math.max(1, enemy.getMaxHp() * getEffectValue() / 100);
+                enemy.setMaxHp(enemy.getMaxHp() + increase);
+                enemy.setHp(enemy.getHp() + increase);
+            } else if ("relic_betrayal".equals(getId()) && owner.getCurrentFloor() >= 5) {
+                int increase = Math.max(1, enemy.getMaxHp() * getEffectValue() / 100);
+                enemy.setMaxHp(enemy.getMaxHp() + increase);
+                enemy.setHp(enemy.getHp() + increase);
+            } else if ("relic_hatred".equals(getId()) && owner.getCurrentFloor() >= 5) {
+                int decrease = Math.max(1, enemy.getMaxHp() * getEffectValue() / 100);
+                int newMaxHp = Math.max(1, enemy.getMaxHp() - decrease);
+                enemy.setMaxHp(newMaxHp);
+                enemy.setHp(Math.min(enemy.getHp(), newMaxHp));
+            }
         }
     }
 

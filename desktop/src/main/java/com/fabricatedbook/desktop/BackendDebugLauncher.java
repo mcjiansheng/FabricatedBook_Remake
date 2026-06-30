@@ -1037,6 +1037,8 @@ public class BackendDebugLauncher {
                 "药水伤害效果生效: 攻击药水");
         ok &= assertCheck(centralizationGrowthWorks(),
                 "集权进入战斗节点后持续成长并修正伤害");
+        ok &= assertCheck(routeRelicsModifyFifthFloorEnemyHp(),
+                "背叛/仇恨在第 5 层修正敌人生命值");
 
         ShopManager shop = new ShopManager(testPlayer, new RelicManager(testPlayer));
         shop.generateItems();
@@ -1124,6 +1126,37 @@ public class BackendDebugLauncher {
                 "集权假人", 50);
         return centralizationPlayer.getCentralizationCombatEntries() == 2
                 && relicManager.modifyDamage(100, centralizationPlayer, dummy) == 110;
+    }
+
+    private boolean routeRelicsModifyFifthFloorEnemyHp() {
+        Player betrayalPlayer = new Player("selftest-betrayal",
+                "背叛自检战士", Profession.WARRIOR);
+        betrayalPlayer.setCurrentFloor(5);
+        Relic betrayal = RelicFactory.createById("relic_betrayal", betrayalPlayer);
+        if (betrayal == null) {
+            return false;
+        }
+        betrayalPlayer.addRelic(betrayal);
+        Enemy strongerEnemy = EntityFactory.createSimpleEnemy(
+                "betrayal_dummy", "背叛假人", 100);
+        new RelicManager(betrayalPlayer).modifyEnemiesAtCombatStart(
+                List.of(strongerEnemy));
+
+        Player hatredPlayer = new Player("selftest-hatred",
+                "仇恨自检战士", Profession.WARRIOR);
+        hatredPlayer.setCurrentFloor(5);
+        Relic hatred = RelicFactory.createById("relic_hatred", hatredPlayer);
+        if (hatred == null) {
+            return false;
+        }
+        hatredPlayer.addRelic(hatred);
+        Enemy weakerEnemy = EntityFactory.createSimpleEnemy(
+                "hatred_dummy", "仇恨假人", 100);
+        new RelicManager(hatredPlayer).modifyEnemiesAtCombatStart(
+                List.of(weakerEnemy));
+
+        return strongerEnemy.getMaxHp() == 120 && strongerEnemy.getHp() == 120
+                && weakerEnemy.getMaxHp() == 80 && weakerEnemy.getHp() == 80;
     }
 
     private boolean randomOutcomesAreValid(DataLoader.EventData event,

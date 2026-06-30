@@ -232,6 +232,8 @@
 
 补充：`relic_centralization` 的“进入战斗节点后持续伤害成长”已接入同一节点入口。`NodeEntryResolver` 会在进入战斗节点时增长 `Player.centralizationCombatEntries`，`DataRelic` 的实战/预览伤害修正按累计层数计算，`SaveManager` 会保存恢复该字段；战斗中途保存仍使用节点入口前快照，因此不会重复累计。`NodeEntryResolverTest`、`GameRunStateSaveTest`、`DataRelicTest` 和后端 CLI `selftest` 已覆盖该链路。
 
+补充：`relic_betrayal` / `relic_hatred` 的第 5 层敌人生命值修正已接入 `DataRelic.modifyEnemyAtCombatStart()`，与既有 1-4 层玩家伤害修正和隐藏路线条件形成完整链路；`DataRelicTest` 和后端 CLI `selftest` 已覆盖第 5 层敌人 HP +20% / -20%。
+
 ### 位置
 
 - 包：`com.fabricatedbook.core.map`

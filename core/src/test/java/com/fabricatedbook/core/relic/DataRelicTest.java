@@ -75,6 +75,42 @@ class DataRelicTest {
         assertEquals(115, relicManager.previewModifyDamage(100, player, enemy));
     }
 
+    @Test
+    void betrayalAndHatredModifyFifthFloorEnemyHpAtCombatStart() {
+        Player betrayalPlayer = player();
+        betrayalPlayer.setCurrentFloor(5);
+        addRelic(betrayalPlayer, "relic_betrayal");
+        Enemy strongerEnemy = new Enemy("enemy", "测试敌人", 100, java.util.List.of("atk1"));
+        new RelicManager(betrayalPlayer).modifyEnemiesAtCombatStart(
+                java.util.List.of(strongerEnemy));
+
+        assertEquals(120, strongerEnemy.getMaxHp());
+        assertEquals(120, strongerEnemy.getHp());
+
+        Player hatredPlayer = player();
+        hatredPlayer.setCurrentFloor(5);
+        addRelic(hatredPlayer, "relic_hatred");
+        Enemy weakerEnemy = new Enemy("enemy", "测试敌人", 100, java.util.List.of("atk1"));
+        new RelicManager(hatredPlayer).modifyEnemiesAtCombatStart(
+                java.util.List.of(weakerEnemy));
+
+        assertEquals(80, weakerEnemy.getMaxHp());
+        assertEquals(80, weakerEnemy.getHp());
+    }
+
+    @Test
+    void betrayalAndHatredDoNotModifyEnemyHpBeforeFifthFloor() {
+        Player player = player();
+        player.setCurrentFloor(4);
+        addRelic(player, "relic_betrayal");
+        Enemy enemy = new Enemy("enemy", "测试敌人", 100, java.util.List.of("atk1"));
+
+        new RelicManager(player).modifyEnemiesAtCombatStart(java.util.List.of(enemy));
+
+        assertEquals(100, enemy.getMaxHp());
+        assertEquals(100, enemy.getHp());
+    }
+
     private Player player() {
         Player player = new Player("relic-test", "藏品测试", Profession.WARRIOR);
         player.setGold(0);

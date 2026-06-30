@@ -317,7 +317,7 @@
     "id": "relic_centralization",
     "name": "\"集权\"",
     "rarity": "SPECIAL",
-    "description": "进入一个战斗节点，造成伤害 +5%",
+    "description": "每进入一个战斗节点，造成伤害累计 +5%",
     "effectValue": 5
   },
   {
