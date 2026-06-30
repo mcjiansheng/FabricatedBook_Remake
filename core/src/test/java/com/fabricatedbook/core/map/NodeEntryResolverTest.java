@@ -38,6 +38,24 @@ class NodeEntryResolverTest {
     }
 
     @Test
+    void bankbookGainsGoldOnlyOnShopNodeEntry() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        player.addRelic(RelicFactory.createById("relic_bankbook", player));
+        player.setGold(10);
+        GameRunState runState = new GameRunState(1L, player);
+        NodeEntryResolver resolver = new NodeEntryResolver();
+
+        NodeEntryResult shop = resolver.enterNode(runState, NodeType.SHOP);
+        NodeEntryResult event = resolver.enterNode(runState, NodeType.UNEXPECTED);
+
+        assertEquals(35, player.getGold());
+        assertEquals(25, shop.getGoldGained());
+        assertTrue(shop.getMessages().stream().anyMatch(message ->
+                message.contains("捡来的存折")));
+        assertEquals(0, event.getGoldGained());
+    }
+
+    @Test
     void centralizationGrowsOnlyOnCombatNodeEntry() {
         Player player = new Player("p", "战士", Profession.WARRIOR);
         player.addRelic(RelicFactory.createById("relic_centralization", player));

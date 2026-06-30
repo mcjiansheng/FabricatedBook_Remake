@@ -114,7 +114,7 @@
 
 ### P1：复杂藏品、隐藏路线与结局
 
-- [x] 梳理藏品实现状态。（已新增 [doc/backend_relic_implementation_audit.md](doc/backend_relic_implementation_audit.md)，逐项对照 `relics.json`、百科、`DataRelic`、`RelicManager`、节点/遭遇/事件奖励入口。当前结论：47 个已完整接入，`捡来的存折` 为部分实现，`核弹` 需要规则确认。）
+- [x] 梳理藏品实现状态。（已新增 [doc/backend_relic_implementation_audit.md](doc/backend_relic_implementation_audit.md)，逐项对照 `relics.json`、百科、`DataRelic`、`RelicManager`、节点/遭遇/事件奖励入口。当前结论：48 个已完整接入，`核弹` 需要规则确认。）
   - [x] 为 `relics.json` 每个藏品标注：已完整、部分实现、未实现、需要规则确认。
   - [x] 对照 `doc/game_encyclopedia/relics.md` 和 `DataRelic` 当前 switch 覆盖情况建立清单。
 - [ ] 补复杂藏品专用实现。
@@ -127,7 +127,7 @@
   - [x] `"集权"`：进入战斗节点后的持续伤害成长与存档。（已通过 `NodeEntryResolver` 增长 `Player.centralizationCombatEntries`，`SaveManager` 存档恢复，`DataRelic` 实战/预览伤害读取累计层数；`selftest` 与核心测试覆盖。）
   - [x] `"寡头"`：进入非战斗节点金币收益，目前前端已有部分逻辑，需下沉到规则层。（已下沉到 `NodeEntryResolver`，前端和 CLI 共用。）
   - [x] `霜之哀伤`：胜利累计伤害成长需要保存/恢复。（已迁入 `Player.frostmourneCombatWins`，`GameRunState.PlayerSnapshot` / `SaveManager` v4 保存恢复，`DataRelic` 实战和预览伤害读取玩家稳定状态。）
-  - [ ] `捡来的存折`：进入商店金币收益需要从 `ShopManager.generateItems()` 迁到稳定的商店节点进入/会话入口，避免未来刷新商品或重建界面重复触发。
+  - [x] `捡来的存折`：进入商店金币收益需要从 `ShopManager.generateItems()` 迁到稳定的商店节点进入/会话入口，避免未来刷新商品或重建界面重复触发。（已迁入 `NodeEntryResolver` 的商店节点入口，商品生成不再产生金币副作用。）
   - [ ] 负面藏品与特殊结局相关效果。
 - [ ] 补隐藏 Boss 和结局。
   - [x] 第一层命运抉择“回头”触发隐藏结局“讲述中断”。

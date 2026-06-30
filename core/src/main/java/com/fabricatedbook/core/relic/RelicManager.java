@@ -161,12 +161,6 @@ public class RelicManager {
         }
     }
 
-    public void onEnterShop() {
-        if (player.hasRelic("relic_bankbook")) {
-            player.gainGold(25);
-        }
-    }
-
     /**
      * 移除一个藏品（仅用于测试或特殊事件）。
      *

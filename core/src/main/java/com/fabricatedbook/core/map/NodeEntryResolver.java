@@ -12,6 +12,7 @@ import java.util.Random;
  */
 public class NodeEntryResolver {
     private static final int DEFAULT_OLIGARCH_GOLD = 20;
+    private static final int DEFAULT_BANKBOOK_GOLD = 25;
 
     public NodeEntryResult enterNode(GameRunState runState, NodeType nodeType) {
         GameRunState.NodeRef nodeRef = nodeType == null ? null
@@ -32,6 +33,7 @@ public class NodeEntryResolver {
         }
 
         applyEnvironment(runState, player, nodeRef, nodeType, result);
+        applyBankbook(player, nodeType, result);
         applyOligarch(player, nodeType, result);
         applyCentralization(player, nodeType, result);
         return result;
@@ -70,6 +72,21 @@ public class NodeEntryResolver {
 
     private String signed(int value) {
         return value > 0 ? "+" + value : String.valueOf(value);
+    }
+
+    private void applyBankbook(Player player, NodeType nodeType, NodeEntryResult result) {
+        if (nodeType != NodeType.SHOP) {
+            return;
+        }
+        Relic bankbook = findRelic(player, "relic_bankbook");
+        if (bankbook == null) {
+            return;
+        }
+        int amount = bankbook instanceof DataRelic
+                ? ((DataRelic) bankbook).getEffectValue()
+                : DEFAULT_BANKBOOK_GOLD;
+        player.gainGold(amount);
+        result.gainGold(amount, bankbook.getName() + "：获得 " + amount + " 金币");
     }
 
     private void applyOligarch(Player player, NodeType nodeType, NodeEntryResult result) {

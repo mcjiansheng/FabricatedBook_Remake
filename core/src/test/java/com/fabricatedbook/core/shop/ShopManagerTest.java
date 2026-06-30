@@ -5,6 +5,7 @@ import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.potion.Potion;
+import com.fabricatedbook.core.relic.RelicFactory;
 import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.core.run.GameRunState;
 import com.fabricatedbook.data.DataLoader;
@@ -156,6 +157,19 @@ class ShopManagerTest {
         ShopManager restoredShop = shopFor(restored, "shop:after-load");
         restoredShop.generateItems();
         assertEquals(100, restoredShop.getRemoveCost());
+    }
+
+    @Test
+    void generateItemsDoesNotTriggerBankbookGold() {
+        GameRunState runState = new GameRunState(4L, playerWithGold(50));
+        runState.getPlayer().addRelic(RelicFactory.createById("relic_bankbook",
+                runState.getPlayer()));
+        ShopManager shop = shopFor(runState, "shop:bankbook");
+
+        shop.generateItems();
+        shop.generateItems();
+
+        assertEquals(50, runState.getPlayer().getGold());
     }
 
     private ShopManager shopFor(GameRunState runState, String key) {

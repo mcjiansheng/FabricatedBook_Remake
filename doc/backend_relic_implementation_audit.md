@@ -9,16 +9,16 @@
 
 当前 `relics.json` 共 49 个藏品或奖励占位 ID：
 
-- 已完整接入：47 个。
-- 部分实现：1 个。
+- 已完整接入：48 个。
+- 部分实现：0 个。
 - 需要规则确认：1 个。
 - 未找到完全缺失实现的普通藏品。
 
 后端藏品入口分布如下：
 
 - `DataRelic`：即时获得、伤害修正、治疗修正、状态伤害、回合开始、战斗开始订阅、敌人开战生命修正。
-- `RelicManager`：统一调度、商店进入、战斗胜利、战斗奖励概率。
-- `NodeEntryResolver`：进入节点时的 `"集权"` / `"寡头"`。
+- `RelicManager`：统一调度、战斗胜利、战斗奖励概率。
+- `NodeEntryResolver`：进入节点时的 `"集权"` / `"寡头"` / `捡来的存折`。
 - `EnemyEncounterResolver`：`"复仇者"` 第 3 层强制 Boss、`"巴别塔"` 紧急作战额外敌人和第 5 层隐藏 Boss 路线。
 - `EventRewardResolver`：事件奖励占位 ID 展开，包括五张牌、随机低阶藏品、随机负面藏品，以及显式未接入的核弹。
 
@@ -34,12 +34,11 @@
 
 ### R-002：`relic_bankbook` 触发点绑定在商店商品生成
 
-- 状态：部分实现。
-- 位置：`RelicManager.onEnterShop()`、`ShopManager.generateItems()`。
-- 当前行为：每次调用 `generateItems()` 都会触发“捡来的存折”获得 25 金币。
-- 问题原因：效果语义是“每次进入商店获得 25 块”，但当前触发点是商品列表生成。正常前端/CLI 流程通常只生成一次商品，因此主链路可用；如果未来出现刷新商品、重建商店界面、读档恢复商店过程，可能重复触发。
-- 期望实现：将商店进入副作用收口到节点进入或商店会话初始化中，并用 `GameRunState` 的 active node 提交语义保证每个商店节点只触发一次。
-- 影响范围：`ShopManager`、`NodeEntryResolver`、`GameRunState` 非战斗节点提交、商店读档流程。
+- 状态：已修复。
+- 位置：`NodeEntryResolver.applyBankbook()`、`ShopManager.generateItems()`。
+- 原问题：每次调用 `generateItems()` 都会触发“捡来的存折”获得 25 金币，导致未来刷新商品、重建商店界面、读档恢复商店过程时可能重复触发。
+- 当前实现：`捡来的存折` 只在 `NodeEntryResolver` 处理 `NodeType.SHOP` 节点入口时给金币；`ShopManager.generateItems()` 不再产生任何进入商店副作用，旧的 `RelicManager.onEnterShop()` 入口已移除。
+- 验证覆盖：`NodeEntryResolverTest` 覆盖只在商店节点入口获得 25 金币；`ShopManagerTest` 覆盖连续调用 `generateItems()` 不会触发存折金币。
 
 ### R-003：`relic_nuke` 真实玩法语义未定义
 
@@ -67,7 +66,7 @@
 | `relic_treasure_ring` | 至宝指环 | 已完整 | `DataRelic.modifyGoldReward()` | 战斗金币奖励 +50%。 |
 | `relic_gargoyle_statue` | 石像鬼塑像 | 已完整 | `DataRelic.applyOnPickup()` | 最大生命 +10 并同步治疗。 |
 | `relic_rice_bowl` | 饭碗 | 已完整 | `DataRelic.applyOnPickup()` | 按最大生命回复 25%。 |
-| `relic_bankbook` | 捡来的存折 | 部分实现 | `RelicManager.onEnterShop()` / `ShopManager.generateItems()` | 主流程可用，但触发点应从商品生成迁到商店节点进入。 |
+| `relic_bankbook` | 捡来的存折 | 已完整 | `NodeEntryResolver` | 进入商店节点获得 25 金币，商品生成不会重复触发。 |
 | `relic_vampire_fang` | 吸血鬼的尖牙 | 已完整 | `DataRelic.subscribe()` / `OnCardUsed` | 每使用 1 张牌回复 1 点生命。 |
 | `relic_kungfu_manual` | 葵花宝典 | 已完整 | `DataRelic.modifyOutgoingDamage()` | 33% 概率 +80%；预览不掷随机。 |
 | `relic_miniature_stage` | 微缩舞台模型 | 已完整 | `DataRelic.subscribe()` / `OnCombatStart` | 战斗开始获得 3 能量并抽 2 张牌。 |
@@ -106,6 +105,5 @@
 
 ## 后续建议
 
-1. 先修 `relic_bankbook` 的触发归属，把“进入商店”从商品生成中剥离出来。
-2. `relic_nuke` 不继续实现，直到玩法语义明确。
-3. 如果继续扩展藏品，优先考虑把藏品效果从 `DataRelic` 的多个 switch 收敛为注册表，至少给“随机类效果不参与预览”建立统一约定。
+1. `relic_nuke` 不继续实现，直到玩法语义明确。
+2. 如果继续扩展藏品，优先考虑把藏品效果从 `DataRelic` 的多个 switch 收敛为注册表，至少给“随机类效果不参与预览”建立统一约定。

@@ -236,9 +236,11 @@
 
 补充：`relic_avenger` 的 1/3 概率伤害加成已确认位于 `DataRelic.modifyOutgoingDamage()`，并保持在 `previewOutgoingDamage()` 外，避免 UI 预览提前消耗随机结果。本次补齐的是测试缺口：`DataRelicTest` 通过可注入 `Random` 固定 `nextInt(100)` 为 32/33，分别覆盖触发与不触发边界，同时确认预览仍返回基础伤害。该改动只增加 `DataRelic` 的测试用随机源注入构造器，`RelicFactory` 的生产创建路径仍使用默认随机源，不影响其它藏品依赖。
 
-补充：后端藏品实现状态已集中审计到 [backend_relic_implementation_audit.md](backend_relic_implementation_audit.md)。当前 `relics.json` 49 个藏品或奖励占位 ID 中，47 个已完整接入；`relic_bankbook` 因触发点绑定在 `ShopManager.generateItems()`，未来商店刷新/重建可能重复触发，标记为部分实现；`relic_nuke` 仍保持“需要规则确认”，不可静默实现。
+补充：后端藏品实现状态已集中审计到 [backend_relic_implementation_audit.md](backend_relic_implementation_audit.md)。当前 `relics.json` 49 个藏品或奖励占位 ID 中，48 个已完整接入；`relic_nuke` 仍保持“需要规则确认”，不可静默实现。
 
-补充：`relic_frostmourne` 的跨战斗成长状态已从 `DataRelic` 临时实例字段迁入 `Player.frostmourneCombatWins`，并随 `GameRunState.PlayerSnapshot` / `SaveManager` v4 保存恢复；`DataRelic` 的实战和预览伤害改为读取玩家稳定状态。`CombatPreviewCalculatorTest` 覆盖胜利增长、失败不增长，`GameRunStateSaveTest` 覆盖读档后仍保留成长并计算伤害。藏品审计状态同步调整为 47 个已完整接入、1 个部分实现、1 个需要规则确认。
+补充：`relic_frostmourne` 的跨战斗成长状态已从 `DataRelic` 临时实例字段迁入 `Player.frostmourneCombatWins`，并随 `GameRunState.PlayerSnapshot` / `SaveManager` v4 保存恢复；`DataRelic` 的实战和预览伤害改为读取玩家稳定状态。`CombatPreviewCalculatorTest` 覆盖胜利增长、失败不增长，`GameRunStateSaveTest` 覆盖读档后仍保留成长并计算伤害。
+
+补充：`relic_bankbook` 的“进入商店获得金币”已从 `ShopManager.generateItems()` 迁入 `NodeEntryResolver` 的 `NodeType.SHOP` 入口，旧的 `RelicManager.onEnterShop()` 已移除。现在前端地图、后端 CLI 和保存/读档流程都经由同一个节点进入入口触发该效果；刷新商品或重建商店界面不会重复给钱。`NodeEntryResolverTest` 覆盖商店节点入口获得 25 金币且非商店节点不触发，`ShopManagerTest` 覆盖连续 `generateItems()` 不触发存折金币。藏品审计状态同步调整为 48 个已完整接入、0 个部分实现、1 个需要规则确认。
 
 ### 位置
 

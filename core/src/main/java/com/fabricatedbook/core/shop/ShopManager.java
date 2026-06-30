@@ -146,7 +146,6 @@ public class ShopManager {
      */
     public void generateItems() {
         items.clear();
-        relicManager.onEnterShop();
 
         // 1. 7 张卡牌 — 从玩家职业的卡牌池随机选择
         String profession = player.getProfession().name().toLowerCase();
