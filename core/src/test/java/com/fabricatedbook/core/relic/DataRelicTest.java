@@ -5,6 +5,9 @@ import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.entity.Enemy;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Random;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,6 +114,21 @@ class DataRelicTest {
         assertEquals(100, enemy.getHp());
     }
 
+    @Test
+    void avengerDamageBonusUsesOneThirdChance() {
+        Player player = player();
+        Enemy enemy = new Enemy("enemy", "测试敌人", 100, List.of("atk1"));
+
+        DataRelic procAtUpperBound = new DataRelic(
+                relicData("relic_avenger"), player, new FixedNextIntRandom(32));
+        DataRelic missAtLowerBound = new DataRelic(
+                relicData("relic_avenger"), player, new FixedNextIntRandom(33));
+
+        assertEquals(130, procAtUpperBound.modifyOutgoingDamage(100, enemy));
+        assertEquals(100, missAtLowerBound.modifyOutgoingDamage(100, enemy));
+        assertEquals(100, procAtUpperBound.previewOutgoingDamage(100, enemy));
+    }
+
     private Player player() {
         Player player = new Player("relic-test", "藏品测试", Profession.WARRIOR);
         player.setGold(0);
@@ -121,5 +139,27 @@ class DataRelicTest {
         Relic relic = RelicFactory.createById(relicId, player);
         assertNotNull(relic);
         new RelicManager(player).addRelic(relic);
+    }
+
+    private RelicData relicData(String relicId) {
+        for (RelicData data : RelicFactory.loadRelicData()) {
+            if (data.getId().equals(relicId)) {
+                return data;
+            }
+        }
+        throw new AssertionError("Missing relic data: " + relicId);
+    }
+
+    private static class FixedNextIntRandom extends Random {
+        private final int value;
+
+        FixedNextIntRandom(int value) {
+            this.value = value;
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            return value;
+        }
     }
 }

@@ -31,9 +31,13 @@ public class DataRelic implements Relic {
     private int combatWins;
 
     public DataRelic(RelicData data, Player owner) {
+        this(data, owner, new Random());
+    }
+
+    DataRelic(RelicData data, Player owner, Random random) {
         this.data = data;
         this.owner = owner;
-        this.random = new Random();
+        this.random = random == null ? new Random() : random;
         this.combatWins = 0;
     }
 

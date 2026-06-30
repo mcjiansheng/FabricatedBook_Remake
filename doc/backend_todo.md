@@ -234,6 +234,8 @@
 
 补充：`relic_betrayal` / `relic_hatred` 的第 5 层敌人生命值修正已接入 `DataRelic.modifyEnemyAtCombatStart()`，与既有 1-4 层玩家伤害修正和隐藏路线条件形成完整链路；`DataRelicTest` 和后端 CLI `selftest` 已覆盖第 5 层敌人 HP +20% / -20%。
 
+补充：`relic_avenger` 的 1/3 概率伤害加成已确认位于 `DataRelic.modifyOutgoingDamage()`，并保持在 `previewOutgoingDamage()` 外，避免 UI 预览提前消耗随机结果。本次补齐的是测试缺口：`DataRelicTest` 通过可注入 `Random` 固定 `nextInt(100)` 为 32/33，分别覆盖触发与不触发边界，同时确认预览仍返回基础伤害。该改动只增加 `DataRelic` 的测试用随机源注入构造器，`RelicFactory` 的生产创建路径仍使用默认随机源，不影响其它藏品依赖。
+
 ### 位置
 
 - 包：`com.fabricatedbook.core.map`
