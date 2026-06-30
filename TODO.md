@@ -62,7 +62,7 @@
   - [x] 支持每层 `length`、`width`、起点类型、终点类型、特殊列、节点概率、层名、层效果文案。
   - [x] 前端临时支持迷雾层倒数第二列 Boss、最后一列命运抉择。
   - [x] 将迷雾层倒数第二列 Boss、最后一列命运抉择规则下沉到 core/JSON。（已下沉到 core；JSON 化仍在迁移项中。）
-  - [ ] 保留同种子可复现的随机流 key 设计。
+  - [x] 保留同种子可复现的随机流 key 设计。（`GameRunStateRandomTest` 已覆盖同 seed/key 稳定、不同 key 隔离、独立随机流消耗互不影响；CLI `seedtest` 覆盖地图和战斗起手。）
 - [ ] 将 `MapScreen` 内置常量迁移到 core/JSON。
   - [x] 迁移 `LAYER_LENGTHS`、`LAYER_WIDTHS`。（已迁入 `data/maps/levels.json` 并由 `LayerMapConfig` 加载。）
   - [x] 迁移 `LAYER_START_TYPES`、`LAYER_END_TYPES`、迷雾特殊 Boss 列。（已迁入 `data/maps/levels.json`。）

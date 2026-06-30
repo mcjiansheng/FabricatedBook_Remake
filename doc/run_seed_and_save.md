@@ -40,7 +40,7 @@ reward:<layer>:<col>:<row>
 shop:<layer>:<col>:<row>:<type>
 ```
 
-这种设计避免保存 `java.util.Random` 的内部状态，同时能保证同一对局种子和同一事件 key 得到稳定结果。
+这种设计避免保存 `java.util.Random` 的内部状态，同时能保证同一对局种子和同一事件 key 得到稳定结果。`GameRunStateRandomTest` 会固定同 seed/key 序列稳定、不同 key 隔离，以及某个随机流的消耗不会推进另一个随机流。
 
 ## 2.1 随机数耦合规避
 
@@ -163,19 +163,22 @@ CLI 入口：
 | `newrun [seed]` | 使用指定或随机种子开始新对局 |
 | `seedtest [seed]` | 验证同种子地图和战斗起手抽牌可复现 |
 | `savetest` | 验证战斗中存档回到战斗前快照 |
+| `flowtest` | 验证事件、奖励节点、商店、安全屋和药水丢弃等非战斗节点提交后保存语义 |
 
 推荐回归命令：
 
 ```bash
-printf 'seedtest 12345\nsavetest\nquit\n' \
+printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nquit\n' \
   | ./gradlew runBackendDebug --args="--seed=12345"
 ```
 
 期望输出包含：
 
 ```text
+SELFTEST PASS
 SEEDTEST PASS
 SAVETEST PASS
+FLOWTEST PASS
 ```
 
 手动保存/读档回归：
