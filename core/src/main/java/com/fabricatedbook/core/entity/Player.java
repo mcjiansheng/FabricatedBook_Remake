@@ -40,6 +40,9 @@ public class Player extends AbstractEntity {
     /** 战斗胜利累积的卡牌数量 */
     private int cardCount;
 
+    /** 「集权」进入战斗节点后的累计伤害成长层数。 */
+    private int centralizationCombatEntries;
+
     /**
      * 构造玩家实体。
      *
@@ -56,6 +59,7 @@ public class Player extends AbstractEntity {
         this.maxPotionSlots = 3;
         this.currentFloor = 1;
         this.cardCount = 0;
+        this.centralizationCombatEntries = 0;
     }
 
     // ====== 职业相关 ======
@@ -144,6 +148,13 @@ public class Player extends AbstractEntity {
 
     public int getCardCount() { return cardCount; }
     public void setCardCount(int cardCount) { this.cardCount = cardCount; }
+    public int getCentralizationCombatEntries() { return centralizationCombatEntries; }
+    public void setCentralizationCombatEntries(int centralizationCombatEntries) {
+        this.centralizationCombatEntries = Math.max(0, centralizationCombatEntries);
+    }
+    public void incrementCentralizationCombatEntries() {
+        centralizationCombatEntries++;
+    }
 
     /**
      * 战斗胜利后回复生命值（战士特性）。

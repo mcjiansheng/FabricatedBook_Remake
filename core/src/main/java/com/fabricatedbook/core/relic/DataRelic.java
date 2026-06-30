@@ -102,7 +102,8 @@ public class DataRelic implements Relic {
             case "relic_frostmourne" ->
                     multiplier += combatWins * getEffectValue() / 100.0;
             case "relic_centralization" ->
-                    multiplier += getEffectValue() / 100.0;
+                    multiplier += owner.getCentralizationCombatEntries()
+                            * getEffectValue() / 100.0;
             default -> {
             }
         }
@@ -143,7 +144,8 @@ public class DataRelic implements Relic {
             case "relic_frostmourne" ->
                     multiplier += combatWins * getEffectValue() / 100.0;
             case "relic_centralization" ->
-                    multiplier += getEffectValue() / 100.0;
+                    multiplier += owner.getCentralizationCombatEntries()
+                            * getEffectValue() / 100.0;
             default -> {
             }
         }

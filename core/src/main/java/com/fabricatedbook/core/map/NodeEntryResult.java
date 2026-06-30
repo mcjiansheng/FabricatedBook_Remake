@@ -69,4 +69,10 @@ public class NodeEntryResult {
             messages.add(message);
         }
     }
+
+    void message(String message) {
+        if (message != null && !message.isBlank()) {
+            messages.add(message);
+        }
+    }
 }

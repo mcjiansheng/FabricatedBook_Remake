@@ -59,6 +59,7 @@ public class SaveManager {
         public int gold;
         public int currentFloor;
         public int cardCount;
+        public int centralizationCombatEntries;
         public int maxPotionSlots;
         public List<String> relicIds;
         public List<String> potionIds;
@@ -162,7 +163,7 @@ public class SaveManager {
                                  int mapDamageModifier) {
         try {
             SaveData data = new SaveData();
-            data.version = 2;
+            data.version = 3;
             data.runSeed = seed;
             data.currentLayerIdx = currentLayerIdx;
             data.completedNode = completedNode;
@@ -178,6 +179,8 @@ public class SaveManager {
             data.gold = snapshot.gold;
             data.currentFloor = snapshot.currentFloor;
             data.cardCount = snapshot.cardCount;
+            data.centralizationCombatEntries = Math.max(0,
+                    snapshot.centralizationCombatEntries);
             data.maxPotionSlots = snapshot.maxPotionSlots;
             data.relicIds.addAll(snapshot.relicIds);
             data.potionIds.addAll(snapshot.potionIds);
@@ -289,6 +292,8 @@ public class SaveManager {
             player.setGold(data.gold);
             player.setCurrentFloor(data.currentFloor);
             player.setCardCount(data.cardCount);
+            player.setCentralizationCombatEntries(data.version >= 3
+                    ? data.centralizationCombatEntries : 0);
             player.setMaxPotionSlots(data.maxPotionSlots > 0 ? data.maxPotionSlots : 3);
 
             // 恢复卡牌组到抽牌堆

@@ -33,6 +33,7 @@ public class NodeEntryResolver {
 
         applyEnvironment(runState, player, nodeRef, nodeType, result);
         applyOligarch(player, nodeType, result);
+        applyCentralization(player, nodeType, result);
         return result;
     }
 
@@ -84,6 +85,16 @@ public class NodeEntryResolver {
                 : DEFAULT_OLIGARCH_GOLD;
         player.gainGold(amount);
         result.gainGold(amount, oligarch.getName() + "：获得 " + amount + " 金币");
+    }
+
+    private void applyCentralization(Player player, NodeType nodeType,
+                                     NodeEntryResult result) {
+        if (!nodeType.isCombat() || findRelic(player, "relic_centralization") == null) {
+            return;
+        }
+        player.incrementCentralizationCombatEntries();
+        result.message("\"集权\"：伤害成长层数 "
+                + player.getCentralizationCombatEntries());
     }
 
     private Relic findRelic(Player player, String relicId) {

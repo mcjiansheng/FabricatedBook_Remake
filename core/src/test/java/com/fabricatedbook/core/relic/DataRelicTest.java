@@ -2,6 +2,7 @@ package com.fabricatedbook.core.relic;
 
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
+import com.fabricatedbook.core.entity.Enemy;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,6 +59,20 @@ class DataRelicTest {
         assertEquals(maxHpBefore - 24, player.getMaxHp());
         assertEquals(player.getMaxHp(), player.getHp());
         assertTrue(player.hasRelic("relic_humility"));
+    }
+
+    @Test
+    void centralizationDamageScalesWithCombatEntryCount() {
+        Player player = player();
+        addRelic(player, "relic_centralization");
+        RelicManager relicManager = new RelicManager(player);
+        Enemy enemy = new Enemy("dummy", "测试敌人", 40, java.util.List.of("atk1"));
+
+        assertEquals(100, relicManager.modifyDamage(100, player, enemy));
+        player.setCentralizationCombatEntries(3);
+
+        assertEquals(115, relicManager.modifyDamage(100, player, enemy));
+        assertEquals(115, relicManager.previewModifyDamage(100, player, enemy));
     }
 
     private Player player() {

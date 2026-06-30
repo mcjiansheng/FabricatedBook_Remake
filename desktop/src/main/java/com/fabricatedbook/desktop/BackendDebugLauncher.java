@@ -1035,6 +1035,8 @@ public class BackendDebugLauncher {
                         && attackPotion.use(testPlayer, List.of(potionDummy), new RelicManager(testPlayer))
                         && potionDummy.getHp() < potionDummy.getMaxHp(),
                 "药水伤害效果生效: 攻击药水");
+        ok &= assertCheck(centralizationGrowthWorks(),
+                "集权进入战斗节点后持续成长并修正伤害");
 
         ShopManager shop = new ShopManager(testPlayer, new RelicManager(testPlayer));
         shop.generateItems();
@@ -1100,6 +1102,28 @@ public class BackendDebugLauncher {
             return false;
         }
         return ok;
+    }
+
+    private boolean centralizationGrowthWorks() {
+        Player centralizationPlayer = new Player("selftest-centralization",
+                "集权自检战士", Profession.WARRIOR);
+        Relic centralization = RelicFactory.createById("relic_centralization",
+                centralizationPlayer);
+        if (centralization == null) {
+            return false;
+        }
+        centralizationPlayer.addRelic(centralization);
+        GameRunState state = new GameRunState(616161L, centralizationPlayer);
+        GameRunState.NodeRef fight = new GameRunState.NodeRef(0, 0, 0, 1);
+        NodeEntryResolver resolver = new NodeEntryResolver();
+        resolver.enterNode(state, fight);
+        resolver.enterNode(state, new GameRunState.NodeRef(0, 1, 0, 2));
+
+        RelicManager relicManager = new RelicManager(centralizationPlayer);
+        Enemy dummy = EntityFactory.createSimpleEnemy("centralization_dummy",
+                "集权假人", 50);
+        return centralizationPlayer.getCentralizationCombatEntries() == 2
+                && relicManager.modifyDamage(100, centralizationPlayer, dummy) == 110;
     }
 
     private boolean randomOutcomesAreValid(DataLoader.EventData event,

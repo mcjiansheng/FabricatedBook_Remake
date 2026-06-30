@@ -38,6 +38,22 @@ class NodeEntryResolverTest {
     }
 
     @Test
+    void centralizationGrowsOnlyOnCombatNodeEntry() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        player.addRelic(RelicFactory.createById("relic_centralization", player));
+        GameRunState runState = new GameRunState(1L, player);
+        NodeEntryResolver resolver = new NodeEntryResolver();
+
+        NodeEntryResult shop = resolver.enterNode(runState, NodeType.SHOP);
+        NodeEntryResult fight = resolver.enterNode(runState, NodeType.FIGHT);
+        resolver.enterNode(runState, NodeType.EMERGENCY);
+
+        assertEquals(0, shop.getMessages().size());
+        assertEquals(2, player.getCentralizationCombatEntries());
+        assertFalse(fight.getMessages().isEmpty());
+    }
+
+    @Test
     void forestNonCombatNodeLosesGold() {
         Player player = new Player("p", "战士", Profession.WARRIOR);
         player.setGold(50);

@@ -230,6 +230,8 @@
 
 补充：敌人遭遇选择已新增 `EnemyEncounterResolver`，前端地图和后端 CLI 共用普通/精英/Boss、`relic_babel_tower` 精英战额外敌人、第 5 层「魔王」/「幕后黑手」分流规则。`EnemyEncounterResolverTest` 固定普通/隐藏 Boss 和巴别塔额外敌人；后端 CLI `routetest` 脚本化覆盖门扉隐藏选项、隐藏 Boss 分流和第一层回头结局。
 
+补充：`relic_centralization` 的“进入战斗节点后持续伤害成长”已接入同一节点入口。`NodeEntryResolver` 会在进入战斗节点时增长 `Player.centralizationCombatEntries`，`DataRelic` 的实战/预览伤害修正按累计层数计算，`SaveManager` 会保存恢复该字段；战斗中途保存仍使用节点入口前快照，因此不会重复累计。`NodeEntryResolverTest`、`GameRunStateSaveTest`、`DataRelicTest` 和后端 CLI `selftest` 已覆盖该链路。
+
 ### 位置
 
 - 包：`com.fabricatedbook.core.map`

@@ -92,6 +92,42 @@ class GameRunStateSaveTest {
     }
 
     @Test
+    void centralizationEntryCountSurvivesRunSaveRestore() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        player.addRelic(RelicFactory.createById("relic_centralization", player));
+        GameRunState runState = new GameRunState(99L, player);
+        runState.beginNode(new GameRunState.NodeRef(0, 0, 0, 1));
+        new NodeEntryResolver().enterNode(runState, runState.getActiveNode());
+        runState.completeActiveNode();
+
+        SaveManager saveManager = new SaveManager(tempDir.resolve("save.json").toString());
+
+        assertTrue(saveManager.saveRun(runState));
+        GameRunState restored = saveManager.loadRun();
+
+        assertNotNull(restored);
+        assertEquals(1, restored.getPlayer().getCentralizationCombatEntries());
+    }
+
+    @Test
+    void activeCombatSaveRollsBackCentralizationEntryCount() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        player.addRelic(RelicFactory.createById("relic_centralization", player));
+        GameRunState runState = new GameRunState(99L, player);
+        GameRunState.NodeRef fight = new GameRunState.NodeRef(0, 0, 0, 1);
+        runState.beginCombat(fight);
+        new NodeEntryResolver().enterNode(runState, fight);
+
+        SaveManager saveManager = new SaveManager(tempDir.resolve("save.json").toString());
+
+        assertTrue(saveManager.saveRun(runState));
+        GameRunState restored = saveManager.loadRun();
+
+        assertNotNull(restored);
+        assertEquals(0, restored.getPlayer().getCentralizationCombatEntries());
+    }
+
+    @Test
     void nonCombatActiveNodeSaveRestoresBeforeNodeEntry() {
         Player player = new Player("p", "战士", Profession.WARRIOR);
         player.setGold(80);

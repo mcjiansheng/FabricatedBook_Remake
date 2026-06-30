@@ -29,6 +29,7 @@ core/src/main/java/com/fabricatedbook/core/run/GameRunState.java
 - `completedNode`：最近完成并记录到路径的节点。
 - `activeNode`：已经进入但尚未完成的节点，主要用于战斗中退出。
 - `combatBaseline`：进入战斗前的玩家快照。
+- `Player.centralizationCombatEntries`：`"集权"` 进入战斗节点后的累计伤害成长层数。
 
 随机数通过 `randomFor(String key)` 创建。不同系统使用不同 key 派生独立随机流，例如：
 
@@ -82,14 +83,14 @@ saves/save.json
 - 前端 `runGame` 使用 `core/src/main/resources` 作为工作目录。
 - 后端 `runBackendDebug` 默认使用对应 Gradle 任务的工作目录。
 
-`SaveManager.saveRun(GameRunState)` 写入版本 2 对局存档，包含：
+`SaveManager.saveRun(GameRunState)` 写入版本 3 对局存档，包含：
 
 - 对局种子。
 - 当前层。
 - 已完成节点。
 - 战斗中活跃节点。
 - 战斗前玩家快照。
-- 玩家生命、金币、卡牌、藏品、药水等长期状态。
+- 玩家生命、金币、卡牌、藏品、药水、`centralizationCombatEntries` 等长期状态。
 
 `SaveManager.loadRun()` 会恢复 `GameRunState`。如果存档是在战斗中写入，读取时不会恢复战斗过程，而是使用战斗前快照并清理 `activeNode`，让玩家回到战斗节点未完成的状态。
 
