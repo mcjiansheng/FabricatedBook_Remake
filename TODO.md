@@ -41,7 +41,7 @@
   - [x] `./gradlew test` 可运行，core 测试通过。
   - [x] 将测试命令、期望结果和失败处理写入测试人员执行清单。
   - [x] 明确每次提交前至少运行哪些命令：`./gradlew test`、后端 CLI `selftest`、`seedtest`、`savetest`、`flowtest` 等。
-- [ ] 补齐 core 单元测试缺口。
+- [x] 补齐 core 单元测试缺口。
   - [x] 伤害/格挡/状态伤害/预览已有部分测试。
   - [x] 药水伤害和格挡已有部分测试。
   - [x] 藏品状态伤害和累计胜利类效果已有部分测试。
@@ -245,9 +245,9 @@
   - [x] 为新增敌人提供图片映射规范。（见 [doc/enemy_action_dsl.md](doc/enemy_action_dsl.md)。）
 - [ ] 统一地图文档。
   - [ ] `game_encyclopedia/overview.md`、`game_encyclopedia/nodes_events.md`、`original_map_analysis.md`、`frontend_design.md`、`run_seed_and_save.md` 中地图描述需在规则下沉后同步。
-- [ ] 更新迁移指南。
-  - [ ] `ai_original_content_migration_guide.md` 中已完成状态与当前代码重新对齐。
-  - [ ] 移除过期 Claude 提示或标注适用前提。
+- [x] 更新迁移指南。
+  - [x] `ai_original_content_migration_guide.md` 中已完成状态与当前代码重新对齐。
+  - [x] 移除过期 Claude 提示或标注适用前提。
 
 ## 测试人员规划区
 

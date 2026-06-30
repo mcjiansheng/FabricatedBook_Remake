@@ -1,6 +1,6 @@
 # AI 原版内容迁移指南
 
-本文档用于指导 Claude 或其他 AI 将原版 `mcjiansheng/FabricatedBook` 的怪物、卡牌、藏品、药水、地图与事件内容迁移到本 Java + LibGDX 重制版中。
+本文档用于指导 AI Agent 将原版 `mcjiansheng/FabricatedBook` 的怪物、卡牌、藏品、药水、地图与事件内容迁移到本 Java + LibGDX 重制版中。
 
 目标不是机械复制文本，而是把原版 C + SDL2 项目的内容整理成当前 Java 项目能运行、能扩展、能测试的数据和代码。
 
@@ -689,19 +689,11 @@ rg '"effects"|actionScript|damage_per_attack|damage_scaling|energy_per_turn|trig
 
 ---
 
-## 13. Claude 可执行任务提示词
+## 13. AI Agent 迁移核查提示词
 
-如果要让 Claude 接手，请在项目根目录运行 Claude，并粘贴下面提示词。
+如果要让 AI Agent 接手内容迁移或状态核查，请在项目根目录运行对应工具，并把本文档作为上下文。下面提示词适用于继续迁移原版内容、核查新 JSON、或确认现有状态是否过期；它不是当前已完成工作的重复修复清单。
 
-如果 CLI 支持非交互模式，可尝试：
-
-```bash
-claude -p "$(cat doc/ai_original_content_migration_guide.md)
-
-请按文档执行阶段 A 和阶段 B，只做卡牌一致性和怪物接入。"
-```
-
-如果 CLI 进入交互界面，请直接粘贴：
+可直接粘贴：
 
 ```text
 你现在位于 Java + LibGDX 项目 FabricatedBook_Remake。
@@ -727,13 +719,13 @@ claude -p "$(cat doc/ai_original_content_migration_guide.md)
 
 任务：
 1. 不要重构 UI，不要大面积格式化。
-2. 先修正卡牌数据和 CardPool 的不一致，让 warrior.json 中所有 effects 都能被 CombatEngine 正确解析。
-3. 如需新增 effect，优先在 CombatEngine.parseCardEffects 中小范围实现，并保持旧 effect 兼容。
-4. 修正怪物 actionScript：要么转换 JSON 为当前 parseEnemyAction 支持的 DSL，要么新增 EnemyActionResolver 兼容原版动作名。
-5. 修改 MapScreen.createEnemiesFor，让战斗从 DataLoader.loadMonsters(currentLayerIdx + 1) 读取对应楼层怪物组。普通战斗选非 Boss 组，Boss 节点选 isBoss=true 的组，紧急作战优先选精英/更高难度组；如果没有匹配组，再 fallback 到训练敌人。
-6. 更新 EnemyActor.NAME_TO_FILE，保证已有怪物名称能匹配 img 目录中贴图。
-7. 每完成一个阶段运行 ./gradlew compileJava desktop:compileJava。
-8. 最后汇报改了哪些文件、哪些原版动作仍未完全实现、下一步建议。
+2. 先核查当前代码和本文档中的已完成状态是否一致。
+3. 迁移新卡牌时，保证 JSON effect 能被 CombatEngine 正确解析；如需新增 effect，优先在核心逻辑小范围实现，并保持旧 effect 兼容。
+4. 迁移新怪物时，优先把语义化 actionId 接入 EnemyActionResolver，并同步 doc/enemy_action_dsl.md、EnemyActionResolverTest 和后端 CLI selftest。
+5. 保持 MapScreen.createEnemiesFor 从 DataLoader.loadMonsters(currentLayerIdx + 1) 读取对应楼层怪物组；如果调整地图或节点类型，必须同步前端生成逻辑和测试文档。
+6. 新增敌人图片时，同步 EnemyActor.NAME_TO_FILE，保证怪物名称能匹配 img 目录中贴图。
+7. 每完成一个阶段运行 ./gradlew test，并用 printf 'selftest\nseedtest 12345\nsavetest\nflowtest\nquit\n' | ./gradlew runBackendDebug 做后端 CLI 回归。
+8. 最后汇报改了哪些文件、哪些效果或动作仍未完全实现、下一步建议。
 
 约束：
 - 保留用户已有未提交修改，不要 git reset，不要回退无关文件。
@@ -746,7 +738,7 @@ claude -p "$(cat doc/ai_original_content_migration_guide.md)
 
 ## 14. 当前建议的第一批具体修复清单
 
-优先让“原版内容能进入游戏循环”：
+第一批“原版内容进入游戏循环”的接入项当前状态：
 
 1. 修 `warrior.json` 中不支持的 effect。
 2. 改 `CardPool` 从 JSON 注册，或至少同步 JSON 与硬编码 ID。
@@ -754,4 +746,4 @@ claude -p "$(cat doc/ai_original_content_migration_guide.md)
 4. `EnemyActionResolver` 已覆盖现有 `level*.json` 的主要 actionScript。
 5. `ShopManager` 已使用真实卡牌、藏品和药水对象。
 
-完成这五项后，原版的卡牌、怪物、藏品和药水已经进入 Java 重制版主循环；后续重点是补自动化测试和复杂藏品/环境规则。
+这五项完成后，原版的卡牌、怪物、藏品和药水已经进入 Java 重制版主循环；后续重点是继续补复杂藏品/环境规则、前端验收流程和地图文档统一。
