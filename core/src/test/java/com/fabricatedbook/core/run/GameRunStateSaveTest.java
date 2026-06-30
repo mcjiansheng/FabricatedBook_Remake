@@ -3,12 +3,14 @@ package com.fabricatedbook.core.run;
 import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
+import com.fabricatedbook.core.entity.Enemy;
 import com.fabricatedbook.core.entity.Player;
 import com.fabricatedbook.core.entity.Profession;
 import com.fabricatedbook.core.map.NodeEntryResolver;
 import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicFactory;
+import com.fabricatedbook.core.relic.RelicManager;
 import com.fabricatedbook.data.DataLoader;
 import com.fabricatedbook.data.SaveManager;
 import org.junit.jupiter.api.Test;
@@ -107,6 +109,25 @@ class GameRunStateSaveTest {
 
         assertNotNull(restored);
         assertEquals(1, restored.getPlayer().getCentralizationCombatEntries());
+    }
+
+    @Test
+    void frostmourneWinsSurviveRunSaveRestore() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        player.addRelic(RelicFactory.createById("relic_frostmourne", player));
+        player.setFrostmourneCombatWins(2);
+        GameRunState runState = new GameRunState(99L, player);
+
+        SaveManager saveManager = new SaveManager(tempDir.resolve("save.json").toString());
+
+        assertTrue(saveManager.saveRun(runState));
+        GameRunState restored = saveManager.loadRun();
+
+        assertNotNull(restored);
+        assertEquals(2, restored.getPlayer().getFrostmourneCombatWins());
+        RelicManager relicManager = new RelicManager(restored.getPlayer());
+        Enemy enemy = new Enemy("dummy", "测试敌人", 40, List.of("atk1"));
+        assertEquals(116, relicManager.modifyDamage(100, restored.getPlayer(), enemy));
     }
 
     @Test

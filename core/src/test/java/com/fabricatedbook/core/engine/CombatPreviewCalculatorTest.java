@@ -205,6 +205,7 @@ class CombatPreviewCalculatorTest {
         engine.checkBattleEnd();
 
         assertTrue(engine.isVictory());
+        assertEquals(1, player.getFrostmourneCombatWins());
         assertEquals(108, relicManager.modifyDamage(100, player, enemy));
     }
 
@@ -222,6 +223,7 @@ class CombatPreviewCalculatorTest {
         engine.checkBattleEnd();
 
         assertFalse(engine.isVictory());
+        assertEquals(0, player.getFrostmourneCombatWins());
         assertEquals(100, relicManager.modifyDamage(100, player, enemy));
     }
 

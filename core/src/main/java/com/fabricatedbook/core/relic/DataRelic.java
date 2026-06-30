@@ -28,7 +28,6 @@ public class DataRelic implements Relic {
     private final Random random;
     private Consumer<OnCombatStart> combatStartHandler;
     private Consumer<OnCardUsed> cardUsedHandler;
-    private int combatWins;
 
     public DataRelic(RelicData data, Player owner) {
         this(data, owner, new Random());
@@ -38,7 +37,6 @@ public class DataRelic implements Relic {
         this.data = data;
         this.owner = owner;
         this.random = random == null ? new Random() : random;
-        this.combatWins = 0;
     }
 
     public int getEffectValue() {
@@ -104,7 +102,8 @@ public class DataRelic implements Relic {
                 if (owner.getCurrentFloor() < 5) multiplier -= getEffectValue() / 100.0;
             }
             case "relic_frostmourne" ->
-                    multiplier += combatWins * getEffectValue() / 100.0;
+                    multiplier += owner.getFrostmourneCombatWins()
+                            * getEffectValue() / 100.0;
             case "relic_centralization" ->
                     multiplier += owner.getCentralizationCombatEntries()
                             * getEffectValue() / 100.0;
@@ -146,7 +145,8 @@ public class DataRelic implements Relic {
                 if (owner.getCurrentFloor() < 5) multiplier -= getEffectValue() / 100.0;
             }
             case "relic_frostmourne" ->
-                    multiplier += combatWins * getEffectValue() / 100.0;
+                    multiplier += owner.getFrostmourneCombatWins()
+                            * getEffectValue() / 100.0;
             case "relic_centralization" ->
                     multiplier += owner.getCentralizationCombatEntries()
                             * getEffectValue() / 100.0;
@@ -231,7 +231,7 @@ public class DataRelic implements Relic {
 
     public void onCombatVictory() {
         if ("relic_frostmourne".equals(getId())) {
-            combatWins++;
+            owner.incrementFrostmourneCombatWins();
         }
     }
 

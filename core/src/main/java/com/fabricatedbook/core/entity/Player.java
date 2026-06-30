@@ -43,6 +43,9 @@ public class Player extends AbstractEntity {
     /** 「集权」进入战斗节点后的累计伤害成长层数。 */
     private int centralizationCombatEntries;
 
+    /** 「霜之哀伤」战斗胜利后的累计伤害成长层数。 */
+    private int frostmourneCombatWins;
+
     /**
      * 构造玩家实体。
      *
@@ -60,6 +63,7 @@ public class Player extends AbstractEntity {
         this.currentFloor = 1;
         this.cardCount = 0;
         this.centralizationCombatEntries = 0;
+        this.frostmourneCombatWins = 0;
     }
 
     // ====== 职业相关 ======
@@ -154,6 +158,13 @@ public class Player extends AbstractEntity {
     }
     public void incrementCentralizationCombatEntries() {
         centralizationCombatEntries++;
+    }
+    public int getFrostmourneCombatWins() { return frostmourneCombatWins; }
+    public void setFrostmourneCombatWins(int frostmourneCombatWins) {
+        this.frostmourneCombatWins = Math.max(0, frostmourneCombatWins);
+    }
+    public void incrementFrostmourneCombatWins() {
+        frostmourneCombatWins++;
     }
 
     /**

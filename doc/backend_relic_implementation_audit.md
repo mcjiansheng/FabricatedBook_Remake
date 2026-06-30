@@ -9,8 +9,8 @@
 
 当前 `relics.json` 共 49 个藏品或奖励占位 ID：
 
-- 已完整接入：46 个。
-- 部分实现：2 个。
+- 已完整接入：47 个。
+- 部分实现：1 个。
 - 需要规则确认：1 个。
 - 未找到完全缺失实现的普通藏品。
 
@@ -26,12 +26,11 @@
 
 ### R-001：`relic_frostmourne` 累计胜利数没有进入存档
 
-- 状态：部分实现。
+- 状态：已修复。
 - 位置：`DataRelic.onCombatVictory()`、`DataRelic.modifyOutgoingDamage()`、`SaveManager`、`GameRunState.PlayerSnapshot`。
-- 当前行为：战斗胜利会增长 `DataRelic.combatWins`，本次运行内伤害加成可生效。
-- 问题原因：`combatWins` 是 `DataRelic` 实例字段；保存/读档只保存 `relicIds`，读档后通过 `RelicFactory.createById()` 重建藏品实例，累计胜利数回到 0。
-- 期望实现：把霜之哀伤这种跨战斗成长状态归属到对局/玩家快照中，例如 `Player.frostmourneCombatWins` 或更通用的 per-relic state；`SaveManager` 保存恢复该字段，`DataRelic` 从稳定状态读取。
-- 影响范围：存档格式、`GameRunState.PlayerSnapshot`、`SaveManager`、`DataRelicTest` 或存档测试。需要保持旧存档缺字段时默认 0。
+- 原问题：`combatWins` 曾是 `DataRelic` 实例字段；保存/读档只保存 `relicIds`，读档后通过 `RelicFactory.createById()` 重建藏品实例，累计胜利数会回到 0。
+- 当前实现：累计胜利数已迁入 `Player.frostmourneCombatWins`，`DataRelic` 在胜利回调中递增该字段，并在实战/预览伤害中读取玩家稳定状态；`GameRunState.PlayerSnapshot` 和 `SaveManager` v4 会保存/恢复该字段。
+- 验证覆盖：`CombatPreviewCalculatorTest` 固定胜利增长、失败不增长；`GameRunStateSaveTest` 覆盖保存读档后仍保留 2 层成长并计算 116 点伤害。
 
 ### R-002：`relic_bankbook` 触发点绑定在商店商品生成
 
@@ -81,7 +80,7 @@
 | `relic_king_armor` | 国王的铠甲 | 已完整 | `DataRelic.onTurnStart()` | 生命不高于 10% 时施加 `BlockIncrease` 并获得 10 格挡。 |
 | `relic_king_crystal` | 国王的水晶 | 已完整 | `DataRelic.modifyGoldReward()` | 战斗金币奖励结算时，高于 10% 生命扣 5 点并 +20 金币。 |
 | `relic_blade_light` | 刀光剑影 | 已完整 | `DataRelic.modifyOutgoingDamage()` / `previewOutgoingDamage()` | 按玩家负面 Buff 种类计数加伤，预览同步。 |
-| `relic_frostmourne` | 霜之哀伤 | 部分实现 | `DataRelic.onCombatVictory()` / `modifyOutgoingDamage()` | 运行内可成长，但累计胜利数未保存恢复。 |
+| `relic_frostmourne` | 霜之哀伤 | 已完整 | `DataRelic.onCombatVictory()` / `Player.frostmourneCombatWins` / `SaveManager` | 胜利累计数随玩家快照保存恢复，实战和预览伤害读取稳定状态。 |
 | `relic_peeping_eye` | 窥秘之眼 | 已完整 | `DataRelic.modifyOutgoingDamage()` / `previewOutgoingDamage()` | 敌方受到伤害 +40%，预览同步。 |
 | `relic_i_help_you` | "我来助你" | 已完整 | `DataRelic.onTurnStart()` | 回合开始对所有存活敌人造成 2 点伤害。 |
 | `relic_safety_suit` | 蓝卡坞安全衣 | 已完整 | `DataRelic.modifyIncomingDamage()` | 每个负面藏品使受到伤害 -10%。 |
@@ -107,7 +106,6 @@
 
 ## 后续建议
 
-1. 先修 `relic_frostmourne` 的存档状态，这是已确认的后端结构问题。
-2. 再修 `relic_bankbook` 的触发归属，把“进入商店”从商品生成中剥离出来。
-3. `relic_nuke` 不继续实现，直到玩法语义明确。
-4. 如果继续扩展藏品，优先考虑把藏品效果从 `DataRelic` 的多个 switch 收敛为注册表，至少给“随机类效果不参与预览”建立统一约定。
+1. 先修 `relic_bankbook` 的触发归属，把“进入商店”从商品生成中剥离出来。
+2. `relic_nuke` 不继续实现，直到玩法语义明确。
+3. 如果继续扩展藏品，优先考虑把藏品效果从 `DataRelic` 的多个 switch 收敛为注册表，至少给“随机类效果不参与预览”建立统一约定。
