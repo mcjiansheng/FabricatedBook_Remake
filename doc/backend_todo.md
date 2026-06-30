@@ -236,6 +236,8 @@
 
 补充：`relic_avenger` 的 1/3 概率伤害加成已确认位于 `DataRelic.modifyOutgoingDamage()`，并保持在 `previewOutgoingDamage()` 外，避免 UI 预览提前消耗随机结果。本次补齐的是测试缺口：`DataRelicTest` 通过可注入 `Random` 固定 `nextInt(100)` 为 32/33，分别覆盖触发与不触发边界，同时确认预览仍返回基础伤害。该改动只增加 `DataRelic` 的测试用随机源注入构造器，`RelicFactory` 的生产创建路径仍使用默认随机源，不影响其它藏品依赖。
 
+补充：后端藏品实现状态已集中审计到 [backend_relic_implementation_audit.md](backend_relic_implementation_audit.md)。当前 `relics.json` 49 个藏品或奖励占位 ID 中，46 个已完整接入；`relic_frostmourne` 因胜利累计数停留在 `DataRelic` 实例字段、读档后丢失，标记为部分实现；`relic_bankbook` 因触发点绑定在 `ShopManager.generateItems()`，未来商店刷新/重建可能重复触发，标记为部分实现；`relic_nuke` 仍保持“需要规则确认”，不可静默实现。
+
 ### 位置
 
 - 包：`com.fabricatedbook.core.map`

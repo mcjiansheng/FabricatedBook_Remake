@@ -114,9 +114,9 @@
 
 ### P1：复杂藏品、隐藏路线与结局
 
-- [ ] 梳理藏品实现状态。
-  - [ ] 为 `relics.json` 每个藏品标注：已完整、部分实现、未实现、需要规则确认。
-  - [ ] 对照 `doc/game_encyclopedia/relics.md` 和 `DataRelic` 当前 switch 覆盖情况建立清单。
+- [x] 梳理藏品实现状态。（已新增 [doc/backend_relic_implementation_audit.md](doc/backend_relic_implementation_audit.md)，逐项对照 `relics.json`、百科、`DataRelic`、`RelicManager`、节点/遭遇/事件奖励入口。当前结论：46 个已完整接入，`霜之哀伤` 和 `捡来的存折` 为部分实现，`核弹` 需要规则确认。）
+  - [x] 为 `relics.json` 每个藏品标注：已完整、部分实现、未实现、需要规则确认。
+  - [x] 对照 `doc/game_encyclopedia/relics.md` 和 `DataRelic` 当前 switch 覆盖情况建立清单。
 - [ ] 补复杂藏品专用实现。
   - [x] `背叛`：1-4 层伤害加成、第 5 层敌人血量加成、结局路线影响。（伤害修正、第五层敌人 HP 修正和隐藏路线条件均已覆盖。）
   - [x] `仇恨`：1-4 层伤害降低、第 5 层敌人血量降低、结局路线影响。（伤害修正、第五层敌人 HP 修正和隐藏路线条件均已覆盖。）
@@ -126,6 +126,8 @@
   - [x] `"巴别塔"`：与「背叛」/「仇恨」共同影响第 5 层隐藏 Boss 路线。
   - [x] `"集权"`：进入战斗节点后的持续伤害成长与存档。（已通过 `NodeEntryResolver` 增长 `Player.centralizationCombatEntries`，`SaveManager` 存档恢复，`DataRelic` 实战/预览伤害读取累计层数；`selftest` 与核心测试覆盖。）
   - [x] `"寡头"`：进入非战斗节点金币收益，目前前端已有部分逻辑，需下沉到规则层。（已下沉到 `NodeEntryResolver`，前端和 CLI 共用。）
+  - [ ] `霜之哀伤`：胜利累计伤害成长需要保存/恢复，目前 `DataRelic.combatWins` 只存在运行时实例中。
+  - [ ] `捡来的存折`：进入商店金币收益需要从 `ShopManager.generateItems()` 迁到稳定的商店节点进入/会话入口，避免未来刷新商品或重建界面重复触发。
   - [ ] 负面藏品与特殊结局相关效果。
 - [ ] 补隐藏 Boss 和结局。
   - [x] 第一层命运抉择“回头”触发隐藏结局“讲述中断”。
