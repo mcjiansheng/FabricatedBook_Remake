@@ -35,9 +35,10 @@
 
 ### 准备做随机种子、存档或回归验证
 
-1. [run_seed_and_save.md](run_seed_and_save.md) - 对局种子、随机流 key、战斗中退出规则、单槽位存档和 CLI 验证方式。
-2. [backend_cli_debug.md](backend_cli_debug.md) - `runBackendDebug` 命令、地图/战斗命令、自检、`seedtest` 和 `savetest`。
-3. [debug_test_report.md](debug_test_report.md) - 2026-05-31 后端 CLI 五层通关测试报告和历史 Bug 记录。
+1. [backend_regression_checklist.md](backend_regression_checklist.md) - 后端提交前最小回归命令、通过标志、失败处理和专项加跑清单。
+2. [run_seed_and_save.md](run_seed_and_save.md) - 对局种子、随机流 key、战斗中退出规则、单槽位存档和 CLI 验证方式。
+3. [backend_cli_debug.md](backend_cli_debug.md) - `runBackendDebug` 命令、地图/战斗命令、自检、`seedtest` 和 `savetest`。
+4. [debug_test_report.md](debug_test_report.md) - 2026-05-31 后端 CLI 五层通关测试报告和历史 Bug 记录。
 
 ## 文档分类
 
@@ -75,6 +76,7 @@
 
 | 文档 | 作用 | 适合什么时候读 |
 |:--|:--|:--|
+| [backend_regression_checklist.md](backend_regression_checklist.md) | 后端最小回归测试矩阵、提交前命令、通过标志和失败处理 | 后端提交前、修复失败测试后 |
 | [backend_cli_debug.md](backend_cli_debug.md) | 后端命令行调试系统说明，覆盖地图、事件、战斗、自检和脚本化回归 | 验证核心逻辑，不想启动前端时 |
 | [run_seed_and_save.md](run_seed_and_save.md) | 对局种子、随机流隔离、存档结构、战斗中退出规则和 CLI 验证 | 改随机、奖励、商店、存档、继续游戏时 |
 

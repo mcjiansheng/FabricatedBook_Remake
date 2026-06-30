@@ -36,11 +36,11 @@
 
 ### P0：测试与质量基线
 
-- [ ] 建立最小回归测试矩阵。
+- [x] 建立最小回归测试矩阵。（已新增 [doc/backend_regression_checklist.md](doc/backend_regression_checklist.md)，记录后端提交前命令、通过标志、失败处理和专项加跑范围。）
   - [x] core 已有 JUnit 测试源码。
   - [x] `./gradlew test` 可运行，core 测试通过。
-  - [ ] 将测试命令、期望结果和失败处理写入测试人员执行清单。
-  - [ ] 明确每次提交前至少运行哪些命令：`./gradlew test`、后端 CLI `selftest`、`seedtest`、`savetest`、`flowtest` 等。
+  - [x] 将测试命令、期望结果和失败处理写入测试人员执行清单。
+  - [x] 明确每次提交前至少运行哪些命令：`./gradlew test`、后端 CLI `selftest`、`seedtest`、`savetest`、`flowtest` 等。
 - [ ] 补齐 core 单元测试缺口。
   - [x] 伤害/格挡/状态伤害/预览已有部分测试。
   - [x] 药水伤害和格挡已有部分测试。
@@ -255,8 +255,8 @@
 
 | ID | 优先级 | 范围 | 测试入口 | 负责人 | 状态 | 备注 |
 |:--|:--|:--|:--|:--|:--|:--|
-| TP-001 | P0 | 后端 CLI 自检 | `./gradlew runBackendDebug` -> `selftest` | 待定 | 待规划 | 覆盖数据加载、药水、藏品、商店 |
-| TP-002 | P0 | 种子、存档与节点提交 | `seedtest` / `savetest` / `flowtest` | 待定 | 待规划 | 验证可复现、战斗中退出、商店购买/删牌和非战斗节点提交保存 |
+| TP-001 | P0 | 后端 CLI 自检 | `./gradlew runBackendDebug` -> `selftest` | 待定 | 已规划 | 覆盖数据加载、药水、藏品、商店；执行清单见 `doc/backend_regression_checklist.md` |
+| TP-002 | P0 | 种子、存档与节点提交 | `seedtest` / `savetest` / `flowtest` | 待定 | 已规划 | 验证可复现、战斗中退出、商店购买/删牌和非战斗节点提交保存；执行清单见 `doc/backend_regression_checklist.md` |
 | TP-003 | P0 | 战斗主流程 | 前端 `battle` 调试入口 | 待定 | 待规划 | 拖拽出牌、药水、奖励 |
 | TP-004 | P1 | 地图探索 | 前端 `map` 调试入口 | 待定 | 待规划 | 拖拽地图、节点可达、跨层推进 |
 | TP-005 | P1 | 商店/事件 | 前端 `shop` / `event` 调试入口 | 待定 | 待规划 | 购买、事件结果、返回地图 |

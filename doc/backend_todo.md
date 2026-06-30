@@ -387,6 +387,8 @@
 
 ## 验证建议
 
+后端提交前的最小回归矩阵、通过标志和失败处理已集中记录在 [backend_regression_checklist.md](backend_regression_checklist.md)。
+
 每完成一个后端问题，应至少运行：
 
 ```bash
