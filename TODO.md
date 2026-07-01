@@ -128,7 +128,8 @@
   - [x] `"寡头"`：进入非战斗节点金币收益，目前前端已有部分逻辑，需下沉到规则层。（已下沉到 `NodeEntryResolver`，前端和 CLI 共用。）
   - [x] `霜之哀伤`：胜利累计伤害成长需要保存/恢复。（已迁入 `Player.frostmourneCombatWins`，`GameRunState.PlayerSnapshot` / `SaveManager` v4 保存恢复，`DataRelic` 实战和预览伤害读取玩家稳定状态。）
   - [x] `捡来的存折`：进入商店金币收益需要从 `ShopManager.generateItems()` 迁到稳定的商店节点进入/会话入口，避免未来刷新商品或重建界面重复触发。（已迁入 `NodeEntryResolver` 的商店节点入口，商品生成不再产生金币副作用。）
-  - [ ] 负面藏品与特殊结局相关效果。
+  - [x] 负面藏品与已定义特殊结局相关效果。（负面藏品即时/战斗效果、随机负面藏品展开、背叛/仇恨/巴别塔隐藏路线、第 5 层 Boss 分流和隐藏结局基础链路均已接入；`relic_nuke` 真实玩法语义单独列为待确认项。）
+  - [ ] `核弹`：曼哈顿计划特殊物品真实效果需要规则确认，当前 `EventRewardResolver` 保持显式未接入，不作为普通藏品加入背包。
 - [ ] 补隐藏 Boss 和结局。
   - [x] 第一层命运抉择“回头”触发隐藏结局“讲述中断”。
   - [x] 迷雾 Boss 后命运抉择“门扉”。
@@ -146,10 +147,10 @@
 
 ### P1：事件、节点与环境效果
 
-- [ ] 确认事件系统是否继续由 `EventHandler` 硬编码，还是迁移到 `data/events.json` 驱动。
+- [x] 确认事件系统是否继续由 `EventHandler` 硬编码，还是迁移到 `data/events.json` 驱动。（已采用 JSON/Resolver 主链路；复杂事件未来必须在 JSON 选项上显式标记 `executor: "java"` 并登记 Java executor。）
   - [x] 事件标题、描述、选项由 JSON 读取。
-  - [ ] 事件效果由 Java handler 或通用 DSL 执行。（固定金币/生命/藏品结果已开始由 JSON 字段执行；随机和特殊逻辑仍在 Java。）
-  - [x] 特殊事件保留专用 handler。
+  - [x] 事件效果由 Java handler 或通用 DSL 执行。（固定金币/生命/回满/藏品/卡牌/结局 outcome、随机范围、加权随机结果和条件选项均由 JSON 字段 + resolver 执行；`relic_nuke` 作为未定义特殊奖励显式未接入。）
+  - [x] 特殊事件保留专用 handler。（当前 JSON 中没有选项依赖 Java executor；未来复杂事件需显式声明。）
 - [ ] 补节点语义。
   - [x] `DECISION` 不应映射为普通随机事件。
   - [x] `REWARD` 应支持三选一藏品或明确采用当前事件映射。（当前前端与后端 CLI 均采用事件「好诗歪诗」作为奖励节点映射。）
