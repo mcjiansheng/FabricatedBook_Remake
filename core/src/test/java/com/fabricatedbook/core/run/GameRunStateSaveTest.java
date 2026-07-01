@@ -219,6 +219,21 @@ class GameRunStateSaveTest {
         assertNull(restored.getActiveNode());
     }
 
+    @Test
+    void runSaveRestoresSpecialEventPotions() {
+        Player player = new Player("p", "战士", Profession.WARRIOR);
+        assertTrue(player.addPotion(Potion.nuke()));
+        GameRunState runState = new GameRunState(123L, player);
+        SaveManager saveManager = new SaveManager(tempDir.resolve("save.json").toString());
+
+        assertTrue(saveManager.saveRun(runState));
+        GameRunState restored = saveManager.loadRun();
+
+        assertNotNull(restored);
+        assertEquals(1, restored.getPlayer().getPotions().size());
+        assertEquals(Potion.NUKE_ID, restored.getPlayer().getPotions().get(0).getId());
+    }
+
     private Player playerWithPersistentInventory() {
         Player player = new Player("p", "战士", Profession.WARRIOR);
         Card upgradedAttack = CardFactory.createFromTemplate(CardPool.findById("war_atk1"));

@@ -238,11 +238,16 @@ public class GameRunState {
 
             List<Potion> potions = new DataLoader().loadPotions();
             for (String potionId : potionIds) {
+                boolean restoredPotion = false;
                 for (Potion potion : potions) {
                     if (potion.getId().equals(potionId)) {
                         restored.addPotion(potion.copy());
+                        restoredPotion = true;
                         break;
                     }
+                }
+                if (!restoredPotion) {
+                    restored.addPotion(Potion.createSpecialById(potionId));
                 }
             }
             return restored;

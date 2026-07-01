@@ -16,6 +16,7 @@ import java.util.List;
  * Potion — 数据驱动药水。
  */
 public class Potion {
+    public static final String NUKE_ID = "potion_nuke";
 
     private String id;
     private String name;
@@ -35,6 +36,19 @@ public class Potion {
 
     public Potion copy() {
         return new Potion(id, name, description, effects);
+    }
+
+    public static Potion createSpecialById(String id) {
+        if (NUKE_ID.equals(id)) {
+            return nuke();
+        }
+        return null;
+    }
+
+    public static Potion nuke() {
+        return new Potion(NUKE_ID, "核弹",
+                "对所有单位造成 999 点伤害；如果自己因此阵亡，优先判定战斗失败",
+                List.of("nuke_all:999"));
     }
 
     public boolean use(Player player, List<Enemy> enemies, RelicManager relicManager) {
@@ -101,6 +115,13 @@ public class Potion {
             case "trigger_withering_all" -> {
                 for (AbstractEntity enemy : aliveEnemies) {
                     triggerWithering(enemy);
+                }
+            }
+            case "nuke_all" -> {
+                int damage = Integer.parseInt(parts[1]);
+                player.takeDamage(damage);
+                for (AbstractEntity enemy : aliveEnemies) {
+                    enemy.takeDamage(damage);
                 }
             }
             default -> System.out.println("[Potion] 未知效果: " + effect);

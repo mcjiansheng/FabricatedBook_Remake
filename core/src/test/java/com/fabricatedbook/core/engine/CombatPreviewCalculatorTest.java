@@ -709,6 +709,23 @@ class CombatPreviewCalculatorTest {
     }
 
     @Test
+    void nukePotionDefeatsPlayerFirstWhenAllUnitsDie() {
+        Player player = player();
+        player.setHp(20);
+        Enemy enemy = enemy("e1");
+        CombatEngine engine = new CombatEngine();
+        engine.initBattle(player, List.of(enemy));
+
+        assertTrue(Potion.nuke().use(player, List.of(enemy), null));
+        engine.checkBattleEnd();
+
+        assertFalse(player.isAlive());
+        assertFalse(enemy.isAlive());
+        assertFalse(engine.isInBattle());
+        assertFalse(engine.isVictory());
+    }
+
+    @Test
     void combatEngineAppliesEnvironmentDamageModifierToPlayerDamage() {
         Player player = player();
         player.getDrawPile().add(attackCard("env", Card.TargetType.SINGLE_ENEMY,

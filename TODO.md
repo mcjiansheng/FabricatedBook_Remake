@@ -114,7 +114,7 @@
 
 ### P1：复杂藏品、隐藏路线与结局
 
-- [x] 梳理藏品实现状态。（已新增 [doc/backend_relic_implementation_audit.md](doc/backend_relic_implementation_audit.md)，逐项对照 `relics.json`、百科、`DataRelic`、`RelicManager`、节点/遭遇/事件奖励入口。当前结论：48 个已完整接入，`核弹` 需要规则确认。）
+- [x] 梳理藏品实现状态。（已新增 [doc/backend_relic_implementation_audit.md](doc/backend_relic_implementation_audit.md)，逐项对照 `relics.json`、百科、`DataRelic`、`RelicManager`、节点/遭遇/事件奖励入口。当前结论：49 个藏品或奖励占位 ID 均已接入；`核弹` 作为特殊事件药水路由实现。）
   - [x] 为 `relics.json` 每个藏品标注：已完整、部分实现、未实现、需要规则确认。
   - [x] 对照 `doc/game_encyclopedia/relics.md` 和 `DataRelic` 当前 switch 覆盖情况建立清单。
 - [ ] 补复杂藏品专用实现。
@@ -128,8 +128,8 @@
   - [x] `"寡头"`：进入非战斗节点金币收益，目前前端已有部分逻辑，需下沉到规则层。（已下沉到 `NodeEntryResolver`，前端和 CLI 共用。）
   - [x] `霜之哀伤`：胜利累计伤害成长需要保存/恢复。（已迁入 `Player.frostmourneCombatWins`，`GameRunState.PlayerSnapshot` / `SaveManager` v4 保存恢复，`DataRelic` 实战和预览伤害读取玩家稳定状态。）
   - [x] `捡来的存折`：进入商店金币收益需要从 `ShopManager.generateItems()` 迁到稳定的商店节点进入/会话入口，避免未来刷新商品或重建界面重复触发。（已迁入 `NodeEntryResolver` 的商店节点入口，商品生成不再产生金币副作用。）
-  - [x] 负面藏品与已定义特殊结局相关效果。（负面藏品即时/战斗效果、随机负面藏品展开、背叛/仇恨/巴别塔隐藏路线、第 5 层 Boss 分流和隐藏结局基础链路均已接入；`relic_nuke` 真实玩法语义单独列为待确认项。）
-  - [ ] `核弹`：曼哈顿计划特殊物品真实效果需要规则确认，当前 `EventRewardResolver` 保持显式未接入，不作为普通藏品加入背包。
+  - [x] 负面藏品与已定义特殊结局相关效果。（负面藏品即时/战斗效果、随机负面藏品展开、背叛/仇恨/巴别塔隐藏路线、第 5 层 Boss 分流和隐藏结局基础链路均已接入。）
+  - [x] `核弹`：曼哈顿计划会通过 `relic_nuke` 路由发放特殊药水 `potion_nuke`，不作为普通藏品加入背包；药水栏满时不发放，使用后对玩家和所有敌人造成 999 点伤害，玩家若阵亡则优先判定战斗失败。
 - [ ] 补隐藏 Boss 和结局。
   - [x] 第一层命运抉择“回头”触发隐藏结局“讲述中断”。
   - [x] 迷雾 Boss 后命运抉择“门扉”。
@@ -149,7 +149,7 @@
 
 - [x] 确认事件系统是否继续由 `EventHandler` 硬编码，还是迁移到 `data/events.json` 驱动。（已采用 JSON/Resolver 主链路；复杂事件未来必须在 JSON 选项上显式标记 `executor: "java"` 并登记 Java executor。）
   - [x] 事件标题、描述、选项由 JSON 读取。
-  - [x] 事件效果由 Java handler 或通用 DSL 执行。（固定金币/生命/回满/藏品/卡牌/结局 outcome、随机范围、加权随机结果和条件选项均由 JSON 字段 + resolver 执行；`relic_nuke` 作为未定义特殊奖励显式未接入。）
+  - [x] 事件效果由 Java handler 或通用 DSL 执行。（固定金币/生命/回满/藏品/卡牌/药水/结局 outcome、随机范围、加权随机结果和条件选项均由 JSON 字段 + resolver 执行；`relic_nuke` 会展开为特殊药水 `potion_nuke`。）
   - [x] 特殊事件保留专用 handler。（当前 JSON 中没有选项依赖 Java executor；未来复杂事件需显式声明。）
 - [ ] 补节点语义。
   - [x] `DECISION` 不应映射为普通随机事件。
@@ -326,4 +326,4 @@ Bug ID：
 
 近期后端进展：战士运行时 `CardPool` 已优先由 `warrior.json` 注册，硬编码战士池仅作为 JSON 加载失败时的兜底；后端 CLI `selftest` 会校验运行时战士 CardPool 与 JSON 的数量、ID 和关键字段一致。effect DSL 已先抽出 `CardEffectParser` 作为执行和预览共用解析入口，并新增 `CardEffectType` 注册体现式记录实战执行/数值预览支持状态、参数数量范围、整数参数位置和关键文字参数约束；卡牌实战执行逻辑已迁入 `CardEffectExecutor`，卡牌数值预览逻辑已迁入 `CardEffectPreviewer`，执行器和预览器现在都由各自的已登记 effect 类型集合驱动构建 handler map。后端 CLI `selftest` 已能扫描所有已配置职业 JSON 卡牌的未知 effect、未接入实战执行的 effect、参数数量错误、整数参数格式错误和不支持的文字参数，并会检查 `CardEffectType` 支持声明与执行/预览 handler 登记是否一致，避免新增 DSL 时漏接实际执行或预览。
 
-事件系统已让普通事件和命运抉择的名称、描述、选项展示、固定结果、简单随机范围结果、加权随机结果、条件选项和结局 outcome 从 `events.json` 读取，并抽出 `EventResultResolver` 负责 JSON 结果转换；`EventRewardResolver` 已建立特殊奖励 executor 注册表，随机低阶/负面藏品占位会展开为真实藏品，五张牌事件奖励会展开为真实卡牌，`relic_nuke` 暂时返回显式未接入特殊奖励状态而不再伪装成普通藏品。`EventHandler` 已收敛为数据调度器，旧的硬编码事件名称、描述、选项和结果 fallback 已移除；当前 JSON 中没有选项依赖 Java executor，未来真正复杂事件需显式标记 `executor: "java"` 并登记专用 executor。后端 CLI 的普通事件和命运抉择也已复用 `EventHandler` / `events.json`，传入玩家上下文展示条件选项并处理 outcome。后端 CLI `selftest` 会扫描 JSON 固定/随机事件结果字段、藏品引用或特殊奖励 ID、五张牌奖励展开、命运抉择随机池边界、条件选项和 Java executor 标记。核弹真实玩法 executor 仍需在语义确认后接入。
+事件系统已让普通事件和命运抉择的名称、描述、选项展示、固定结果、简单随机范围结果、加权随机结果、条件选项和结局 outcome 从 `events.json` 读取，并抽出 `EventResultResolver` 负责 JSON 结果转换；`EventRewardResolver` 已建立特殊奖励 executor 注册表，随机低阶/负面藏品占位会展开为真实藏品，五张牌事件奖励会展开为真实卡牌，`relic_nuke` 会展开为特殊事件药水 `potion_nuke`，不再伪装成普通藏品。`EventHandler` 已收敛为数据调度器，旧的硬编码事件名称、描述、选项和结果 fallback 已移除；当前 JSON 中没有选项依赖 Java executor，未来真正复杂事件需显式标记 `executor: "java"` 并登记专用 executor。后端 CLI 的普通事件和命运抉择也已复用 `EventHandler` / `events.json`，传入玩家上下文展示条件选项并处理 outcome。后端 CLI `selftest` 会扫描 JSON 固定/随机事件结果字段、藏品引用或特殊奖励 ID、五张牌奖励展开、核弹药水展开、命运抉择随机池边界、条件选项和 Java executor 标记。

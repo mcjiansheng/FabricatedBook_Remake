@@ -9,9 +9,9 @@
 
 当前 `relics.json` 共 49 个藏品或奖励占位 ID：
 
-- 已完整接入：48 个。
+- 已完整接入：49 个。
 - 部分实现：0 个。
-- 需要规则确认：1 个。
+- 需要规则确认：0 个。
 - 未找到完全缺失实现的普通藏品。
 
 后端藏品入口分布如下：
@@ -20,7 +20,7 @@
 - `RelicManager`：统一调度、战斗胜利、战斗奖励概率。
 - `NodeEntryResolver`：进入节点时的 `"集权"` / `"寡头"` / `捡来的存折`。
 - `EnemyEncounterResolver`：`"复仇者"` 第 3 层强制 Boss、`"巴别塔"` 紧急作战额外敌人和第 5 层隐藏 Boss 路线。
-- `EventRewardResolver`：事件奖励占位 ID 展开，包括五张牌、随机低阶藏品、随机负面藏品，以及显式未接入的核弹。
+- `EventRewardResolver`：事件奖励占位 ID 展开，包括五张牌、随机低阶藏品、随机负面藏品，以及核弹特殊药水。
 
 ## 需要优先处理的问题
 
@@ -40,15 +40,14 @@
 - 当前实现：`捡来的存折` 只在 `NodeEntryResolver` 处理 `NodeType.SHOP` 节点入口时给金币；`ShopManager.generateItems()` 不再产生任何进入商店副作用，旧的 `RelicManager.onEnterShop()` 入口已移除。
 - 验证覆盖：`NodeEntryResolverTest` 覆盖只在商店节点入口获得 25 金币；`ShopManagerTest` 覆盖连续调用 `generateItems()` 不会触发存折金币。
 
-### R-003：`relic_nuke` 真实玩法语义未定义
+### R-003：`relic_nuke` 需要接入特殊药水语义
 
-- 状态：需要规则确认。
-- 位置：`EventRewardResolver`、`events.json` 曼哈顿计划事件。
-- 当前行为：`relic_nuke` 被识别为特殊奖励 ID，但 executor 返回显式未接入状态，不会作为普通藏品加入背包。
-- 问题原因：百科和数据只说明它是村庄事件获得的特殊物品，未定义它是藏品、一次性道具、路线标记、战斗效果还是结局条件。
-- 期望实现：先确认玩法语义，再实现专用 executor；确认前继续保持显式未接入，避免伪装成普通藏品。
-- TODO 对应：总 Backlog 中已将负面藏品与已定义隐藏结局链路标为完成，`核弹` 作为独立待确认项保留。
-- 影响范围：事件奖励、前端事件结果展示、存档、可能的结局路线或战斗效果。
+- 状态：已修复。
+- 位置：`EventRewardResolver`、`Potion`、`SaveManager`、`GameRunState.PlayerSnapshot`、`BattleScreen`、`events.json` 曼哈顿计划事件。
+- 原问题：`relic_nuke` 被识别为特殊奖励 ID，但 executor 返回显式未接入状态，不会作为普通藏品或可用道具加入背包。
+- 当前实现：`relic_nuke` 作为“曼哈顿计划”的事件奖励路由 ID 保留；`EventRewardResolver` 在药水栏有空位时发放特殊药水 `potion_nuke`，满栏时不强塞、不扩容，并返回未领取摘要。`potion_nuke` 不写入 `potions.json`，因此不会进入商店或随机药水池；存档恢复会在普通药水数据外识别该特殊 ID。
+- 战斗效果：使用核弹会对玩家和所有存活敌人造成 999 点伤害；药水使用后立即调用 `CombatEngine.checkBattleEnd()`，而战斗结算先判玩家死亡、后判敌人全灭，所以同归于尽时优先战斗失败。
+- 验证覆盖：`EventHandlerTest` 覆盖核弹发放和满栏拦截；`CombatPreviewCalculatorTest` 覆盖同归于尽优先失败；`GameRunStateSaveTest` 覆盖特殊药水存档恢复；后端 CLI `selftest` 覆盖核弹事件奖励发放为特殊药水且不进入藏品栏。
 
 ## 逐项状态表
 
@@ -93,7 +92,7 @@
 | `relic_betrayal` | 背叛 | 已完整 | `DataRelic` / `EnemyEncounterResolver` | 1-4 层加伤、第 5 层敌人加血、隐藏路线条件均接入。 |
 | `relic_hatred` | 仇恨 | 已完整 | `DataRelic` / `EnemyEncounterResolver` | 1-4 层减伤、第 5 层敌人减血、隐藏路线条件均接入。 |
 | `relic_avenger` | "复仇者" | 已完整 | `DataRelic.modifyOutgoingDamage()` / `EnemyEncounterResolver` | 1/3 概率 +30%，第 3 层强制「迷失的守林人」。 |
-| `relic_nuke` | 核弹 | 需要规则确认 | `EventRewardResolver` | 显式未接入特殊奖励；确认语义前不加入背包。 |
+| `relic_nuke` | 核弹 | 已完整 | `EventRewardResolver` / `Potion` | 曼哈顿计划特殊奖励路由，发放 `potion_nuke`；满栏不发放，不作为藏品持有。 |
 | `relic_five_cards` | 五张牌 | 已完整 | `EventRewardResolver` | 事件奖励占位，展开为 5 张真实卡牌，不作为藏品持有。 |
 | `relic_random_leq3` | 随机低阶藏品 | 已完整 | `EventRewardResolver` | 事件奖励占位，展开为价值 3 及以下的非负面、非特殊藏品。 |
 | `relic_curse_random` | 随机负面藏品 | 已完整 | `EventRewardResolver` | 事件奖励占位，展开为真实负面藏品。 |
@@ -106,5 +105,5 @@
 
 ## 后续建议
 
-1. `relic_nuke` 不继续实现，直到玩法语义明确。
-2. 如果继续扩展藏品，优先考虑把藏品效果从 `DataRelic` 的多个 switch 收敛为注册表，至少给“随机类效果不参与预览”建立统一约定。
+1. 如果继续扩展藏品，优先考虑把藏品效果从 `DataRelic` 的多个 switch 收敛为注册表，至少给“随机类效果不参与预览”建立统一约定。
+2. 后续若增加更多“事件专属药水”，建议把 `Potion.createSpecialById()` 扩展为专用注册表，避免特殊 ID 分散在存档和事件奖励链路中。

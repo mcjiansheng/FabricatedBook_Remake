@@ -182,7 +182,7 @@ class EventHandlerTest {
     }
 
     @Test
-    void nukeEventRewardUsesExplicitUnsupportedSpecialReward() {
+    void nukeEventRewardAddsSpecialPotionWhenPotionBarHasRoom() {
         Player player = player();
         EventHandler.EventResult result = new EventHandler.EventResult(
                 "获得 1 个核弹", 0, 0, "relic_nuke");
@@ -191,9 +191,29 @@ class EventHandlerTest {
                 EventRewardResolver.applyRewards(result, player, new Random(1));
 
         assertNull(reward.getRelic());
-        assertEquals("relic_nuke", reward.getUnresolvedSpecialRewardId());
+        assertNull(reward.getUnresolvedSpecialRewardId());
+        assertEquals(Potion.NUKE_ID, reward.getPotion().getId());
+        assertEquals(Potion.NUKE_ID, player.getPotions().get(0).getId());
         assertFalse(player.hasRelic("relic_nuke"));
         assertTrue(EventRewardResolver.isSpecialRewardId("relic_nuke"));
+    }
+
+    @Test
+    void nukeEventRewardRespectsPotionBarLimit() {
+        Player player = player();
+        player.setMaxPotionSlots(1);
+        assertTrue(player.addPotion(new Potion("potion_test", "测试药水",
+                "测试", List.of())));
+        EventHandler.EventResult result = new EventHandler.EventResult(
+                "获得 1 个核弹", 0, 0, "relic_nuke");
+
+        EventRewardResolver.EventReward reward =
+                EventRewardResolver.applyRewards(result, player, new Random(1));
+
+        assertNull(reward.getPotion());
+        assertEquals("relic_nuke", reward.getUnclaimedSpecialRewardId());
+        assertEquals(1, player.getPotions().size());
+        assertEquals("potion_test", player.getPotions().get(0).getId());
     }
 
     @Test

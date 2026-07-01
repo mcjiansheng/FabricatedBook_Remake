@@ -4,6 +4,7 @@ import com.fabricatedbook.core.card.Card;
 import com.fabricatedbook.core.card.CardFactory;
 import com.fabricatedbook.core.card.CardPool;
 import com.fabricatedbook.core.entity.Player;
+import com.fabricatedbook.core.potion.Potion;
 import com.fabricatedbook.core.relic.Relic;
 import com.fabricatedbook.core.relic.RelicData;
 import com.fabricatedbook.core.relic.RelicFactory;
@@ -46,7 +47,7 @@ public final class EventRewardResolver {
         if (relic != null) {
             new RelicManager(owner).addRelic(relic);
         }
-        return new EventReward(relic, List.of(), null);
+        return new EventReward(relic, List.of(), null, null, null);
     }
 
     public static Relic resolveRelic(String relicId, Player owner, Random random) {
@@ -118,7 +119,7 @@ public final class EventRewardResolver {
             public EventReward apply(RewardContext context) {
                 Relic relic = randomRelic(context.owner(), context.random(), false, 3);
                 addRelic(context.owner(), relic);
-                return new EventReward(relic, List.of(), null);
+                return new EventReward(relic, List.of(), null, null, null);
             }
 
             @Override
@@ -131,7 +132,7 @@ public final class EventRewardResolver {
             public EventReward apply(RewardContext context) {
                 Relic relic = randomCursedRelic(context.owner(), context.random());
                 addRelic(context.owner(), relic);
-                return new EventReward(relic, List.of(), null);
+                return new EventReward(relic, List.of(), null, null, null);
             }
 
             @Override
@@ -142,10 +143,15 @@ public final class EventRewardResolver {
         executors.put(FIVE_CARDS_REWARD, context -> {
             List<Card> cards = randomCards(context.owner(), context.random(), 5);
             context.owner().getDrawPile().addAll(cards);
-            return new EventReward(null, cards, null);
+            return new EventReward(null, cards, null, null, null);
         });
-        executors.put(NUKE_REWARD, context ->
-                new EventReward(null, List.of(), NUKE_REWARD));
+        executors.put(NUKE_REWARD, context -> {
+            Potion nuke = Potion.nuke();
+            if (context.owner().addPotion(nuke)) {
+                return new EventReward(null, List.of(), nuke, null, null);
+            }
+            return new EventReward(null, List.of(), null, null, NUKE_REWARD);
+        });
         return Map.copyOf(executors);
     }
 
@@ -180,17 +186,22 @@ public final class EventRewardResolver {
 
     public static final class EventReward {
         private static final EventReward EMPTY =
-                new EventReward(null, Collections.emptyList(), null);
+                new EventReward(null, Collections.emptyList(), null, null, null);
 
         private final Relic relic;
         private final List<Card> cards;
+        private final Potion potion;
         private final String unresolvedSpecialRewardId;
+        private final String unclaimedSpecialRewardId;
 
-        private EventReward(Relic relic, List<Card> cards,
-                            String unresolvedSpecialRewardId) {
+        private EventReward(Relic relic, List<Card> cards, Potion potion,
+                            String unresolvedSpecialRewardId,
+                            String unclaimedSpecialRewardId) {
             this.relic = relic;
             this.cards = List.copyOf(cards);
+            this.potion = potion;
             this.unresolvedSpecialRewardId = unresolvedSpecialRewardId;
+            this.unclaimedSpecialRewardId = unclaimedSpecialRewardId;
         }
 
         public static EventReward empty() {
@@ -205,12 +216,31 @@ public final class EventRewardResolver {
             return cards;
         }
 
+        public Potion getPotion() {
+            return potion;
+        }
+
         public String getUnresolvedSpecialRewardId() {
             return unresolvedSpecialRewardId;
         }
 
+        public String getUnclaimedSpecialRewardId() {
+            return unclaimedSpecialRewardId;
+        }
+
+        public String getUnclaimedSpecialRewardName() {
+            if (NUKE_REWARD.equals(unclaimedSpecialRewardId)) {
+                return "核弹";
+            }
+            return unclaimedSpecialRewardId;
+        }
+
         public String getRelicName() {
             return relic == null ? null : relic.getName();
+        }
+
+        public String getPotionName() {
+            return potion == null ? null : potion.getName();
         }
 
         public String cardNames() {

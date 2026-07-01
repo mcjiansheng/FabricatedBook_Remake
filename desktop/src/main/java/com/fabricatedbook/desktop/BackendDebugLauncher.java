@@ -1013,9 +1013,12 @@ public class BackendDebugLauncher {
                 EventRewardResolver.applyRewards(new EventHandler.EventResult(
                                 "获得 1 个核弹", 0, 0, "relic_nuke"),
                         testPlayer, new Random(1));
-        ok &= assertCheck("relic_nuke".equals(nukeReward.getUnresolvedSpecialRewardId())
+        ok &= assertCheck(nukeReward.getPotion() != null
+                        && Potion.NUKE_ID.equals(nukeReward.getPotion().getId())
+                        && testPlayer.getPotions().stream()
+                                .anyMatch(potion -> Potion.NUKE_ID.equals(potion.getId()))
                         && !testPlayer.hasRelic("relic_nuke"),
-                "核弹特殊奖励保持显式未接入状态");
+                "核弹事件奖励发放特殊药水且不加入藏品栏");
 
         int oldMaxHp = testPlayer.getMaxHp();
         Relic hotWater = RelicFactory.createById("relic_hot_water_flask", testPlayer);

@@ -336,11 +336,16 @@ public class SaveManager {
             if (data.potionIds != null) {
                 List<Potion> potions = new DataLoader().loadPotions();
                 for (String potionId : data.potionIds) {
+                    boolean restoredPotion = false;
                     for (Potion potion : potions) {
                         if (potion.getId().equals(potionId)) {
                             player.addPotion(potion.copy());
+                            restoredPotion = true;
                             break;
                         }
+                    }
+                    if (!restoredPotion) {
+                        player.addPotion(Potion.createSpecialById(potionId));
                     }
                 }
             }

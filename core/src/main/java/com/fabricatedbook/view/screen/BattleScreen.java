@@ -218,7 +218,11 @@ public class BattleScreen implements Screen, ViewNotifier, CardActor.CardInterac
                 () -> returnMap != null ? returnMap.currentLayerStatusText() : "第" + player.getCurrentFloor() + "层",
                 () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.CARDS)),
                 () -> game.setScreen(new InventoryScreen(game, player, returnMap, InventoryScreen.Tab.RELICS)),
-                true, potion -> potion.use(player, enemies, relicManager),
+                true, potion -> {
+                    boolean used = potion.use(player, enemies, relicManager);
+                    combatEngine.checkBattleEnd();
+                    return used;
+                },
                 () -> statusLabel.setText("药水栏已更新。"));
 
         if (!battleInitialized) {

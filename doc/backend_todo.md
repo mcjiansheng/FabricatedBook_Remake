@@ -236,11 +236,11 @@
 
 补充：`relic_avenger` 的 1/3 概率伤害加成已确认位于 `DataRelic.modifyOutgoingDamage()`，并保持在 `previewOutgoingDamage()` 外，避免 UI 预览提前消耗随机结果。本次补齐的是测试缺口：`DataRelicTest` 通过可注入 `Random` 固定 `nextInt(100)` 为 32/33，分别覆盖触发与不触发边界，同时确认预览仍返回基础伤害。该改动只增加 `DataRelic` 的测试用随机源注入构造器，`RelicFactory` 的生产创建路径仍使用默认随机源，不影响其它藏品依赖。
 
-补充：后端藏品实现状态已集中审计到 [backend_relic_implementation_audit.md](backend_relic_implementation_audit.md)。当前 `relics.json` 49 个藏品或奖励占位 ID 中，48 个已完整接入；`relic_nuke` 仍保持“需要规则确认”，不可静默实现。
+补充：后端藏品实现状态已集中审计到 [backend_relic_implementation_audit.md](backend_relic_implementation_audit.md)。当前 `relics.json` 49 个藏品或奖励占位 ID 中，48 个普通藏品/占位已完整接入；`relic_nuke` 已按事件特殊药水路由接入，不作为普通藏品进入背包。
 
 补充：`relic_frostmourne` 的跨战斗成长状态已从 `DataRelic` 临时实例字段迁入 `Player.frostmourneCombatWins`，并随 `GameRunState.PlayerSnapshot` / `SaveManager` v4 保存恢复；`DataRelic` 的实战和预览伤害改为读取玩家稳定状态。`CombatPreviewCalculatorTest` 覆盖胜利增长、失败不增长，`GameRunStateSaveTest` 覆盖读档后仍保留成长并计算伤害。
 
-补充：`relic_bankbook` 的“进入商店获得金币”已从 `ShopManager.generateItems()` 迁入 `NodeEntryResolver` 的 `NodeType.SHOP` 入口，旧的 `RelicManager.onEnterShop()` 已移除。现在前端地图、后端 CLI 和保存/读档流程都经由同一个节点进入入口触发该效果；刷新商品或重建商店界面不会重复给钱。`NodeEntryResolverTest` 覆盖商店节点入口获得 25 金币且非商店节点不触发，`ShopManagerTest` 覆盖连续 `generateItems()` 不触发存折金币。藏品审计状态同步调整为 48 个已完整接入、0 个部分实现、1 个需要规则确认。
+补充：`relic_bankbook` 的“进入商店获得金币”已从 `ShopManager.generateItems()` 迁入 `NodeEntryResolver` 的 `NodeType.SHOP` 入口，旧的 `RelicManager.onEnterShop()` 已移除。现在前端地图、后端 CLI 和保存/读档流程都经由同一个节点进入入口触发该效果；刷新商品或重建商店界面不会重复给钱。`NodeEntryResolverTest` 覆盖商店节点入口获得 25 金币且非商店节点不触发，`ShopManagerTest` 覆盖连续 `generateItems()` 不触发存折金币。藏品审计状态已同步为 49 个藏品或奖励占位 ID 均已接入，其中 `relic_nuke` 作为特殊事件药水路由实现。
 
 ### 位置
 
@@ -346,13 +346,13 @@
 
 ## B-007：事件系统仍是 Java 硬编码，数据文件没有成为规则来源
 
-状态：主链路已修复，剩余玩法语义待确认。`DataLoader` 已新增 `loadEvents()`，普通事件和命运抉择的名称、描述、选项展示、固定结果、简单随机范围结果、加权随机结果、条件选项和结局 `outcome` 都由 `events.json` 驱动。`EventHandler` 已收敛为数据调度器，旧的硬编码事件名称、描述、选项和结果 fallback 已移除；当前 `events.json` 中没有选项依赖 Java executor，未来真正复杂事件必须在 JSON 选项上显式标记 `executor: "java"` 并在注册表中登记。
+状态：主链路已修复。`DataLoader` 已新增 `loadEvents()`，普通事件和命运抉择的名称、描述、选项展示、固定结果、简单随机范围结果、加权随机结果、条件选项和结局 `outcome` 都由 `events.json` 驱动。`EventHandler` 已收敛为数据调度器，旧的硬编码事件名称、描述、选项和结果 fallback 已移除；当前 `events.json` 中没有选项依赖 Java executor，未来真正复杂事件必须在 JSON 选项上显式标记 `executor: "java"` 并在注册表中登记。
 
-已完成的结构收口包括：`EventResultResolver` 负责把 JSON 选项转换为 `EventResult`；`EventRewardResolver` 建立特殊奖励 executor 注册表，`relic_random_leq3` / `relic_curse_random` 会展开为真实藏品，`relic_five_cards` 会展开为 5 张真实可获得卡牌，`relic_nuke` 暂时返回显式未接入特殊奖励状态而不再伪装成普通藏品；前端事件页和后端 CLI 共用同一奖励入口。“生命回满”已从 `hpChange = 9999` 哨兵值改为显式 `fullHeal` 字段；翅膀雕像摧毁、黏液世界放手、村庄板烧鸡腿堡已迁到 JSON 随机范围，投资已迁到 JSON 加权随机结果，追猎逃跑与好诗歪诗的随机藏品占位结果也已迁到 JSON。命运抉择通过 `randomPool: false` 排除普通随机事件池，`EventHandler.executeEvent()` 会按玩家可见选项解析数据结果，避免条件选项和点击索引错位；已存在于 JSON 的事件如果选择索引无效，会直接返回“没有作出选择”。
+已完成的结构收口包括：`EventResultResolver` 负责把 JSON 选项转换为 `EventResult`；`EventRewardResolver` 建立特殊奖励 executor 注册表，`relic_random_leq3` / `relic_curse_random` 会展开为真实藏品，`relic_five_cards` 会展开为 5 张真实可获得卡牌，`relic_nuke` 会展开为特殊事件药水 `potion_nuke`，不再伪装成普通藏品；前端事件页和后端 CLI 共用同一奖励入口。“生命回满”已从 `hpChange = 9999` 哨兵值改为显式 `fullHeal` 字段；翅膀雕像摧毁、黏液世界放手、村庄板烧鸡腿堡已迁到 JSON 随机范围，投资已迁到 JSON 加权随机结果，追猎逃跑与好诗歪诗的随机藏品占位结果也已迁到 JSON。命运抉择通过 `randomPool: false` 排除普通随机事件池，`EventHandler.executeEvent()` 会按玩家可见选项解析数据结果，避免条件选项和点击索引错位；已存在于 JSON 的事件如果选择索引无效，会直接返回“没有作出选择”。
 
-后端 CLI 的普通事件、命运抉择和奖励节点事件现在也通过 `EventHandler` 读取 `events.json`，传入玩家上下文展示条件选项，并处理事件 `outcome`。后端 CLI `selftest` 会扫描所有 JSON 固定/随机事件结果，确认字段可解析、随机范围顺序有效、加权 outcome 权重和描述有效、`relicId` 可创建或是已注册特殊奖励、`fullHeal` 不与普通 `hpChange` 混用，并验证占位低阶/负面藏品可展开为真实藏品、五张牌奖励可展开为真实卡牌、核弹保持显式未接入状态、命运抉择不会进入随机事件池、条件选项会按玩家藏品展示。`flowtest` 会验证奖励节点采用「好诗歪诗」事件后，奖励结果可保存并记录节点完成。测试覆盖普通事件文本来自 JSON、固定结果来自 JSON、随机范围结果来自 JSON、加权随机结果来自 JSON、占位藏品结果来自 JSON、占位藏品展开、五张牌展开、核弹特殊奖励未接入状态、命运抉择展示数据/结果/随机池边界、数据事件无效选项不会触发旧 fallback、固定字段解析、显式回满、固定结果藏品 ID，以及命运抉择条件仍按玩家藏品判断。
+后端 CLI 的普通事件、命运抉择和奖励节点事件现在也通过 `EventHandler` 读取 `events.json`，传入玩家上下文展示条件选项，并处理事件 `outcome`。后端 CLI `selftest` 会扫描所有 JSON 固定/随机事件结果，确认字段可解析、随机范围顺序有效、加权 outcome 权重和描述有效、`relicId` 可创建或是已注册特殊奖励、`fullHeal` 不与普通 `hpChange` 混用，并验证占位低阶/负面藏品可展开为真实藏品、五张牌奖励可展开为真实卡牌、核弹可展开为特殊药水、命运抉择不会进入随机事件池、条件选项会按玩家藏品展示。`flowtest` 会验证奖励节点采用「好诗歪诗」事件后，奖励结果可保存并记录节点完成。测试覆盖普通事件文本来自 JSON、固定结果来自 JSON、随机范围结果来自 JSON、加权随机结果来自 JSON、占位藏品结果来自 JSON、占位藏品展开、五张牌展开、核弹特殊药水发放和满栏拦截、命运抉择展示数据/结果/随机池边界、数据事件无效选项不会触发旧 fallback、固定字段解析、显式回满、固定结果藏品 ID，以及命运抉择条件仍按玩家藏品判断。
 
-不可继续静默实现的剩余点：`relic_nuke` 的真实玩法语义尚未定义。它现在只是“曼哈顿计划”事件的特殊奖励 ID，代码会把它识别为未接入特殊奖励并展示/记录该状态。期望先确认核弹到底是藏品、一次性道具、路线标记、战斗效果还是结局条件，再为 `relic_nuke` executor 实现对应效果；在确认前不应把它当普通藏品塞入玩家背包。
+核弹实现说明：`events.json` 中仍使用 `relic_nuke` 作为“曼哈顿计划”的特殊奖励路由 ID；`EventRewardResolver` 会在药水栏有空位时发放 `Potion.nuke()`，其存档 ID 为 `potion_nuke`。药水栏已满时不会强行加入、不会扩容，也不会加入普通藏品栏；事件结果摘要会提示未获得该特殊奖励。`potion_nuke` 不写入 `potions.json`，因此不会进入商店或随机药水奖励池；`SaveManager` / `GameRunState.PlayerSnapshot` 会在普通药水数据外额外识别该特殊药水 ID。战斗中使用后对玩家和所有存活敌人造成 999 点伤害，`BattleScreen` 会立即调用 `CombatEngine.checkBattleEnd()`，而该结算先判玩家死亡、后判敌人全灭，所以同归于尽时优先战斗失败。
 
 ### 位置
 
